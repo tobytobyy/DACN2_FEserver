@@ -14,7 +14,7 @@ const RootNavigator = () => {
   // const { isAuthenticated } = useAuth();
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: true }}>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       {true ? (
         // Login successful -> show the app
         <Stack.Screen name="App" component={AppStack} />

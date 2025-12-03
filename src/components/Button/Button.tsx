@@ -10,7 +10,7 @@ import {
 import { theme } from '../../assets/theme';
 
 interface ButtonProps {
-  text?: string;
+  title?: string;
   width?: number | string;
   height?: number;
   color?: string; // text color
@@ -28,7 +28,7 @@ interface ButtonProps {
 }
 
 const Button: React.FC<ButtonProps> = ({
-  text,
+  title,
   width = '100%',
   height = 48,
   color = '#FFFFFF',
@@ -42,7 +42,7 @@ const Button: React.FC<ButtonProps> = ({
   loading = false,
   loadingText,
 }) => {
-  const showText = loading && loadingText ? loadingText : text;
+  const showText = loading && loadingText ? loadingText : title;
 
   return (
     <TouchableOpacity
@@ -76,7 +76,7 @@ const Button: React.FC<ButtonProps> = ({
           {leftIcon ? (
             <View style={{ marginRight: iconSpacing }}>{leftIcon}</View>
           ) : null}
-          <Text style={[styles.text, { color } as TextStyle]}>{text}</Text>
+          <Text style={[styles.text, { color } as TextStyle]}>{title}</Text>
         </View>
       )}
     </TouchableOpacity>
