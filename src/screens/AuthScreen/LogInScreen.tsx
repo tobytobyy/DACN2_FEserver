@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import HeartCareIcon from '@assets/icons/svgs/health-care-logo.svg';
-import HeartLine from '@assets/icons/svgs/heart-line.svg';
+import HeartCareLogo from '@assets/icons/svgs/health_care_logo.svg';
+import HeartLine from '@assets/icons/svgs/heart_line.svg';
 import { AuthOptionCard } from '@components/AuthOptionCard/AuthOptionCard';
-import GoogleIcon from '@assets/icons/svgs/google.svg';
-import FaceIdIcon from '@assets/icons/svgs/face-id.svg';
+import FaceIdIcon from '@assets/icons/svgs/face_id_5050.svg';
 import { theme } from '@assets/theme';
 
 type AuthMethod = 'google' | 'faceId' | 'pin' | 'biometric';
@@ -19,7 +18,6 @@ const LogInScreen = () => {
       key: 'google' as AuthMethod,
       label: 'Google account',
       subtitle: 'Sync data',
-      icon: <GoogleIcon width={24} height={24} />,
     },
     {
       key: 'faceId' as AuthMethod,
@@ -27,7 +25,6 @@ const LogInScreen = () => {
       subtitle: 'Quick Access',
       icon: <FaceIdIcon width={24} height={24} />,
     },
-    // Có thể thêm các phương thức khác sau này: pin, biometric...
   ];
 
   return (
@@ -35,7 +32,7 @@ const LogInScreen = () => {
       <ScrollView style={styles.container}>
         {/* Name brand */}
         <View>
-          <HeartCareIcon width={80} height={40} />
+          <HeartCareLogo width={80} height={40} />
         </View>
 
         {/* Banner */}
