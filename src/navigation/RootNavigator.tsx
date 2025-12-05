@@ -1,6 +1,8 @@
+// src/navigation/RootNavigator.tsx
+import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AuthStack from './AuthStack';
-import AppStack from './AppStack';
+import BottomTabs from './BottomTabs'; // 👈 thay vì AppStack
 
 export type RootNavigatorProps = {
   Auth: undefined;
@@ -15,10 +17,8 @@ const RootNavigator = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       {false ? (
-        // Login successful -> show the app
-        <Stack.Screen name="App" component={AppStack} />
+        <Stack.Screen name="App" component={BottomTabs} />
       ) : (
-        // No token found, user isn't signed in -> show auth flow
         <Stack.Screen name="Auth" component={AuthStack} />
       )}
     </Stack.Navigator>
