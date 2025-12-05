@@ -4,8 +4,6 @@
     "baseUrl": "./src",
     "paths": {
       "@assets/*": ["assets/*"],
-      "@icons/*": ["assets/icons/*"],
-      "@theme/*": ["assets/theme/*"],
       "@components/*": ["components/*"],
       "@context/*": ["context/*"],
       "@navigation/*": ["navigation/*"],

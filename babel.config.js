@@ -16,8 +16,6 @@ module.exports = {
         ],
         alias: {
           '@assets': './src/assets',
-          '@icons': './src/assets/icons',
-          '@theme': './src/assets/theme',
           '@components': './src/components',
           '@context': './src/context',
           '@navigation': './src/navigation',
