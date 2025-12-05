@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import HeartCareIcon from '@icons/svgs/health-care-logo.svg';
-import HeartLine from '@icons/svgs/heart-line.svg';
+import HeartCareIcon from '@assets/icons/svgs/heart-care.svg';
+import HeartLine from '@assets/icons//svgs/heart-line.svg';
 import { AuthOptionCard } from '@components/AuthOptionCard/AuthOptionCard';
-import GoogleIcon from '@icons/svgs/google.svg';
-import FaceIdIcon from '@icons/svgs/face-id.svg';
+import GoogleIcon from '@assets/icons//svgs/google.svg';
+import FaceIdIcon from '@assets/icons//svgs/face-id.svg';
 import { theme } from '@assets/theme';
 
 type AuthMethod = 'google' | 'faceId' | 'pin' | 'biometric';
