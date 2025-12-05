@@ -1,15 +1,15 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ProfileScreen from '@screens/AppScreen/ProfileScreen';
+import ChatbotScreen from '../../screens/AppScreen/ChatbotScreen';
 
 const Stack = createNativeStackNavigator();
 
-const ProfileStack = () => {
+const ChatbotStack = () => {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Chatbot" component={ChatbotScreen} />
     </Stack.Navigator>
   );
 };
 
-export default ProfileStack;
+export default ChatbotStack;
