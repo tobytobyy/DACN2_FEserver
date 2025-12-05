@@ -3,6 +3,10 @@ export const fonts = {
     regular: 'Nunito-VariableFont_wght',
     italic: 'Nunito-Italic-VariableFont_wght',
   },
+  poppins: {
+    regular: 'Poppins-Regular',
+    bold: 'Poppins-Bold',
+  },
   weight: {
     thin: '100',
     light: '300',
@@ -19,10 +23,10 @@ export const fonts = {
     md: 16,
     lg: 18,
     xl: 22,
-    '2xl': 28,
+    '2xl': 30,
   },
-};
+} as const;
 
-export type FontName = keyof typeof fonts.nunito;
+export type FontName = keyof typeof fonts.nunito | keyof typeof fonts.poppins;
 export type FontWeightName = keyof typeof fonts.weight;
 export type FontSizeName = keyof typeof fonts.size;

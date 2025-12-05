@@ -1,9 +1,9 @@
 import { Text, View } from 'react-native';
-import Button from '../components/Button/Button';
-import { AuthOptionCard } from '../components/AuthOptionCard/AuthOptionCard';
 import IconFeather from 'react-native-vector-icons/Feather';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Button from '@components/Button/Button';
+import { AuthOptionCard } from '@components/AuthOptionCard/AuthOptionCard';
 
 const HomeScreen = () => {
   return (

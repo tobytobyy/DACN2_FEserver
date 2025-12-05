@@ -1,7 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import AuthStack from './AuthStack';
 import AppStack from './AppStack';
-// import { useAuth } from '../context/AuthContext';
 
 export type RootNavigatorProps = {
   Auth: undefined;
@@ -15,7 +14,7 @@ const RootNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {true ? (
+      {false ? (
         // Login successful -> show the app
         <Stack.Screen name="App" component={AppStack} />
       ) : (

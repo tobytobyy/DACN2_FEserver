@@ -1,3 +1,4 @@
+import { theme } from '@assets/theme';
 import {
   ActivityIndicator,
   StyleSheet,
@@ -7,7 +8,6 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import { theme } from '../../assets/theme';
 
 interface ButtonProps {
   title?: string;
