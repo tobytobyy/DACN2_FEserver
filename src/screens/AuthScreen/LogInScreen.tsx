@@ -10,10 +10,13 @@ import FingerIcon from '@assets/icons/svgs/fingerprint.svg';
 import { AuthOptionCard } from '@components/AuthOptionCard/AuthOptionCard';
 import { theme } from '@assets/theme';
 import Button from '@components/Button/Button';
+import { useNavigation } from '@react-navigation/native';
 type AuthMethod = 'google' | 'faceId' | 'pin' | 'biometric';
 
 const LogInScreen = () => {
   const [selected, setSelected] = useState<AuthMethod | null>(null);
+  const [loading, setLoading] = useState(false);
+  const navigation = useNavigation();
 
   // Cấu hình các phương thức đăng nhập
   const authMethods = [
@@ -42,6 +45,17 @@ const LogInScreen = () => {
       icon: <FingerIcon width={50} height={50} />,
     },
   ];
+
+  // handle login action
+  const handleContinue = () => {
+    setLoading(true);
+
+    // Giả lập gọi API
+    setTimeout(() => {
+      navigation.navigate('AboutYouPage1' as never);
+      setLoading(false);
+    }, 1500);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -99,9 +113,9 @@ const LogInScreen = () => {
 
         <Button
           title="Continue"
-          onPress={() => {
-            // Handle login action
-          }}
+          loading={loading}
+          loadingText="Loading..."
+          onPress={handleContinue}
         />
       </ScrollView>
     </SafeAreaView>
@@ -114,6 +128,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFDFD',
   },
   container: {
+    flex: 1,
     paddingHorizontal: theme.spacing.md,
     backgroundColor: '#FFFDFD',
   },
