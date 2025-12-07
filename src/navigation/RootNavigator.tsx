@@ -16,7 +16,7 @@ const RootNavigator = () => {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {true ? (
+      {false ? (
         <Stack.Screen name="App" component={BottomTabs} />
       ) : (
         <Stack.Screen name="Auth" component={AuthStack} />

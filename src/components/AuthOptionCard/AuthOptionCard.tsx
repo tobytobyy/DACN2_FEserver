@@ -1,3 +1,4 @@
+import { theme } from '@assets/theme';
 import React from 'react';
 import {
   Text,
@@ -36,7 +37,7 @@ export const AuthOptionCard: React.FC<AuthOptionCardProps> = ({
         {
           width,
           height,
-          backgroundColor: selected ? '#D9D6D6' : '#FFFFFF',
+          backgroundColor: selected ? '#DCD7D7' : '#FFFFFF',
         } as ViewStyle,
       ]}
     >
@@ -49,28 +50,36 @@ export const AuthOptionCard: React.FC<AuthOptionCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 20,
+    backgroundColor: theme.colors.white,
+    alignItems: 'center',
+    borderRadius: theme.spacing.gap * 2,
+    paddingHorizontal: theme.spacing.xs * 3,
+    paddingVertical: theme.spacing.lg,
     justifyContent: 'center',
     // shadow
     shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 4,
+    shadowOpacity: 0.07,
+    shadowRadius: 20, // blur
+    shadowOffset: { width: 0, height: 0 }, // offset 0 0
+    // Android shadow
+    elevation: 10,
   },
   iconWrapper: {
-    marginBottom: 12,
+    marginBottom: theme.spacing.xs,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    color: theme.colors.text,
+    textAlign: 'center',
+    fontFamily: theme.fonts.poppins.regular,
+    fontSize: theme.fonts.size.sm,
+    fontWeight: theme.fonts.weight.regular,
   },
   subtitle: {
-    marginTop: 4,
-    fontSize: 12,
-    color: '#888888',
+    color: theme.colors.subText,
+    textAlign: 'center',
+    fontFamily: theme.fonts.poppins.regular,
+    fontSize: theme.fonts.size.xs,
+    fontWeight: theme.fonts.weight.light,
+    marginTop: theme.spacing.xs / 2,
   },
 });
