@@ -23,7 +23,7 @@ const ChatbotScreen = () => {
   const [menuVisible, setMenuVisible] = useState(false);
   const [message, setMessage] = useState('');
 
-  // ✅ Khai báo navigation với kiểu đúng
+  // Khai báo navigation với kiểu đúng
   const navigation =
     useNavigation<NativeStackNavigationProp<ChatbotStackParamList>>();
 

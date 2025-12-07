@@ -6,6 +6,7 @@ export const fonts = {
   poppins: {
     regular: 'Poppins-Regular',
     bold: 'Poppins-Bold',
+    italic: 'Poppins-Italic',
   },
   weight: {
     thin: '100',
