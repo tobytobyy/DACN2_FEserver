@@ -84,6 +84,8 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.xs * 3,
   },
   content: {
+    flexDirection: 'row',
+    gap: theme.spacing.gap,
     alignItems: 'center',
     justifyContent: 'center',
   },
