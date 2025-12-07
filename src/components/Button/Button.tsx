@@ -18,10 +18,6 @@ interface ButtonProps {
   borderRadius?: number;
   onPress?: () => void;
 
-  // icon bên trái (cho phép truyền bất cứ React node nào)
-  leftIcon?: React.ReactNode;
-  iconSpacing?: number; // khoảng cách icon - text
-
   // loading state
   loading?: boolean;
   loadingText?: string; // nếu muốn text khác khi loading
@@ -30,14 +26,11 @@ interface ButtonProps {
 const Button: React.FC<ButtonProps> = ({
   title,
   width = '100%',
-  height = 48,
-  color = '#FFFFFF',
-  backgroundColor = '#4A8A83',
-  borderRadius = 10,
+  height,
+  color = theme.colors.text,
+  backgroundColor = theme.colors.white,
+  borderRadius = 50,
   onPress,
-
-  leftIcon,
-  iconSpacing = 10,
 
   loading = false,
   loadingText,
@@ -73,9 +66,6 @@ const Button: React.FC<ButtonProps> = ({
         </View>
       ) : (
         <View style={styles.content}>
-          {leftIcon ? (
-            <View style={{ marginRight: iconSpacing }}>{leftIcon}</View>
-          ) : null}
           <Text style={[styles.text, { color } as TextStyle]}>{title}</Text>
         </View>
       )}
@@ -87,16 +77,20 @@ const styles = StyleSheet.create({
   button: {
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.text,
+    backgroundColor: theme.colors.white,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.xs * 3,
   },
   content: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
-    fontFamily: theme.fonts.nunito.regular,
-    fontSize: 16,
-    fontWeight: '600',
+    fontFamily: theme.fonts.poppins.regular,
+    fontSize: theme.fonts.size.lg,
+    textAlign: 'center',
   },
 });
 
