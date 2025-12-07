@@ -18,7 +18,7 @@ export type BottomTabParamList = {
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
-// ✅ Tách icon ra ngoài để tránh cảnh báo ESLint
+// Tách icon ra ngoài để tránh cảnh báo ESLint
 const ChatbotIcon = ({ color, size }: { color: string; size: number }) => (
   <Ionicons name="chatbubble-outline" color={color} size={size} />
 );
