@@ -1,4 +1,5 @@
-import { fonts } from '../theme/font';
+import { gradients } from '@assets/theme/gradient';
+import { fonts } from '@assets/theme/font';
 
 export const theme = {
   fonts,
@@ -11,14 +12,7 @@ export const theme = {
     text: '#020202',
     subText: '#818181',
   },
-  gradients: {
-    background: {
-      colors: ['#BBFFE2', '#DDFFF1', '#D5D5D5'],
-      locations: [0, 0.17, 1],
-      start: { x: 0, y: 0 },
-      end: { x: 1, y: 0 },
-    },
-  },
+  gradients,
   spacing: {
     xs: 4,
     sm: 16,
@@ -27,6 +21,6 @@ export const theme = {
     xl: 32,
     gap: 10,
   },
-};
+} as const;
 
 export type Theme = typeof theme;

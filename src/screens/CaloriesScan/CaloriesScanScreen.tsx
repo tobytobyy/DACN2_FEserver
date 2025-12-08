@@ -1,81 +1,146 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
-import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ArrowLeft from '@assets/icons/svgs/arrow_left_2424.svg';
+import CameraIcon from '@assets/icons/svgs/camera_5050.svg';
 import { theme } from '@assets/theme';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { BrowserStackParamList } from '@navigation/AppStack/BrowserStack';
 
-const CaloriesScanScreen = () => {
-  const navigation = useNavigation();
+type Props = NativeStackScreenProps<BrowserStackParamList, 'AiCaloriesScan'>;
+
+const CaloriesScanScreen: React.FC<Props> = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
+
+  const handlePickImage = () => {
+    // TODO: mở camera / image picker, lấy về uri ảnh thật
+    const dummyUri =
+      'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg';
+
+    navigation.navigate('CaloriesScanProcess', { imageUri: dummyUri });
+  };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Header với nút trở về */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <ArrowLeftIcon width={24} height={24} color={theme.colors.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>AI Calories Scan</Text>
-      </View>
+    <LinearGradient
+      colors={theme.gradients.background.colors}
+      locations={theme.gradients.background.locations}
+      start={theme.gradients.background.start}
+      end={theme.gradients.background.end}
+      style={styles.container}
+    >
+      <View style={[styles.safeArea, { paddingTop: insets.top || 12 }]}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            activeOpacity={0.7}
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeft width={24} height={24} color={theme.colors.text} />
+          </TouchableOpacity>
 
-      {/* Nội dung chính có thể cuộn */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          <Text style={styles.text}>
-            AI Calories Scan Screen (đang phát triển)
-          </Text>
+          <Text style={styles.headerTitle}>AI Calories Scan</Text>
+
+          {/* placeholder bên phải cho cân layout (nếu cần) */}
+          <View style={styles.headerRightPlaceholder} />
         </View>
-      </ScrollView>
-    </SafeAreaView>
+
+        {/* Content */}
+        <View style={styles.content}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={styles.uploadCard}
+            onPress={handlePickImage}
+          >
+            <View style={styles.iconWrapper}>
+              <CameraIcon width={50} height={50} color={theme.colors.primary} />
+            </View>
+
+            <Text style={styles.cardTitle}>Take or upload photo</Text>
+            <Text style={styles.cardSubtitle}>Support JPG, PNG</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </LinearGradient>
   );
 };
 
+export default CaloriesScanScreen;
+
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
   safeArea: {
     flex: 1,
-    backgroundColor: theme.colors.white,
+    paddingHorizontal: theme.spacing.md,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.white,
-    elevation: 2,
+    marginTop: theme.spacing.gap,
+    marginBottom: theme.spacing.lg,
   },
   backButton: {
-    marginRight: theme.spacing.sm,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: theme.fonts.size.lg,
-    fontWeight: theme.fonts.weight.bold,
-    fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.primary,
+    flex: 1,
+    textAlign: 'center',
+    fontSize: theme.fonts.size.xl,
+    color: theme.colors.text,
+    fontFamily: theme.fonts.nunito.regular,
+    fontWeight: theme.fonts.weight.semibold,
   },
-  scrollContent: {
-    flexGrow: 1,
-    padding: theme.spacing.md,
+  headerRightPlaceholder: {
+    width: 32,
+    height: 32,
   },
   content: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: theme.spacing.lg,
+    flex: 1,
+    paddingTop: theme.spacing.lg * 3,
   },
-  text: {
-    fontSize: theme.fonts.size.md,
-    fontWeight: theme.fonts.weight.bold,
-    fontFamily: theme.fonts.poppins.bold,
+  uploadCard: {
+    height: 300,
+    backgroundColor: theme.colors.white,
+    borderRadius: theme.spacing.lg,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#E5E7EB',
+    paddingVertical: theme.spacing.xl * 1.5,
+    paddingHorizontal: theme.spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapper: {
+    padding: theme.spacing.gap,
+    borderRadius: 36,
+    backgroundColor: '#E0FFF6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  cardTitle: {
+    fontSize: theme.fonts.size.lg,
     color: theme.colors.text,
+    textAlign: 'center',
+    fontFamily: theme.fonts.nunito.regular,
+    fontWeight: theme.fonts.weight.semibold,
+    lineHeight: theme.spacing.lg,
+    marginBottom: theme.spacing.xs,
+  },
+  cardSubtitle: {
+    fontSize: theme.fonts.size.sm,
+    color: theme.colors.subText,
+    fontFamily: theme.fonts.nunito.regular,
+    fontWeight: theme.fonts.weight.regular,
+    textAlign: 'center',
+    lineHeight: theme.spacing.lg,
   },
 });
-
-export default CaloriesScanScreen;
