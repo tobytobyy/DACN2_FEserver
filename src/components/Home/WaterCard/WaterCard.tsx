@@ -1,49 +1,62 @@
-// src/screens/HomeScreen/components/WaterCard.tsx
+// src/components/Home/WaterCard/WaterCard.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+
 import WaterDropIcon from '@assets/icons/svgs/water_913.svg';
 import WaterBackgroundIcon from '@assets/icons/svgs/water_background_119119.svg';
+import { theme } from '@assets/theme';
+import { useWater, WATER_TARGET } from './useWater';
 
 type WaterCardProps = {
-  waterAmount: number;
-  onIncrease: () => void;
-  onDecrease: () => void;
+  title?: string;
+  unit?: string;
+  showGoalText?: boolean;
 };
 
 const WaterCard: React.FC<WaterCardProps> = ({
-  waterAmount,
-  onIncrease,
-  onDecrease,
+  title = 'Water',
+  unit = 'mL',
+  showGoalText = true,
 }) => {
+  const { waterAmount, increase, decrease } = useWater();
+
+  const percent = Math.round((waterAmount / (WATER_TARGET || 1)) * 100);
+
   return (
     <View style={styles.waterCard}>
+      {/* background icon */}
       <View style={styles.bgIconWrapper}>
-        <WaterBackgroundIcon
-          fill="#959595ff"
-          color="#959595ff"
-          width="100px"
-          height="100px"
-        />
+        <View style={styles.waterBackgroundIcon}>
+          <WaterBackgroundIcon width="380px" height="120px" />
+        </View>
       </View>
 
+      {/* left content */}
       <View style={styles.waterContent}>
         <View style={styles.headerRow}>
-          <View style={[styles.iconCircle, { backgroundColor: '#BAE6FD' }]}>
+          <View style={styles.iconCircle}>
             <WaterDropIcon />
           </View>
-          <Text style={styles.smallCardTitle}>Water</Text>
+          <Text style={styles.smallCardTitle}>{title}</Text>
         </View>
 
         <View style={styles.valueRow}>
-          <Text style={styles.bigValue}>2000</Text>
-          <Text style={styles.smallUnit}> mL</Text>
+          <Text style={styles.bigValue}>{waterAmount}</Text>
+          <Text style={styles.smallUnit}> {unit}</Text>
         </View>
+
+        {showGoalText && (
+          <Text style={styles.goalText}>
+            Goal: {WATER_TARGET} {unit} ({percent}%)
+          </Text>
+        )}
       </View>
 
+      {/* right controls */}
       <View style={styles.waterControls}>
         <TouchableOpacity
           style={styles.controlBtn}
-          onPress={onDecrease}
+          onPress={decrease}
           accessibilityLabel="Decrease water"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
@@ -54,11 +67,11 @@ const WaterCard: React.FC<WaterCardProps> = ({
 
         <TouchableOpacity
           style={[styles.controlBtn, styles.controlBtnPrimary]}
-          onPress={onIncrease}
+          onPress={increase}
           accessibilityLabel="Increase water"
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
-          <Text style={[styles.controlText, styles.controlTextPrimary]}>+</Text>
+          <Text style={styles.controlTextPrimary}>+</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -67,9 +80,9 @@ const WaterCard: React.FC<WaterCardProps> = ({
 
 const styles = StyleSheet.create({
   waterCard: {
-    backgroundColor: '#E0F2FE',
+    backgroundColor: theme.colors.white,
     borderRadius: 24,
-    padding: 20,
+    padding: theme.spacing.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -78,16 +91,22 @@ const styles = StyleSheet.create({
   },
   bgIconWrapper: {
     position: 'absolute',
-    right: 20,
+    right: -120,
     top: 10,
+  },
+  waterBackgroundIcon: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
   },
   waterContent: {
     zIndex: 1,
+    flex: 1,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    marginBottom: theme.spacing.xs,
   },
   iconCircle: {
     width: 32,
@@ -95,31 +114,43 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#A1DBF8',
+    marginRight: theme.spacing.xs,
   },
   smallCardTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: theme.fonts.size.sm,
+    color: theme.colors.text,
+    fontFamily: theme.fonts.poppins.bold,
+    fontWeight: theme.fonts.weight.bold,
   },
   valueRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginTop: 10,
+    marginTop: 6,
   },
   bigValue: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
+    fontSize: theme.fonts.size['2xl'],
+    color: theme.colors.text,
+    fontFamily: theme.fonts.poppins.bold,
+    fontWeight: theme.fonts.weight.bold,
   },
   smallUnit: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#888',
+    fontSize: theme.fonts.size.sm,
+    color: theme.colors.subText,
+    fontFamily: theme.fonts.poppins.regular,
+    fontWeight: theme.fonts.weight.regular,
+  },
+  goalText: {
+    marginTop: 4,
+    fontSize: theme.fonts.size.xs,
+    color: theme.colors.subText,
+    fontFamily: theme.fonts.poppins.regular,
+    fontWeight: theme.fonts.weight.regular,
   },
   waterControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: theme.colors.white,
     borderRadius: 20,
     padding: 4,
     shadowColor: '#000',
@@ -135,27 +166,33 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFF',
+    backgroundColor: theme.colors.white,
     borderWidth: 1,
     borderColor: '#EEE',
   },
-  controlText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#000',
-  },
   controlBtnPrimary: {
-    backgroundColor: '#0EA5E9',
-    borderColor: '#0EA5E9',
+    backgroundColor: theme.colors.blue,
+    borderColor: theme.colors.blue,
+    marginLeft: 4,
+  },
+  controlText: {
+    fontSize: theme.fonts.size.md,
+    color: theme.colors.text,
+    fontFamily: theme.fonts.poppins.bold,
+    fontWeight: theme.fonts.weight.bold,
   },
   controlTextPrimary: {
-    color: '#fff',
+    fontSize: theme.fonts.size.md,
+    color: theme.colors.white,
+    fontFamily: theme.fonts.poppins.bold,
+    fontWeight: theme.fonts.weight.bold,
   },
   waterCount: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    paddingHorizontal: 12,
-    color: '#000',
+    fontSize: theme.fonts.size.md,
+    fontFamily: theme.fonts.poppins.bold,
+    fontWeight: theme.fonts.weight.bold,
+    paddingHorizontal: 8,
+    color: theme.colors.text,
   },
 });
 

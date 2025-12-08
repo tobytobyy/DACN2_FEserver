@@ -11,6 +11,14 @@ export const theme = {
     white: '#FFFFFF',
     text: '#020202',
     subText: '#818181',
+
+    //SettingScreen colors
+    green: '#10B981',
+    orange: '#F97316',
+    violet: '#8B5CF6',
+    danger: '#EF4444',
+    info: '#3B82F6',
+    muted: '#6B7280',
   },
   gradients,
   spacing: {
