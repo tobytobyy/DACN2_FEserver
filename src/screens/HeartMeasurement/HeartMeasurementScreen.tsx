@@ -10,12 +10,12 @@ import {
 import Svg, { Circle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
+import { theme } from '@assets/theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import ArrowLeftIcon from '../../assets/icons/svgs/arrow_left_2424.svg';
-import HeartIcon from '../../assets/icons/svgs/heart.svg';
-import HeartLineIcon from '../../assets/icons/svgs/heart_line.svg';
-import { theme } from '../../assets/theme';
-import type { BrowserStackParamList } from '../../navigation/stacks/BrowserStack';
+import HeartLineIcon from '@assets/icons/svgs/heart_line.svg';
+import HeartIcon from '@assets/icons/svgs/heart.svg';
+import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
+import type { BrowserStackParamList } from '@navigation/AppStack/BrowserStack';
 
 type Nav = NativeStackNavigationProp<BrowserStackParamList, 'HeartMeasurement'>;
 

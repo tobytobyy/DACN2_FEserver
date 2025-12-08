@@ -1,11 +1,12 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import BrowserScreen from '../../screens/AppScreen/BrowserScreen';
-import HeartMeasurementScreen from '../../screens/HeartMeasurement/HeartMeasurementScreen';
-import CaloriesScanScreen from '../../screens/CaloriesScan/CaloriesScanScreen';
-import FootStepCountingScreen from '../../screens/FootStepCounting/FootStepCountingScreen';
-import SleepTrackingScreen from '../../screens/SleepTracking/SleepTrackingScreen';
-import HeartResultScreen from '../../screens/HeartMeasurement/HeartResultScreen';
+
+import BrowserScreen from '@screens/AppScreen/Browser/BrowserScreen';
+import HeartMeasurementScreen from '@screens/HeartMeasurement/HeartMeasurementScreen';
+import CaloriesScanScreen from '@screens/CaloriesScan/CaloriesScanScreen';
+import FootStepCountingScreen from '@screens/FootStepCounting/FootStepCountingScreen';
+import SleepTrackingScreen from '@screens/SleepTracking/SleepTrackingScreen';
+import HeartResultScreen from '@screens/HeartMeasurement/HeartResultScreen';
 
 export type BrowserStackParamList = {
   Browser: undefined;

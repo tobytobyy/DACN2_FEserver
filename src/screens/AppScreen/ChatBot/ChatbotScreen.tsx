@@ -8,16 +8,16 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ChatbotStackParamList } from '../../navigation/stacks/ChatbotStack';
+import { ChatbotStackParamList } from '@navigation/AppStack/ChatbotStack';
 
 // Import icon SVG từ đường dẫn đúng
-import MenuIcon from '../../assets/icons/svgs/setting_2424.svg';
-import ChatAiIcon from '../../assets/icons/svgs/chat_ai_3030.svg';
-import DotIcon from '../../assets/icons/svgs/dot_1010.svg';
-import AttachIcon from '../../assets/icons/svgs/attach_1515.svg';
-import VoiceIcon from '../../assets/icons/svgs/voice_1520.svg';
-import ArrowRightIcon from '../../assets/icons/svgs/arrow_right_2424.svg';
-import ChatOptionsMenu from './ChatOptions/ChatOptionsMenu';
+import MenuIcon from '@assets/icons/svgs/menu_dot_2020.svg';
+import ChatAiIcon from '@assets/icons/svgs/chat_ai_3030.svg';
+import DotIcon from '@assets/icons/svgs/dot_1010.svg';
+import AttachIcon from '@assets/icons/svgs/attach_1515.svg';
+import VoiceIcon from '@assets/icons/svgs/voice_1520.svg';
+import ArrowRightIcon from '@assets/icons/svgs/arrow_right_2424.svg';
+import ChatOptionsMenu from '@screens/AppScreen/ChatOptions/ChatOptionsMenu';
 
 const ChatbotScreen = () => {
   const [menuVisible, setMenuVisible] = useState(false);

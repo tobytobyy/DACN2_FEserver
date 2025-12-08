@@ -2,11 +2,19 @@ import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import SettingScreen from '@screens/AppScreen/SettingScreen';
 
-const Stack = createNativeStackNavigator();
+export type SettingStackParamList = {
+  Setting: undefined;
+};
 
-const SettingStack = () => {
+const Stack = createNativeStackNavigator<SettingStackParamList>();
+
+const defaultStackScreenOptions = {
+  headerShown: false,
+};
+
+const SettingStack: React.FC = () => {
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator screenOptions={defaultStackScreenOptions}>
       <Stack.Screen name="Setting" component={SettingScreen} />
     </Stack.Navigator>
   );

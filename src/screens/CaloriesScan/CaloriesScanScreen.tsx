@@ -8,8 +8,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import ArrowLeftIcon from '../../assets/icons/svgs/arrow_left_2424.svg';
-import { theme } from '../../assets/theme';
+import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
+import { theme } from '@assets/theme';
 
 const CaloriesScanScreen = () => {
   const navigation = useNavigation();
