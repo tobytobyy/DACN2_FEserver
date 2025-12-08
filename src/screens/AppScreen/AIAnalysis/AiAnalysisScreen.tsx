@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import ArrowLeftIcon from '../../../assets/icons/svgs/arrow_left_2424.svg';
+import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
 
 const AiAnalysisScreen = () => {
   const navigation = useNavigation();

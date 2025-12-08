@@ -1,34 +1,37 @@
-import React from 'react';
+// src/navigation/CustomBottomTabBar.tsx
+import React, { memo } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // SVG icons
-import ChatAIIcon from '@assets/icons/svgs/setting_2424.svg';
+import ChatAIIcon from '@assets/icons/svgs/chat_ai_3030.svg';
 import CalendarIcon from '@assets/icons/svgs/calendar_2521.svg';
 import WindowIcon from '@assets/icons/svgs/window_3030.svg';
 import SettingsIcon from '@assets/icons/svgs/setting_2424.svg';
 import HomeIcon from '@assets/icons/svgs/home_3737.svg';
 
-const ICON_SIZE = 24;
+const ICON_SIZE = 30;
 
-const CustomBottomTabBar: React.FC<BottomTabBarProps> = ({
-  state,
-  //   descriptors,
-  navigation,
-}) => {
-  // Tìm index của HomeTab để không hard-code 2 nữa
+type Props = BottomTabBarProps;
+
+const CustomBottomTabBarComponent: React.FC<Props> = props => {
+  const { state, navigation } = props;
+  const insets = useSafeAreaInsets();
+
   const homeIndex = state.routes.findIndex(r => r.name === 'HomeTab');
-
   const isHomeFocused = state.index === homeIndex;
 
   return (
-    <View style={styles.bottomBarContainer}>
-      {/* White curved bar */}
+    <View
+      style={[styles.bottomBarContainer, { paddingBottom: insets.bottom || 0 }]}
+    >
+      {/* Background bar */}
       <View style={styles.bottomBar}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
 
-          // Bỏ qua HomeTab vì đã có floating button riêng
+          // chừa chỗ cho nút Home nổi
           if (route.name === 'HomeTab') {
             return <View key={route.key} style={{ width: 60 }} />;
           }
@@ -41,7 +44,8 @@ const CustomBottomTabBar: React.FC<BottomTabBarProps> = ({
             });
 
             if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
+              // cast nho nhỏ để thỏa ts
+              navigation.navigate(route.name as never);
             }
           };
 
@@ -107,7 +111,7 @@ const CustomBottomTabBar: React.FC<BottomTabBarProps> = ({
       <TouchableOpacity
         style={styles.floatingHomeBtn}
         activeOpacity={0.9}
-        onPress={() => navigation.navigate('HomeTab')}
+        onPress={() => navigation.navigate('HomeTab' as never)}
       >
         <HomeIcon
           width={32}
@@ -167,5 +171,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 });
+
+const CustomBottomTabBar = memo(CustomBottomTabBarComponent);
 
 export default CustomBottomTabBar;

@@ -9,7 +9,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 
 // Import icon SVG
-import BackIcon from '../../../assets/icons/svgs/arrow_left_2424.svg';
+import BackIcon from '@assets/icons/svgs/arrow_left_2424.svg';
 
 const dummyHistory = [
   { id: '1', message: 'Xin chào, tôi cần tư vấn sức khỏe.' },

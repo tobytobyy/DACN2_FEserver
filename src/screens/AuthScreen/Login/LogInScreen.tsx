@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 import HeartCareLogo from '@assets/icons/svgs/health_care_logo.svg';
 import HeartLine from '@assets/icons/svgs/heart_line.svg';
 import GoogleIcon from '@assets/icons/svgs/google_5050.svg';
 import FaceIdIcon from '@assets/icons/svgs/face_id_5050.svg';
 import PinIcon from '@assets/icons/svgs/password_5050.svg';
 import FingerIcon from '@assets/icons/svgs/fingerprint.svg';
-import { AuthOptionCard } from '@components/AuthOptionCard/AuthOptionCard';
-import { theme } from '@assets/theme';
-import Button from '@components/Button/Button';
-import { useNavigation } from '@react-navigation/native';
+import { AuthOptionCard } from '@components/Auth/AuthOptionCard/AuthOptionCard';
+import { styles } from './style';
+import Button from '@components/Auth/Button/Button';
 type AuthMethod = 'google' | 'faceId' | 'pin' | 'biometric';
 
 const LogInScreen = () => {
@@ -121,46 +121,5 @@ const LogInScreen = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFFDFD',
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: theme.spacing.md,
-    backgroundColor: '#FFFDFD',
-  },
-  nameBrand: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  nameBrandText: {
-    fontFamily: theme.fonts.poppins.regular,
-    fontSize: theme.fonts.size.lg,
-    fontWeight: theme.fonts.weight.semibold,
-  },
-  banner: {
-    transform: [{ translateX: -30 }],
-  },
-  title: {
-    fontFamily: theme.fonts.poppins.bold,
-    fontWeight: theme.fonts.weight.bold,
-    fontSize: theme.fonts.size['2xl'],
-    marginBottom: theme.spacing.sm * 2,
-    width: '80%',
-  },
-  authOptionsContainer: {
-    gap: theme.spacing.gap * 2,
-    marginBottom: theme.spacing.xl,
-  },
-  authOptionsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing.gap * 2,
-  },
-});
 
 export default LogInScreen;

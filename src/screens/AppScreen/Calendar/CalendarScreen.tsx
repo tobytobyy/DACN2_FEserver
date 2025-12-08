@@ -9,15 +9,15 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
 import { useNavigation } from '@react-navigation/native'; // để điều hướng
-import { theme } from '../../assets/theme';
+import { theme } from '@assets/theme';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../../navigation/stacks/CalendarStack';
+import { CalendarStackParamList } from '@navigation/AppStack/CalendarStack';
 
-import CalendarIcon from '../../assets/icons/svgs/calendar_2521.svg';
-import AiIcon from '../../assets/icons/svgs/ai_icon_1111.svg';
-import HeartIcon from '../../assets/icons/svgs/heart.svg';
-import StepsIcon from '../../assets/icons/svgs/footprint_1515.svg';
-import SleepIcon from '../../assets/icons/svgs/sleep_2424.svg';
+import CalendarIcon from '@assets/icons/svgs/calendar_2521.svg';
+import AiIcon from '@assets/icons/svgs/ai_icon_1111.svg';
+import HeartIcon from '@assets/icons/svgs/heart.svg';
+import StepsIcon from '@assets/icons/svgs/footprint_1515.svg';
+import SleepIcon from '@assets/icons/svgs/sleep_2424.svg';
 
 type HealthSummary = {
   heartRate: string;
@@ -52,7 +52,7 @@ const CalendarScreen = () => {
 
   // Khai báo navigation với kiểu đúng
   type NavigationProp = NativeStackNavigationProp<
-    RootStackParamList,
+    CalendarStackParamList,
     'Calendar'
   >;
   const navigation = useNavigation<NavigationProp>();

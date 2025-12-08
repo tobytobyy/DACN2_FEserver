@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AuthStack from './AuthStack';
-import BottomTabs from './BottomTabs';
+import AuthStack from '@navigation/AuthStack/AuthStack';
+import BottomTab from '@navigation/BottomTab/BottomTab';
 
 export type RootNavigatorProps = {
   Auth: undefined;
@@ -10,13 +10,20 @@ export type RootNavigatorProps = {
 
 const Stack = createNativeStackNavigator<RootNavigatorProps>();
 
+const defaultStackScreenOptions = {
+  headerShown: false,
+};
+
 const RootNavigator = () => {
   // const { isAuthenticated } = useAuth();
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      screenOptions={defaultStackScreenOptions}
+      // initialRouteName={isAuthenticated ? 'App' : 'Auth'}
+    >
       {true ? (
-        <Stack.Screen name="App" component={BottomTabs} />
+        <Stack.Screen name="App" component={BottomTab} />
       ) : (
         <Stack.Screen name="Auth" component={AuthStack} />
       )}

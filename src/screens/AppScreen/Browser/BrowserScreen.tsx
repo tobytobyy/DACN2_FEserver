@@ -7,12 +7,12 @@ import {
   FlatList,
   TouchableOpacity,
 } from 'react-native';
-import { theme } from '../../assets/theme';
+import { theme } from '@assets/theme';
 import { useNavigation } from '@react-navigation/native';
 
-import SettingIcon from '../../assets/icons/svgs/setting_2424.svg';
-import CaloriesIcon from '../../assets/icons/svgs/calories_1515.svg';
-import ArrowRightIcon from '../../assets/icons/svgs/arrow_right_2424.svg';
+import SettingIcon from '@assets/icons/svgs/setting_2424.svg';
+import CaloriesIcon from '@assets/icons/svgs/calories_1515.svg';
+import ArrowRightIcon from '@assets/icons/svgs/arrow_right_2424.svg';
 
 // sau này bạn có thể thay icon cho từng category nếu muốn
 const categories = [

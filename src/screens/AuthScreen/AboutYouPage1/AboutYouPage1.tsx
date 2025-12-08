@@ -1,12 +1,13 @@
-import { theme } from '@assets/theme';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HeartPulse from '@assets/icons/svgs/heart_pulse.svg';
 import Account from '@assets/icons/svgs/account_circle.svg';
-import DropdownForm from '@components/DropdownForm/DropdownForm';
-import Button from '@components/Button/Button';
-import { useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import DropdownForm from '@components/Auth/DropdownForm/DropdownForm';
+import Button from '@components/Auth/Button/Button';
+import { theme } from '@assets/theme';
+import { styles } from './styles';
 
 const AboutYouPage1 = () => {
   const [loading, setLoading] = useState(false);
@@ -101,68 +102,5 @@ const AboutYouPage1 = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFFDFD',
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: theme.spacing.md,
-    backgroundColor: '#FFFDFD',
-  },
-  header: {
-    alignItems: 'center',
-    gap: theme.spacing.xs * 3,
-    marginTop: theme.spacing.gap * 2,
-    marginBottom: theme.spacing.xl,
-  },
-  title: {
-    color: theme.colors.text,
-    textAlign: 'center',
-    fontFamily: theme.fonts.nunito.regular,
-    fontSize: theme.fonts.size.lg,
-    fontWeight: theme.fonts.weight.regular,
-    lineHeight: theme.spacing.lg,
-  },
-  description: {
-    width: '100%',
-    color: theme.colors.subText,
-    textAlign: 'center',
-    fontFamily: theme.fonts.nunito.regular,
-    fontSize: theme.fonts.size.md,
-    fontWeight: theme.fonts.weight.regular,
-    lineHeight: theme.spacing.lg,
-    marginBottom: theme.spacing.gap * 3,
-  },
-  avatarBlock: {
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-  username: {
-    color: theme.colors.subText,
-    textAlign: 'center',
-    fontFamily: theme.fonts.nunito.regular,
-    fontWeight: theme.fonts.weight.regular,
-    fontSize: theme.fonts.size.lg,
-    lineHeight: theme.spacing.lg,
-  },
-  formContainer: {
-    marginTop: theme.spacing.xl,
-    gap: theme.spacing.gap * 2,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: theme.spacing.gap * 2,
-  },
-  column: {
-    flex: 1,
-  },
-  buttonWrapper: {
-    marginTop: theme.spacing.gap * 20,
-    paddingHorizontal: theme.spacing.gap * 3,
-  },
-});
 
 export default AboutYouPage1;

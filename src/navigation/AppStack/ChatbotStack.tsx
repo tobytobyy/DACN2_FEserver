@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import ChatbotScreen from '../../screens/AppScreen/ChatbotScreen';
-import HistoryChatScreen from '../../screens/AppScreen/ChatOptions/HistoryChatScreen';
+import ChatbotScreen from '@screens/AppScreen/ChatBot/ChatbotScreen';
+import HistoryChatScreen from '@screens/AppScreen/ChatOptions/HistoryChatScreen';
 
 // Khai báo kiểu cho các route trong Stack
 export type ChatbotStackParamList = {

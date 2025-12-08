@@ -1,14 +1,14 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import CalendarScreen from '../../screens/AppScreen/CalendarScreen';
-import AiAnalysisScreen from '../../screens/AppScreen/AIAnalysis/AiAnalysisScreen';
+import CalendarScreen from '@screens/AppScreen/Calendar/CalendarScreen';
+import AiAnalysisScreen from '@screens/AppScreen/AIAnalysis/AiAnalysisScreen';
 
-export type RootStackParamList = {
+export type CalendarStackParamList = {
   Calendar: undefined;
   AiAnalysis: undefined;
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createNativeStackNavigator<CalendarStackParamList>();
 
 const CalendarStack = () => {
   return (
