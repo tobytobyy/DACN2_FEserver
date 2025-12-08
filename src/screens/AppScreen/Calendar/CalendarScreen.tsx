@@ -162,7 +162,7 @@ const CalendarScreen = () => {
                   {summary?.sleep ?? '00h00m'}
                 </Text>
                 <View style={styles.statusBadge}>
-                  <Text style={styles.statusText}>
+                  <Text style={styles.statusTextSleep}>
                     {summary?.sleepStatus ?? '(Unknown)'}
                   </Text>
                 </View>
@@ -320,6 +320,11 @@ const styles = StyleSheet.create({
   },
   statusText: {
     color: '#FF69B4', // có thể đổi #A855F7 cho tím
+    fontSize: theme.fonts.size.sm,
+    fontFamily: theme.fonts.poppins.bold,
+  },
+  statusTextSleep: {
+    color: '#A855F7', // có thể đổi #A855F7 cho tím
     fontSize: theme.fonts.size.sm,
     fontFamily: theme.fonts.poppins.bold,
   },

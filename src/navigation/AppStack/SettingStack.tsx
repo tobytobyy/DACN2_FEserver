@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import SettingScreen from '@screens/AppScreen/SettingScreen';
+import SettingScreen from '@screens/AppScreen/Setting/SettingScreen';
 
 export type SettingStackParamList = {
   Setting: undefined;

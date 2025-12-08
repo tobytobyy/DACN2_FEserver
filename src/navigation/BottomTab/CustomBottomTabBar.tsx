@@ -63,14 +63,7 @@ const CustomBottomTabBarComponent: React.FC<Props> = props => {
                   />
                 );
               case 'CalendarTab':
-                return (
-                  <CalendarIcon
-                    width={ICON_SIZE}
-                    height={ICON_SIZE}
-                    color={color}
-                    fill={color}
-                  />
-                );
+                return <CalendarIcon width={ICON_SIZE} height={ICON_SIZE} />;
               case 'BrowserTab':
                 return (
                   <WindowIcon
@@ -126,7 +119,6 @@ const CustomBottomTabBarComponent: React.FC<Props> = props => {
 
 const styles = StyleSheet.create({
   bottomBarContainer: {
-    position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,

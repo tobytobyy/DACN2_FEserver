@@ -26,7 +26,12 @@ const HeartCard: React.FC = () => {
       />
       <View style={styles.headerRow}>
         <View style={[styles.iconCircle, { backgroundColor: '#F7DDDF' }]}>
-          <HeartIcon fill="#DF394C" width="25px" height="25px" />
+          <HeartIcon
+            color="#DF394C"
+            fill="#DF394C"
+            width="20px"
+            height="20px"
+          />
         </View>
         <Text style={styles.smallCardTitle}>Heart beat</Text>
       </View>
@@ -35,7 +40,7 @@ const HeartCard: React.FC = () => {
         <Text style={styles.smallUnit}> BPM</Text>
       </View>
       <View style={styles.statusRow}>
-        <PulseLine />
+        <PulseLine color="#10B981" fill="#10B981" />
         <Text style={[styles.statusText, { color: '#10B981' }]}>Normal</Text>
       </View>
     </View>
@@ -61,7 +66,7 @@ const SleepCard: React.FC = () => {
       />
       <View style={styles.headerRow}>
         <View style={[styles.iconCircle, { backgroundColor: '#E0E0FC' }]}>
-          <MoonIcon />
+          <MoonIcon color="#6366F1" fill="#6366F1" width="20px" height="20px" />
         </View>
         <Text style={styles.smallCardTitle}>Sleep</Text>
       </View>
