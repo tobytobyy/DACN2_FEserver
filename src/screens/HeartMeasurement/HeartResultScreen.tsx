@@ -10,12 +10,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { RouteProp } from '@react-navigation/native';
-import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
-import HeartIcon from '@assets/icons/svgs/heart.svg';
-import AiIcon from '@assets/icons/svgs/ai_icon_1111.svg';
-import VerifyIcon from '@assets/icons/svgs/verify_1515.svg';
-import ThunderIcon from '@assets/icons/svgs/thunder_2424.svg';
-import { theme } from '@assets/theme';
+import ArrowLeftIcon from '../../assets/icons/svgs/arrow_left_2424.svg';
+import HeartIcon from '../../assets/icons/svgs/heart.svg';
+import AiIcon from '../../assets/icons/svgs/ai_icon_1111.svg';
+import VerifyIcon from '../../assets/icons/svgs/verify_1515.svg';
+import ThunderIcon from '../../assets/icons/svgs/thunder_2424.svg';
+import { theme } from '../../assets/theme';
 import type { BrowserStackParamList } from '@navigation/AppStack/BrowserStack';
 
 type Nav = NativeStackNavigationProp<BrowserStackParamList, 'HeartResult'>;
@@ -30,7 +30,7 @@ const HeartResultScreen = () => {
   let insight = '';
   let recommended: string[] = [];
   let avoid: string[] = [];
-  let statusColor = theme.colors.primary;
+  let statusColor: string = theme.colors.primary;
 
   if (bpm < 60) {
     status = 'Thấp';
@@ -172,14 +172,13 @@ const styles = StyleSheet.create({
   backButton: { marginRight: theme.spacing.sm },
   headerTitle: {
     fontSize: theme.fonts.size.lg,
-    fontWeight: theme.fonts.weight.bold,
     fontFamily: theme.fonts.poppins.bold,
     color: theme.colors.primary,
   },
   scrollContent: {
     flexGrow: 1,
     padding: theme.spacing.md,
-    gap: theme.spacing.md,
+    // bỏ gap để tránh warning
   },
   resultCard: {
     alignItems: 'center',
@@ -189,7 +188,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     marginBottom: theme.spacing.md,
   },
-  bpm: { fontSize: 36, fontWeight: 'bold' },
+  bpm: { fontSize: 36, fontFamily: theme.fonts.poppins.bold },
   status: { fontSize: theme.fonts.size.md, marginTop: theme.spacing.xs },
   insightCard: {
     backgroundColor: '#E0F2FE',
@@ -200,14 +199,13 @@ const styles = StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
     marginBottom: theme.spacing.xs,
   },
   sectionTitle: {
     fontSize: theme.fonts.size.md,
-    fontWeight: theme.fonts.weight.bold,
     fontFamily: theme.fonts.poppins.bold,
     color: theme.colors.primary,
+    marginLeft: theme.spacing.xs,
   },
   insight: {
     fontSize: theme.fonts.size.sm,
@@ -219,12 +217,14 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
     borderRadius: theme.spacing.sm,
     elevation: 1,
+    marginTop: theme.spacing.md,
   },
   avoidCard: {
     backgroundColor: '#FEE2E2',
     padding: theme.spacing.md,
     borderRadius: theme.spacing.sm,
     elevation: 1,
+    marginTop: theme.spacing.md,
   },
   listItem: {
     fontSize: theme.fonts.size.sm,
