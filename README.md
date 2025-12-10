@@ -1,97 +1,116 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# HealthCare App (DACN2)
 
-# Getting Started
+Dự án ứng dụng di động theo dõi sức khỏe được xây dựng bằng **React Native**, hỗ trợ người dùng theo dõi các chỉ số sức khỏe như bước chân, nhịp tim, giấc ngủ và tính toán calo.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 🌟 Tính năng chính
 
-## Step 1: Start Metro
+- **Xác thực người dùng (Auth):** Đăng nhập, Đăng ký.
+- **Calories Scan:** Quét và tính toán lượng calo (sử dụng Camera).
+- **Foot Step Counting:** Đếm bước chân hàng ngày.
+- **Heart Measurement:** Đo và theo dõi nhịp tim.
+- **Sleep Tracking:** Theo dõi chất lượng giấc ngủ.
+- **Settings:** Cài đặt ứng dụng và tài khoản.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## 🛠 Công nghệ sử dụng
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+- **Core:** React Native (0.82.1), React (19.1.1), TypeScript.
+- **Navigation:** React Navigation v7 (Native Stack, Bottom Tabs).
+- **State Management & Data Fetching:** TanStack Query (React Query), Context API.
+- **UI & Assets:**
+  - `react-native-svg` & `react-native-vector-icons` (Icons & Images).
+  - `react-native-linear-gradient` (UI Styling).
+  - `react-native-calendars` (Lịch theo dõi).
+- **Camera:** `react-native-vision-camera`.
+- **Code Quality:** ESLint, Prettier, Husky, Commitlint.
 
-```sh
-# Using npm
-npm start
+## 📂 Cấu trúc thư mục
 
-# OR using Yarn
-yarn start
+```
+src/
+├── assets/          # Tài nguyên (Fonts, Icons, Images, Theme)
+├── components/      # Các component tái sử dụng (Auth, Home, Common...)
+├── context/         # Global State (AuthContext)
+├── navigation/      # Cấu hình điều hướng (AppStack, AuthStack, BottomTab)
+├── screens/         # Màn hình chính (CaloriesScan, HeartMeasurement, etc.)
+└── types/           # Định nghĩa kiểu dữ liệu TypeScript
 ```
 
-## Step 2: Build and run your app
+## 🚀 Hướng dẫn cài đặt & Chạy dự án
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+### 1. Yêu cầu môi trường
 
-### Android
+- Node.js (>= 18)
+- JDK 17 (cho Android)
+- Ruby (cho iOS CocoaPods)
+- Xcode (macOS) & Android Studio
 
-```sh
-# Using npm
-npm run android
+### 2. Cài đặt dependencies
 
-# OR using Yarn
-yarn android
+```bash
+# Cài đặt thư viện npm
+npm install
+# Hoặc
+yarn install
 ```
 
-### iOS
+### 3. Cấu hình cho iOS (Quan trọng)
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+Do dự án sử dụng các native modules, bạn cần cài đặt Pods. Nếu gặp lỗi về phiên bản Ruby, hãy đảm bảo bạn đang sử dụng Ruby tương thích với hệ thống (khuyến nghị dùng `rbenv` hoặc `rvm`).
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
+```bash
+cd ios
 bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
 bundle exec pod install
+cd ..
 ```
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+### 4. Chạy ứng dụng
 
-```sh
-# Using npm
+**Khởi động Metro Bundler:**
+
+```bash
+npm start
+```
+
+**Chạy trên Android:**
+
+```bash
+npm run android
+```
+
+**Chạy trên iOS:**
+
+```bash
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## ⚠️ Các vấn đề thường gặp (Troubleshooting)
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+### Lỗi Icon hoặc SVG không hiển thị
 
-## Step 3: Modify your app
+Dự án sử dụng alias `@icons`. Đảm bảo bạn đã cấu hình đúng trong `babel.config.js` và `tsconfig.json`.
 
-Now that you have successfully run the app, let's make changes!
+- Đường dẫn đúng: `src/assets/icons/svgs/*.svg`
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+### Lỗi CocoaPods trên iOS
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+Nếu gặp lỗi liên quan đến `ffi` hoặc phiên bản Ruby khi chạy `pod install`:
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+1.  Kiểm tra `Gemfile` trong thư mục `ios/`.
+2.  Chạy `bundle update` để cập nhật dependencies của Ruby.
+3.  Sử dụng `bundle exec pod install` thay vì `pod install` trực tiếp.
 
-## Congratulations! :tada:
+## 🤝 Đóng góp (Contribution)
 
-You've successfully run and modified your React Native App. :partying_face:
+Dự án tuân thủ quy chuẩn commit **Conventional Commits**.
+Ví dụ:
 
-### Now what?
+- `feat: add login screen`
+- `fix: fix header alignment`
+- `chore: update dependencies`
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+Sử dụng lệnh sau để commit đúng chuẩn:
 
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+```bash
+npm run commit
+```
