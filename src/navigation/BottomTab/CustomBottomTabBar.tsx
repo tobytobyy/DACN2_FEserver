@@ -92,7 +92,7 @@ const CustomBottomTabBarComponent: React.FC<Props> = ({
 
 const styles = StyleSheet.create({
   bottomBarContainer: {
-    position: 'absolute',
+    // position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0, // dính sát đáy màn hình
