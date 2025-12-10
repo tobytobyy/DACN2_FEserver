@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,15 @@ import {
   TouchableOpacity,
   Animated,
   TouchableWithoutFeedback,
-  SafeAreaView,
-  Pressable, // 1. Import Pressable
+  Pressable,
+  FlatList,
+  ListRenderItem,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-// Giả định đường dẫn import giống code bạn cung cấp, hãy điều chỉnh nếu cần
+import axios from 'axios';
+
 import { ChatbotStackParamList } from '@navigation/AppStack/ChatbotStack';
 
 // SVG icons
@@ -24,45 +27,185 @@ import VoiceIcon from '@assets/icons/svgs/voice_1520.svg';
 import ArrowRightIcon from '@assets/icons/svgs/arrow_right_2424.svg';
 import { theme } from '@assets/theme';
 
-const DRAWER_WIDTH = 280; // Tăng nhẹ độ rộng để thoáng hơn
-
-// Animated value cố định cho drawer (không dùng hook)
+const DRAWER_WIDTH = 280;
 const drawerAnim = new Animated.Value(-DRAWER_WIDTH);
 
-const ChatbotScreen = () => {
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+// cooldown giữa 2 lần gửi, tránh spam
+const MIN_INTERVAL_MS = 2000;
+
+// ====== GROQ API KEY ======
+// TODO: DÁN KEY GROQ CỦA BẠN VÀO ĐÂY (ví dụ: gsk_xxx)
+//
+// ⚠️ Đừng commit file này lên GitHub public nếu còn key thật.
+const GROQ_API_KEY = '';
+
+// Hàm gọi Groq (OpenAI-compatible endpoint)
+const callGroq = async (payload: any) => {
+  const res = await axios.post(
+    'https://api.groq.com/openai/v1/chat/completions',
+    payload,
+    {
+      headers: {
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 20000,
+    },
+  );
+  return res;
+};
+
+const ChatbotScreen: React.FC = () => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [message, setMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      role: 'assistant',
+      content:
+        "Hi there! I am your AI health assistant. Based on today's data, your heart rate is quite stable (78 BPM).",
+    },
+  ]);
 
   const navigation =
     useNavigation<NativeStackNavigationProp<ChatbotStackParamList>>();
 
-  const handleSendMessage = () => {
-    if (message.trim().length > 0) {
-      console.log('Tin nhắn gửi đi:', message);
-      setMessage('');
+  const lastRequestTsRef = useRef<number>(0);
+
+  const handleSendMessage = async (): Promise<void> => {
+    if (message.trim().length === 0 || isLoading) return;
+
+    // throttle gửi quá nhanh
+    const now = Date.now();
+    if (now - lastRequestTsRef.current < MIN_INTERVAL_MS) {
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: 'Bạn đang gửi quá nhanh, vui lòng đợi một chút rồi thử lại.',
+        },
+      ]);
+      return;
+    }
+    lastRequestTsRef.current = now;
+
+    const newMessage: ChatMessage = { role: 'user', content: message };
+    setMessages(prev => [...prev, newMessage]);
+    setMessage('');
+    setIsLoading(true);
+
+    try {
+      const recentMessages = messages.slice(-10);
+
+      const payload = {
+        // Model trên Groq – Llama 3, 8B, context 8K
+        model: 'llama-3.1-8b-instant',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'Bạn là một trợ lý AI chỉ trả lời các câu hỏi liên quan đến sức khỏe. Nếu câu hỏi không liên quan đến sức khỏe, hãy từ chối trả lời.',
+          },
+          ...recentMessages,
+          newMessage,
+        ],
+      };
+
+      const response = await callGroq(payload);
+      const aiReply: string = response.data.choices[0].message.content;
+
+      setMessages(prev => [...prev, { role: 'assistant', content: aiReply }]);
+    } catch (error: any) {
+      console.error(
+        'Groq error:',
+        error.response?.status,
+        JSON.stringify(error.response?.data || {}, null, 2),
+      );
+
+      let errorMessage = 'Có lỗi xảy ra khi gọi Groq API.';
+      const status = error.response?.status;
+
+      if (status === 401) {
+        errorMessage =
+          'GROQ API key không hợp lệ hoặc bị từ chối (401 Unauthorized). Vui lòng kiểm tra lại key.';
+      } else if (status === 429) {
+        const serverMsg = error.response?.data?.error?.message;
+        if (
+          typeof serverMsg === 'string' &&
+          serverMsg.toLowerCase().includes('quota')
+        ) {
+          errorMessage =
+            'Bạn đã vượt quá hạn mức (quota) của Groq. Vui lòng kiểm tra lại usage/quota trên Groq.';
+        } else {
+          errorMessage =
+            'Bạn đang gửi quá nhiều yêu cầu hoặc bị giới hạn bởi Groq (429). Vui lòng thử lại sau một lát.';
+        }
+      } else if (status) {
+        const serverMsg = error.response?.data?.error?.message;
+        if (serverMsg) {
+          errorMessage = `Lỗi ${status}: ${serverMsg}`;
+        } else {
+          errorMessage = `Đã xảy ra lỗi (HTTP ${status}).`;
+        }
+      } else if (error.message) {
+        errorMessage = `Lỗi mạng: ${error.message}`;
+      }
+
+      setMessages(prev => [
+        ...prev,
+        { role: 'assistant', content: errorMessage },
+      ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const openDrawer = () => {
+  const openDrawer = (): void => {
     setDrawerVisible(true);
     Animated.timing(drawerAnim, {
       toValue: 0,
-      duration: 250, // Mượt mà hơn chút
+      duration: 250,
       useNativeDriver: true,
     }).start();
   };
 
-  const closeDrawer = () => {
+  const closeDrawer = (): void => {
     Animated.timing(drawerAnim, {
       toValue: -DRAWER_WIDTH,
       duration: 200,
       useNativeDriver: true,
     }).start(({ finished }) => {
-      if (finished) {
-        setDrawerVisible(false);
-      }
+      if (finished) setDrawerVisible(false);
     });
   };
+
+  const renderMessage: ListRenderItem<ChatMessage> = ({ item }) => (
+    <View
+      style={[
+        styles.messageRow,
+        item.role === 'user' && styles.messageRowRight,
+      ]}
+    >
+      {item.role === 'assistant' && (
+        <View style={styles.botAvatar}>
+          <ChatAiIcon width={24} height={24} />
+        </View>
+      )}
+      <View
+        style={[
+          styles.messageBox,
+          item.role === 'user' && styles.messageBoxUser,
+        ]}
+      >
+        <Text style={styles.messageText}>{item.content}</Text>
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -76,7 +219,9 @@ const ChatbotScreen = () => {
             <Text style={styles.title}>Health Assistant</Text>
             <View style={styles.statusRow}>
               <DotIcon width={10} height={10} color={theme.colors.primary} />
-              <Text style={styles.status}>Online</Text>
+              <Text style={styles.status}>
+                {isLoading ? 'Đang trả lời...' : 'Online'}
+              </Text>
             </View>
           </View>
         </View>
@@ -84,28 +229,14 @@ const ChatbotScreen = () => {
 
       {/* BODY */}
       <View style={styles.body}>
-        <View style={styles.messageRow}>
-          {/* ICON TRÒN MÀU XANH */}
-          <View style={styles.botAvatar}>
-            <ChatAiIcon width={24} height={24} />
-          </View>
-
-          {/* BONG BÓNG CHAT */}
-          <View style={styles.messageBox}>
-            <Text style={styles.messageText}>
-              Hi there! I am your AI health assistant. Based on today's data,
-              your heart rate is quite stable (78 BPM).
-            </Text>
-            <Text style={styles.messageText}>
-              Is there anything else I can help you with?
-            </Text>
-
-            <Text style={styles.timestamp}>09:41</Text>
-          </View>
-        </View>
+        <FlatList
+          data={messages}
+          keyExtractor={(_, index) => index.toString()}
+          renderItem={renderMessage}
+        />
       </View>
 
-      {/* INPUT – nhích lên khỏi bottom tabs */}
+      {/* INPUT */}
       <View style={styles.inputArea}>
         <TouchableOpacity style={styles.iconButton}>
           <AttachIcon width={24} height={24} />
@@ -121,19 +252,20 @@ const ChatbotScreen = () => {
 
         {message.trim().length > 0 ? (
           <TouchableOpacity
-            style={styles.sendButton} // Style riêng cho nút gửi
+            style={[styles.sendButton, isLoading && styles.handleSend]}
             onPress={handleSendMessage}
+            disabled={isLoading}
           >
             <ArrowRightIcon width={20} height={20} fill="#FFF" />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.iconButton}>
+          <TouchableOpacity style={styles.iconButton} disabled={isLoading}>
             <VoiceIcon width={20} height={24} />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* DRAWER FULL HEIGHT TRÁI -> PHẢI */}
+      {/* DRAWER */}
       {drawerVisible && (
         <TouchableWithoutFeedback onPress={closeDrawer}>
           <View style={styles.drawerOverlay}>
@@ -144,19 +276,18 @@ const ChatbotScreen = () => {
                   { transform: [{ translateX: drawerAnim }] },
                 ]}
               >
-                <SafeAreaView style={{ flex: 1 }}>
+                <SafeAreaView style={styles.safeArea}>
                   <View style={styles.drawerContent}>
                     <Text style={styles.drawerTitle}>Options</Text>
 
-                    {/* 2. Sử dụng Pressable để tạo hiệu ứng hover/pressed */}
                     <Pressable
                       style={({ pressed }) => [
                         styles.drawerItem,
-                        pressed && styles.drawerItemPressed, // Style khi nhấn
+                        pressed && styles.drawerItemPressed,
                       ]}
                       onPress={() => {
                         closeDrawer();
-                        console.log('New Conversation');
+                        setMessages([]);
                       }}
                     >
                       <Text style={styles.drawerItemText}>
@@ -167,7 +298,7 @@ const ChatbotScreen = () => {
                     <Pressable
                       style={({ pressed }) => [
                         styles.drawerItem,
-                        pressed && styles.drawerItemPressed, // Style khi nhấn
+                        pressed && styles.drawerItemPressed,
                       ]}
                       onPress={() => {
                         closeDrawer();
@@ -187,8 +318,6 @@ const ChatbotScreen = () => {
   );
 };
 
-export default ChatbotScreen;
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F3F4F6' },
 
@@ -200,82 +329,53 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFFFFF',
     elevation: 2,
-    shadowColor: '#000', // Thêm shadow cho iOS
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 2,
   },
-  titleArea: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  menuButton: {
-    padding: 4,
-  },
-  titleTextArea: {
-    marginLeft: 12,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 2,
-  },
-  status: {
-    fontSize: 12,
-    color: '#22C55E',
-    marginLeft: 4,
-    fontWeight: '500',
-  },
+  titleArea: { flexDirection: 'row', alignItems: 'center' },
+  menuButton: { padding: 4 },
+  titleTextArea: { marginLeft: 12 },
+  title: { fontSize: 18, fontWeight: '700' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
+  status: { fontSize: 12, color: '#22C55E', marginLeft: 4, fontWeight: '500' },
 
-  body: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 16,
-  },
+  body: { flex: 1, paddingHorizontal: 16, paddingTop: 16 },
 
-  // Hàng chứa avatar + bubble
   messageRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+    marginVertical: 6,
   },
-
-  // Vòng tròn xanh chứa icon bot
   botAvatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#21C4A7', // màu xanh giống hình
+    backgroundColor: '#21C4A7',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 8,
   },
-
+  handleSend: {
+    opacity: 0.5,
+  },
+  safeArea: {
+    flex: 1,
+  },
   messageBox: {
     flexShrink: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    // shadow nhẹ giống card
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 2,
   },
-  messageContent: {
-    marginLeft: 12,
-    flex: 1,
-  },
-  messageText: {
-    fontSize: 14,
-    color: '#0F172A',
-    lineHeight: 20,
-  },
+  messageText: { fontSize: 14, color: '#0F172A', lineHeight: 20 },
   timestamp: {
     marginTop: 6,
     fontSize: 12,
@@ -324,13 +424,12 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 
-  // Drawer Styles
   drawerOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.5)', // Màu overlay tối hơn chút cho hiện đại
+    backgroundColor: 'rgba(15, 23, 42, 0.5)',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
-    zIndex: 1000, // Đảm bảo drawer luôn nằm trên cùng
+    zIndex: 1000,
   },
   drawer: {
     width: DRAWER_WIDTH,
@@ -342,11 +441,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 10,
   },
-  drawerContent: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 20,
-  },
+  drawerContent: { flex: 1, paddingHorizontal: 20, paddingTop: 20 },
   drawerTitle: {
     fontSize: 22,
     fontWeight: '800',
@@ -354,22 +449,24 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     marginTop: 10,
   },
-  // Style item mặc định
+  messageRowRight: {
+    justifyContent: 'flex-end',
+  },
+  messageBoxUser: {
+    backgroundColor: '#DCFCE7',
+  },
   drawerItem: {
     paddingVertical: 14,
     paddingHorizontal: 16,
-    backgroundColor: '#F1F5F9', // Nền xám nhạt mặc định
+    backgroundColor: '#F1F5F9',
     borderRadius: 12,
     marginBottom: 12,
   },
-  // 3. Style item khi nhấn (hiệu ứng hover)
   drawerItemPressed: {
-    backgroundColor: '#E2E8F0', // Nền đậm hơn khi nhấn
-    borderColor: '#CBD5E1', // Viền đậm hơn
+    backgroundColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
   },
-  drawerItemText: {
-    fontSize: 16,
-    color: '#334155',
-    fontWeight: '600',
-  },
+  drawerItemText: { fontSize: 16, color: '#334155', fontWeight: '600' },
 });
+
+export default ChatbotScreen;
