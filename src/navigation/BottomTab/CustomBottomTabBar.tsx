@@ -1,40 +1,52 @@
-// src/navigation/CustomBottomTabBar.tsx
 import React, { memo } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-// SVG icons
 import ChatAIIcon from '@assets/icons/svgs/chat_ai_3030.svg';
 import CalendarIcon from '@assets/icons/svgs/calendar_2521.svg';
 import WindowIcon from '@assets/icons/svgs/window_3030.svg';
 import SettingsIcon from '@assets/icons/svgs/setting_2424.svg';
 import HomeIcon from '@assets/icons/svgs/home_3737.svg';
+import { theme } from '@assets/theme';
 
 const ICON_SIZE = 30;
 
 type Props = BottomTabBarProps;
 
-const CustomBottomTabBarComponent: React.FC<Props> = props => {
-  const { state, navigation } = props;
-  const insets = useSafeAreaInsets();
+// map tên route → icon component
+const TAB_ICONS: Record<string, React.ComponentType<any>> = {
+  ChatbotTab: ChatAIIcon,
+  CalendarTab: CalendarIcon,
+  BrowserTab: WindowIcon,
+  SettingsTab: SettingsIcon,
+};
 
+const CustomBottomTabBarComponent: React.FC<Props> = ({
+  state,
+  navigation,
+}) => {
   const homeIndex = state.routes.findIndex(r => r.name === 'HomeTab');
   const isHomeFocused = state.index === homeIndex;
 
+  const activeColor = theme.colors.primary;
+  const inactiveColor = theme.colors.text;
+
   return (
-    <View
-      style={[styles.bottomBarContainer, { paddingBottom: insets.bottom || 0 }]}
-    >
-      {/* Background bar */}
+    <View style={styles.bottomBarContainer}>
+      {/* White tab bar */}
       <View style={styles.bottomBar}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
 
-          // chừa chỗ cho nút Home nổi
+          // chừa slot giữa cho nút home nổi
           if (route.name === 'HomeTab') {
-            return <View key={route.key} style={{ width: 60 }} />;
+            return <View key={route.key} style={styles.homeSpacer} />;
           }
+
+          const Icon = TAB_ICONS[route.name];
+          if (!Icon) return null;
+
+          const color = isFocused ? activeColor : inactiveColor;
 
           const onPress = () => {
             const event = navigation.emit({
@@ -44,46 +56,7 @@ const CustomBottomTabBarComponent: React.FC<Props> = props => {
             });
 
             if (!isFocused && !event.defaultPrevented) {
-              // cast nho nhỏ để thỏa ts
               navigation.navigate(route.name as never);
-            }
-          };
-
-          const color = isFocused ? '#0EA5E9' : '#6B7280';
-
-          const renderIcon = () => {
-            switch (route.name) {
-              case 'ChatbotTab':
-                return (
-                  <ChatAIIcon
-                    width={ICON_SIZE}
-                    height={ICON_SIZE}
-                    color={color}
-                    fill={color}
-                  />
-                );
-              case 'CalendarTab':
-                return <CalendarIcon width={ICON_SIZE} height={ICON_SIZE} />;
-              case 'BrowserTab':
-                return (
-                  <WindowIcon
-                    width={ICON_SIZE}
-                    height={ICON_SIZE}
-                    color={color}
-                    fill={color}
-                  />
-                );
-              case 'SettingsTab':
-                return (
-                  <SettingsIcon
-                    width={ICON_SIZE}
-                    height={ICON_SIZE}
-                    color={color}
-                    fill={color}
-                  />
-                );
-              default:
-                return null;
             }
           };
 
@@ -94,13 +67,13 @@ const CustomBottomTabBarComponent: React.FC<Props> = props => {
               style={styles.navItem}
               activeOpacity={0.7}
             >
-              {renderIcon()}
+              <Icon width={ICON_SIZE} height={ICON_SIZE} color={color} />
             </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* Floating Home button */}
+      {/* Floating home button */}
       <TouchableOpacity
         style={styles.floatingHomeBtn}
         activeOpacity={0.9}
@@ -109,8 +82,8 @@ const CustomBottomTabBarComponent: React.FC<Props> = props => {
         <HomeIcon
           width={32}
           height={32}
-          color={isHomeFocused ? '#0EA5E9' : '#000'}
-          fill={isHomeFocused ? '#0EA5E9' : '#000'}
+          color={isHomeFocused ? activeColor : inactiveColor}
+          fill={isHomeFocused ? activeColor : inactiveColor}
         />
       </TouchableOpacity>
     </View>
@@ -119,51 +92,53 @@ const CustomBottomTabBarComponent: React.FC<Props> = props => {
 
 const styles = StyleSheet.create({
   bottomBarContainer: {
-    bottom: 0,
+    position: 'absolute',
     left: 0,
     right: 0,
+    bottom: 0, // dính sát đáy màn hình
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
   bottomBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
+    alignItems: 'center', // icon nằm giữa theo chiều dọc
+    backgroundColor: theme.colors.white,
     width: '100%',
     height: 80,
-    paddingHorizontal: 30,
-    borderTopLeftRadius: 30,
-    borderTopRightRadius: 30,
+    paddingHorizontal: theme.spacing.gap * 3,
+    borderTopLeftRadius: theme.spacing.gap * 2,
+    borderTopRightRadius: theme.spacing.gap * 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.05,
     shadowRadius: 10,
     elevation: 10,
-    paddingBottom: 10,
+  },
+  homeSpacer: {
+    width: 60,
   },
   navItem: {
-    padding: 10,
+    paddingVertical: theme.spacing.gap,
+    paddingHorizontal: theme.spacing.xs * 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   floatingHomeBtn: {
     position: 'absolute',
-    top: -30,
-    width: 64,
-    height: 64,
-    backgroundColor: '#FFF',
-    borderRadius: 32,
+    top: -26,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: theme.colors.white,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 5,
+    elevation: 6,
   },
 });
 
-const CustomBottomTabBar = memo(CustomBottomTabBarComponent);
-
-export default CustomBottomTabBar;
+export default memo(CustomBottomTabBarComponent);

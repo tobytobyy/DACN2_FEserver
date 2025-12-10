@@ -10,14 +10,15 @@ import {
 import Svg, { Circle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { theme } from '@assets/theme';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+import { theme } from '@assets/theme';
 import HeartLineIcon from '@assets/icons/svgs/heart_line.svg';
 import HeartIcon from '@assets/icons/svgs/heart.svg';
 import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
 import type { BrowserStackParamList } from '@navigation/AppStack/BrowserStack';
 
-// VisionCamera imports (không dùng frameProcessor nữa)
+// Camera
 import {
   Camera,
   useCameraDevice,
@@ -26,9 +27,9 @@ import {
 
 type Nav = NativeStackNavigationProp<BrowserStackParamList, 'HeartMeasurement'>;
 
-const MEASUREMENT_DURATION_MS = 5000; // 5s
-const PROGRESS_INTERVAL_MS = 100; // 100ms
-const PROGRESS_STEP = PROGRESS_INTERVAL_MS / MEASUREMENT_DURATION_MS; // 0.02
+const MEASUREMENT_DURATION_MS = 5000;
+const INTERVAL_MS = 100;
+const PROGRESS_STEP = INTERVAL_MS / MEASUREMENT_DURATION_MS;
 
 const HeartMeasurementScreen = () => {
   const navigation = useNavigation<Nav>();
@@ -38,18 +39,15 @@ const HeartMeasurementScreen = () => {
   const [permission, setPermission] = useState<CameraPermissionStatus | null>(
     null,
   );
-  const [redAvg, setRedAvg] = useState<number>(0);
+  const [redAvg, setRedAvg] = useState(0);
 
-  // Lấy camera sau
   const device = useCameraDevice('back');
-
-  // intervalRef để clear setInterval khi cần
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // animation tim đập (dùng Animated core)
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
-  // Xin quyền camera khi mount
+  // -----------------------
+  // 1. Xin quyền Camera
+  // -----------------------
   useEffect(() => {
     (async () => {
       const status = await Camera.requestCameraPermission();
@@ -57,62 +55,58 @@ const HeartMeasurementScreen = () => {
     })();
   }, []);
 
-  // Animation nhịp tim
+  // -----------------------
+  // 2. Animation nhịp tim
+  // -----------------------
   useEffect(() => {
-    if (isMeasuring) {
-      const pulse = Animated.loop(
-        Animated.sequence([
-          Animated.timing(scaleAnim, {
-            toValue: 1.2,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(scaleAnim, {
-            toValue: 1,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-
-      pulse.start();
-
-      return () => {
-        pulse.stop();
-        scaleAnim.setValue(1);
-      };
-    } else {
+    if (!isMeasuring) {
       scaleAnim.setValue(1);
+      return;
     }
+
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.2,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+
+    pulse.start();
+    return () => pulse.stop();
   }, [isMeasuring, scaleAnim]);
 
-  // Dọn dẹp interval khi unmount
+  // -----------------------
+  // 3. Cleanup interval
+  // -----------------------
   useEffect(() => {
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
+      if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, []);
 
-  // Khi isMeasuring = false thì clear interval (phòng stop giữa chừng)
-  useEffect(() => {
-    if (!isMeasuring && intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  }, [isMeasuring]);
-
-  // Điều hướng khi đo xong
+  // -----------------------
+  // 4. Nếu đo xong → điều hướng
+  // -----------------------
   useEffect(() => {
     if (progress >= 1 && isMeasuring) {
-      setIsMeasuring(false);
-      const fakeBpm = 78; // TODO: thay bằng xử lý từ dữ liệu thật
+      stopMeasurement();
+
+      const fakeBpm = 78; // TODO: replace with backend result
       navigation.navigate('HeartResult', { bpm: fakeBpm });
     }
   }, [progress, isMeasuring, navigation]);
 
+  // -----------------------
+  // 5. Start đo
+  // -----------------------
   const startMeasurement = () => {
     if (isMeasuring) return;
 
@@ -120,16 +114,12 @@ const HeartMeasurementScreen = () => {
     setProgress(0);
     setRedAvg(0);
 
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
+    if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = setInterval(() => {
       setProgress(prev => {
         const next = Math.min(prev + PROGRESS_STEP, 1);
 
-        // Mock redAvg ngay tại đây (thay cho frameProcessor)
         const mockRed = Math.floor(Math.random() * 255);
         setRedAvg(mockRed);
 
@@ -139,10 +129,41 @@ const HeartMeasurementScreen = () => {
         }
         return next;
       });
-    }, PROGRESS_INTERVAL_MS);
+    }, INTERVAL_MS);
   };
 
+  // -----------------------
+  // 6. Stop đo
+  // -----------------------
+  const stopMeasurement = () => {
+    setIsMeasuring(false);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  // -----------------------
+  // 7. Camera Error Handling
+  // -----------------------
+  const getCameraErrorMessage = () => {
+    if (permission === null) return 'Đang kiểm tra quyền camera...';
+    if (permission !== 'granted')
+      return 'Bạn cần cấp quyền camera để đo nhịp tim.';
+    if (!device) return 'Không tìm thấy camera phù hợp.';
+    if (!device.hasFlash) return 'Camera này không hỗ trợ đèn flash.';
+    return null;
+  };
+
+  const canUseCamera = !!device && permission === 'granted';
+  const torchMode: 'on' | 'off' =
+    isMeasuring && device?.hasFlash ? 'on' : 'off';
+
+  // -----------------------
+  // 8. UI
+  // -----------------------
   const progressPercent = Math.round(progress * 100);
+  const size = 160;
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = 2 * Math.PI * radius;
 
   const strokeColor =
     progressPercent < 50
@@ -151,55 +172,9 @@ const HeartMeasurementScreen = () => {
       ? '#FACC15'
       : '#DC2626';
 
-  const size = 160;
-  const strokeWidth = 8;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset =
-    circumference - (circumference * progressPercent) / 100;
-
-  const renderCameraInfo = () => {
-    if (permission === null) {
-      return <Text style={styles.infoText}>Đang kiểm tra quyền camera...</Text>;
-    }
-
-    if (permission !== 'granted') {
-      return (
-        <Text style={styles.infoText}>
-          Bạn cần cấp quyền camera trong Cài đặt để sử dụng chức năng đo nhịp
-          tim.
-        </Text>
-      );
-    }
-
-    // Có permission nhưng không có camera phù hợp
-    if (!device) {
-      return (
-        <Text style={styles.infoText}>
-          Không tìm thấy camera phù hợp. Vui lòng kiểm tra lại thiết bị.
-        </Text>
-      );
-    }
-
-    // Có camera nhưng không có flash
-    if (!device.hasFlash) {
-      return (
-        <Text style={styles.infoText}>
-          Camera hiện tại không hỗ trợ đèn flash, nên không thể đo bằng cách
-          này.
-        </Text>
-      );
-    }
-
-    return null;
-  };
-
-  const canUseCamera = !!device && permission === 'granted';
-  const torchMode: 'on' | 'off' =
-    isMeasuring && device?.hasFlash ? 'on' : 'off';
-
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
@@ -210,21 +185,22 @@ const HeartMeasurementScreen = () => {
         <Text style={styles.headerTitle}>Heart Measurement</Text>
       </View>
 
+      {/* CONTENT */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          {/* Camera + Flash */}
+          {/* CAMERA */}
           {canUseCamera ? (
             <Camera
               style={styles.camera}
               device={device!}
-              isActive={canUseCamera} // camera luôn chạy khi đã sẵn sàng
-              torch={torchMode} // flash chỉ bật khi đang đo & có flash
+              isActive={true}
+              torch={torchMode}
             />
           ) : (
-            renderCameraInfo()
+            <Text style={styles.infoText}>{getCameraErrorMessage()}</Text>
           )}
 
-          {/* Vòng đo + icon trái tim */}
+          {/* PROGRESS RING */}
           <TouchableOpacity onPress={startMeasurement} disabled={isMeasuring}>
             <View style={styles.circleWrapper}>
               <Svg width={size} height={size}>
@@ -236,6 +212,7 @@ const HeartMeasurementScreen = () => {
                   r={radius}
                   strokeWidth={strokeWidth}
                 />
+
                 <Circle
                   stroke={strokeColor}
                   fill="none"
@@ -244,7 +221,9 @@ const HeartMeasurementScreen = () => {
                   r={radius}
                   strokeWidth={strokeWidth}
                   strokeDasharray={circumference}
-                  strokeDashoffset={strokeDashoffset}
+                  strokeDashoffset={
+                    circumference - (circumference * progressPercent) / 100
+                  }
                   strokeLinecap="round"
                   rotation={-90}
                   originX={size / 2}
@@ -269,29 +248,29 @@ const HeartMeasurementScreen = () => {
             </View>
           </TouchableOpacity>
 
-          {/* Nhịp tim chạy + trạng thái */}
+          {/* STATUS */}
           <View style={styles.heartbeatBox}>
             <HeartLineIcon width={220} height={44} />
             <Text style={styles.bpmText}>
               {isMeasuring
-                ? `Đang đo nhịp tim… ${progressPercent}% (RedAvg: ${redAvg})`
-                : 'Nhấn vào trái tim để bắt đầu'}
+                ? `Đang đo… ${progressPercent}%  (RedAvg: ${redAvg})`
+                : 'Nhấn vào trái tim để bắt đầu đo'}
             </Text>
           </View>
 
-          {/* Hướng dẫn đo */}
+          {/* INSTRUCTIONS */}
           <View style={styles.tipsBox}>
             <HeartIcon width={20} height={20} color="#fff" />
             <View style={styles.tipsTextWrapper}>
               <Text style={styles.tipsTitle}>Hướng dẫn đo nhịp tim:</Text>
               <Text style={styles.tipsText}>
-                1. Đặt nhẹ ngón tay lên camera và đèn flash phía sau điện thoại.
+                1. Đặt ngón tay lên camera & flash.
               </Text>
               <Text style={styles.tipsText}>
                 2. Giữ yên tay trong suốt quá trình đo.
               </Text>
               <Text style={styles.tipsText}>
-                3. Không di chuyển hoặc thay đổi vị trí ngón tay.
+                3. Không di chuyển hoặc thay đổi vị trí.
               </Text>
               <Text style={styles.tipsText}>
                 4. Kết quả sẽ hiển thị sau vài giây.
@@ -303,6 +282,10 @@ const HeartMeasurementScreen = () => {
     </SafeAreaView>
   );
 };
+
+// -----------------------
+// STYLE
+// -----------------------
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: theme.colors.white },
@@ -327,10 +310,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  content: {
-    alignItems: 'center',
-    gap: theme.spacing.lg,
-  },
+  content: { alignItems: 'center', gap: theme.spacing.lg },
   circleWrapper: {
     width: 160,
     height: 160,
@@ -343,16 +323,11 @@ const styles = StyleSheet.create({
     top: '50%',
     left: '50%',
   },
-  heartbeatBox: {
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
+  heartbeatBox: { alignItems: 'center', gap: theme.spacing.sm },
   bpmText: {
     fontSize: theme.fonts.size.md,
     fontFamily: theme.fonts.poppins.regular,
-    fontWeight: theme.fonts.weight.medium,
     color: theme.colors.primary,
-    textAlign: 'center',
   },
   tipsBox: {
     flexDirection: 'row',
@@ -364,9 +339,7 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.lg,
     maxWidth: 520,
   },
-  tipsTextWrapper: {
-    flex: 1,
-  },
+  tipsTextWrapper: { flex: 1 },
   tipsTitle: {
     color: '#fff',
     fontSize: theme.fonts.size.md,
@@ -390,7 +363,6 @@ const styles = StyleSheet.create({
   infoText: {
     textAlign: 'center',
     color: theme.colors.primary,
-    marginBottom: theme.spacing.md,
     fontSize: theme.fonts.size.sm,
     fontFamily: theme.fonts.poppins.regular,
   },
