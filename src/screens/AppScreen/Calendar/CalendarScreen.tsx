@@ -13,7 +13,6 @@ import { theme } from '@assets/theme';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { CalendarStackParamList } from '@navigation/AppStack/CalendarStack';
 
-import CalendarIcon from '@assets/icons/svgs/calendar_2521.svg';
 import AiIcon from '@assets/icons/svgs/ai_icon_1111.svg';
 import HeartIcon from '@assets/icons/svgs/heart.svg';
 import StepsIcon from '@assets/icons/svgs/footprint_1515.svg';
@@ -63,16 +62,14 @@ const CalendarScreen = () => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Calendar</Text>
+      </View>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <CalendarIcon width={25} height={21} />
-          <Text style={styles.headerText}>Calendar</Text>
-        </View>
-
         {/* Calendar */}
         <Calendar
           current={selectedDate}
@@ -179,7 +176,7 @@ const styles = StyleSheet.create({
   // Container có thể cuộn
   container: {
     flex: 1,
-    backgroundColor: theme.colors.white,
+    backgroundColor: '#F3F4F6',
   },
   safeArea: {
     flex: 1,
@@ -195,7 +192,18 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.md,
+    justifyContent: 'flex-start',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.white,
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   headerText: {
     fontSize: theme.fonts.size.xl,
