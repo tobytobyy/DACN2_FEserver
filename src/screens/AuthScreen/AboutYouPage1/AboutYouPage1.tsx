@@ -61,7 +61,7 @@ const AboutYouPage1 = () => {
 
             <View style={styles.column}>
               <DropdownForm
-                label="Name"
+                label="Birthday"
                 value={''}
                 options={['male', 'female', 'other']}
                 onValueChange={() => {}}
@@ -71,7 +71,7 @@ const AboutYouPage1 = () => {
           <View style={styles.row}>
             <View style={styles.column}>
               <DropdownForm
-                label="Name"
+                label="Weight"
                 value={''}
                 options={['male', 'female', 'other']}
                 onValueChange={() => {}}
@@ -80,7 +80,7 @@ const AboutYouPage1 = () => {
 
             <View style={styles.column}>
               <DropdownForm
-                label="Name"
+                label="Height"
                 value={''}
                 options={['male', 'female', 'other']}
                 onValueChange={() => {}}

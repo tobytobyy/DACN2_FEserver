@@ -22,7 +22,7 @@ const RootNavigator = () => {
       screenOptions={defaultStackScreenOptions}
       // initialRouteName={isAuthenticated ? 'App' : 'Auth'}
     >
-      {true ? (
+      {false ? (
         <Stack.Screen name="App" component={BottomTab} />
       ) : (
         <Stack.Screen name="Auth" component={AuthStack} />

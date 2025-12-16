@@ -28,16 +28,24 @@ export const styles = StyleSheet.create({
     fontFamily: theme.fonts.poppins.bold,
     fontWeight: theme.fonts.weight.bold,
     fontSize: theme.fonts.size['2xl'],
-    marginBottom: theme.spacing.sm * 2,
-    width: '80%',
+    marginBottom: theme.spacing.xs,
+    width: '90%',
+  },
+  subtitle: {
+    color: theme.colors.subText,
+    fontFamily: theme.fonts.poppins.regular,
+    fontSize: theme.fonts.size.sm,
+    marginBottom: theme.spacing.lg,
+    lineHeight: 20,
   },
   authOptionsContainer: {
-    gap: theme.spacing.gap * 2,
+    gap: theme.spacing.sm,
     marginBottom: theme.spacing.xl,
+    width: '100%',
+    alignSelf: 'stretch',
   },
-  authOptionsCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: theme.spacing.gap * 2,
+  authOptionCard: {
+    width: '100%',
+    alignSelf: 'stretch',
   },
 });
