@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: theme.fonts.size.sm,
     fontFamily: theme.fonts.poppins.regular,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     marginBottom: theme.spacing.xs,
   },
   distanceRow: {
@@ -213,7 +213,7 @@ const styles = StyleSheet.create({
   distanceUnit: {
     fontSize: theme.fonts.size.sm,
     fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     marginLeft: 6,
   },
   statsRow: {
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: theme.fonts.size.xs,
     fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     marginBottom: 4,
   },
   statLabelRow: {
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   },
   resultDateText: {
     fontSize: theme.fonts.size.xs,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     fontFamily: theme.fonts.poppins.regular,
   },
   resultCard: {
@@ -302,7 +302,7 @@ const styles = StyleSheet.create({
   },
   resultLabel: {
     fontSize: theme.fonts.size.sm,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     fontFamily: theme.fonts.poppins.regular,
     marginBottom: 4,
   },
@@ -328,7 +328,7 @@ const styles = StyleSheet.create({
   },
   resultMetricLabel: {
     fontSize: theme.fonts.size.xs,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     fontFamily: theme.fonts.poppins.regular,
     marginBottom: 2,
   },

@@ -76,7 +76,7 @@ const BrowserScreen = () => {
       bgColor: '#CFFAFE',
       iconColor: '#0891B2',
       borderColor: '#A5F3FC',
-      screen: 'WaterTracking',
+      screen: 'WaterTracker',
     },
   ];
 

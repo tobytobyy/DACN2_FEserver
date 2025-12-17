@@ -1,60 +1,57 @@
-import React, { useState } from 'react';
-import { ScrollView, StatusBar, StyleSheet } from 'react-native';
+import React from 'react';
+import { View, ScrollView, StatusBar, StyleSheet } from 'react-native';
 
 import HeaderSection from '@components/Home/HeaderSection/HeaderSection';
 import ActivityCard from '@components/Home/ActivityCard/ActivityCard';
 import HeartSleepGrid from '@components/Home/HeartSleepGrid/HeartSleepGrid';
 import WaterCard from '@components/Home/WaterCard/WaterCard';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 const HomeScreen: React.FC = () => {
-  const [waterAmount, setWaterAmount] = useState(5);
-
-  const handleIncreaseWater = () => setWaterAmount(prev => prev + 1);
-  const handleDecreaseWater = () =>
-    setWaterAmount(prev => Math.max(0, prev - 1));
+  // WaterCard now manages its own state via hook; no local water state needed
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <ScrollView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#98F6D6" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#98F6D6" />
 
+      {/* Header nằm tuyệt đối ở trên cùng để làm nền */}
+      <View style={styles.headerContainer}>
         <HeaderSection />
+      </View>
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <ActivityCard />
-          <HeartSleepGrid />
-          <WaterCard
-            waterAmount={waterAmount}
-            onIncrease={handleIncreaseWater}
-            onDecrease={handleDecreaseWater}
-          />
-        </ScrollView>
+      {/* ScrollView chứa nội dung chính */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <ActivityCard />
+        <HeartSleepGrid />
+        <WaterCard />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#FFFDFD',
-  },
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F3F4F6', // Màu nền xám nhạt cho toàn màn hình
+  },
+  headerContainer: {
+    position: 'absolute', // Quan trọng: Để header nằm chìm bên dưới
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 0,
   },
   scrollView: {
     flex: 1,
-    marginTop: 100, // để nội dung trượt xuống dưới header
+    marginTop: 100, // Đẩy nội dung xuống để thẻ Activity chồng lên Header (overlap)
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 120, // chừa chỗ cho bottom bar
+    paddingBottom: 120, // Chừa khoảng trống lớn cho Bottom Tab Bar
+    paddingTop: 10,
   },
 });
 

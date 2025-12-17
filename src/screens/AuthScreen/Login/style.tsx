@@ -32,7 +32,7 @@ export const styles = StyleSheet.create({
     width: '90%',
   },
   subtitle: {
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     fontFamily: theme.fonts.poppins.regular,
     fontSize: theme.fonts.size.sm,
     marginBottom: theme.spacing.lg,

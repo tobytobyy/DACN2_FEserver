@@ -33,7 +33,7 @@ export const styles = StyleSheet.create({
   subtitle: {
     fontFamily: theme.fonts.poppins.regular,
     fontSize: theme.fonts.size.md,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     lineHeight: 22,
   },
   input: {

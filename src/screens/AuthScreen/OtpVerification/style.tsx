@@ -33,13 +33,13 @@ export const styles = StyleSheet.create({
   subtitle: {
     fontFamily: theme.fonts.poppins.regular,
     fontSize: theme.fonts.size.md,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     lineHeight: 22,
   },
   helperText: {
     fontFamily: theme.fonts.poppins.regular,
     fontSize: theme.fonts.size.sm,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     marginTop: -theme.spacing.sm / 2,
     marginBottom: theme.spacing.sm,
   },
@@ -104,7 +104,7 @@ export const styles = StyleSheet.create({
     color: theme.colors.primary,
   },
   resendButtonTextDisabled: {
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
   },
   resendTimer: {
     fontFamily: theme.fonts.poppins.bold,

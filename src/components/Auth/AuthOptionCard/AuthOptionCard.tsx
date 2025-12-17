@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     fontWeight: theme.fonts.weight.semibold,
   },
   subtitle: {
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     fontFamily: theme.fonts.poppins.regular,
     fontSize: theme.fonts.size.xs,
     fontWeight: theme.fonts.weight.regular,

@@ -10,7 +10,8 @@ export const theme = {
     blue: '#0EA5E9',
     white: '#FFFFFF',
     text: '#020202',
-    subText: '#818181',
+    subText_1: '#464545ff',
+    subText_2: '#6B7280',
 
     //SettingScreen colors
     green: '#10B981',

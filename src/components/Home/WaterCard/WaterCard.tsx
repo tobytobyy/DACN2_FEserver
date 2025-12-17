@@ -1,77 +1,102 @@
-// src/components/Home/WaterCard/WaterCard.tsx
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
+// 1. Import Context
+// Đảm bảo file src/context/WaterContext.tsx đã tồn tại.
+// Nếu báo lỗi import, hãy thử kiểm tra lại đường dẫn ../../../context/WaterContext
+import { useWater } from '../../../context/WaterContext';
+
+// Import Icons
+// Nếu thiếu file này, bạn có thể comment dòng này lại và xóa thẻ <WaterDropIcon /> bên dưới
 import WaterDropIcon from '@assets/icons/svgs/water_913.svg';
-import WaterBackgroundIcon from '@assets/icons/svgs/water_background_119119.svg';
-import { theme } from '@assets/theme';
-import { useWater, WATER_TARGET } from './useWater';
 
-type WaterCardProps = {
-  title?: string;
-  unit?: string;
-  showGoalText?: boolean;
-};
+const WaterCard = () => {
+  // 2. Sử dụng hook từ Context
+  const context = useWater();
 
-const WaterCard: React.FC<WaterCardProps> = ({
-  title = 'Water',
-  unit = 'mL',
-  showGoalText = true,
-}) => {
-  const { waterAmount, increase, decrease } = useWater();
+  // Kiểm tra an toàn: Nếu quên bọc Provider, tránh crash app
+  if (!context) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: 'center', alignItems: 'center' },
+        ]}
+      >
+        <Text style={{ color: 'red' }}>Thiếu WaterProvider!</Text>
+      </View>
+    );
+  }
 
-  const percent = Math.round((waterAmount / (WATER_TARGET || 1)) * 100);
+  const { currentIntake, dailyTarget, cupSize, addWater } = context;
+
+  // Hằng số cấu hình lấy từ context hoặc fallback
+  const CUP_SIZE = cupSize || 250;
+  const TARGET = dailyTarget || 2000;
+
+  // Tính toán % tiến độ
+  const progress =
+    TARGET > 0 ? Math.min((currentIntake / TARGET) * 100, 100) : 0;
+
+  // Số lượng cốc (ước tính) để hiển thị
+  const cups = Math.round(currentIntake / CUP_SIZE);
+
+  // Hàm xử lý tăng giảm
+  const handleIncrease = () => addWater(CUP_SIZE);
+  const handleDecrease = () => addWater(-CUP_SIZE);
 
   return (
-    <View style={styles.waterCard}>
-      {/* background icon */}
-      <View style={styles.bgIconWrapper}>
-        <View style={styles.waterBackgroundIcon}>
-          <WaterBackgroundIcon width="380px" height="120px" />
-        </View>
+    <View style={styles.container}>
+      {/* Background Decor: Dùng View tròn đơn giản thay vì SVG để tránh lỗi thiếu file */}
+      <View style={styles.bgDecor}>
+        <View style={styles.circleDecor} />
       </View>
 
-      {/* left content */}
-      <View style={styles.waterContent}>
-        <View style={styles.headerRow}>
+      <View style={styles.content}>
+        {/* Header: Icon + Title */}
+        <View style={styles.header}>
           <View style={styles.iconCircle}>
-            <WaterDropIcon />
+            {/* Nếu WaterDropIcon lỗi, bạn có thể thay bằng <Text>💧</Text> */}
+            <WaterDropIcon
+              width={20}
+              height={20}
+              color="#0EA5E9"
+              fill="#0EA5E9"
+            />
           </View>
-          <Text style={styles.smallCardTitle}>{title}</Text>
+          <Text style={styles.title}>Water Intake</Text>
         </View>
 
-        <View style={styles.valueRow}>
-          <Text style={styles.bigValue}>{waterAmount}</Text>
-          <Text style={styles.smallUnit}> {unit}</Text>
+        {/* Progress Bar */}
+        <View style={styles.progressTrack}>
+          <View style={[styles.progressFill, { width: `${progress}%` }]} />
         </View>
 
-        {showGoalText && (
-          <Text style={styles.goalText}>
-            Goal: {WATER_TARGET} {unit} ({percent}%)
-          </Text>
-        )}
+        {/* Info Text: Consumed / Target */}
+        <View style={styles.infoRow}>
+          <Text style={styles.currentValue}>{currentIntake}</Text>
+          <Text style={styles.targetValue}> / {TARGET} ml</Text>
+        </View>
+
+        {/* Subtitle: Cups info */}
+        <Text style={styles.subtitle}>
+          {cups} cups ({CUP_SIZE}ml)
+        </Text>
       </View>
 
-      {/* right controls */}
-      <View style={styles.waterControls}>
-        <TouchableOpacity
-          style={styles.controlBtn}
-          onPress={decrease}
-          accessibilityLabel="Decrease water"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <Text style={styles.controlText}>-</Text>
+      {/* Controls (+/- Buttons) */}
+      <View style={styles.controls}>
+        <TouchableOpacity style={styles.btn} onPress={handleDecrease}>
+          <Text style={styles.btnTextMinus}>-</Text>
         </TouchableOpacity>
 
-        <Text style={styles.waterCount}>{waterAmount}</Text>
+        <View style={styles.divider} />
 
         <TouchableOpacity
-          style={[styles.controlBtn, styles.controlBtnPrimary]}
-          onPress={increase}
-          accessibilityLabel="Increase water"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={[styles.btn, styles.btnAdd]}
+          onPress={handleIncrease}
         >
-          <Text style={styles.controlTextPrimary}>+</Text>
+          <Text style={styles.btnTextPlus}>+</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -79,80 +104,95 @@ const WaterCard: React.FC<WaterCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  waterCard: {
-    backgroundColor: theme.colors.white,
+  container: {
+    backgroundColor: '#E0F2FE', // Light blue background
     borderRadius: 24,
-    padding: theme.spacing.md,
+    padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     overflow: 'hidden',
     position: 'relative',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+    marginTop: 20,
   },
-  bgIconWrapper: {
+  bgDecor: {
     position: 'absolute',
-    right: -120,
-    top: 10,
+    right: -20,
+    bottom: -20,
   },
-  waterBackgroundIcon: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
+  // Hình tròn trang trí thay thế SVG
+  circleDecor: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#0EA5E9',
+    opacity: 0.1,
   },
-  waterContent: {
+  content: {
     zIndex: 1,
     flex: 1,
   },
-  headerRow: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
+    gap: 8,
+    marginBottom: 12,
   },
   iconCircle: {
     width: 32,
     height: 32,
     borderRadius: 16,
+    backgroundColor: '#BAE6FD',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#A1DBF8',
-    marginRight: theme.spacing.xs,
   },
-  smallCardTitle: {
-    fontSize: theme.fonts.size.sm,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.poppins.bold,
-    fontWeight: theme.fonts.weight.bold,
+  title: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
   },
-  valueRow: {
+  progressTrack: {
+    height: 6,
+    backgroundColor: '#BFDBFE',
+    borderRadius: 3,
+    marginBottom: 8,
+    width: '90%',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#0EA5E9',
+    borderRadius: 3,
+  },
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginTop: 6,
   },
-  bigValue: {
-    fontSize: theme.fonts.size['2xl'],
-    color: theme.colors.text,
-    fontFamily: theme.fonts.poppins.bold,
-    fontWeight: theme.fonts.weight.bold,
+  currentValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#000',
   },
-  smallUnit: {
-    fontSize: theme.fonts.size.sm,
-    color: theme.colors.subText,
-    fontFamily: theme.fonts.poppins.regular,
-    fontWeight: theme.fonts.weight.regular,
+  targetValue: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
   },
-  goalText: {
-    marginTop: 4,
-    fontSize: theme.fonts.size.xs,
-    color: theme.colors.subText,
-    fontFamily: theme.fonts.poppins.regular,
-    fontWeight: theme.fonts.weight.regular,
+  subtitle: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
   },
-  waterControls: {
+  controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: theme.colors.white,
-    borderRadius: 20,
-    padding: 4,
+    backgroundColor: '#FFF',
+    borderRadius: 24,
+    padding: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -160,39 +200,39 @@ const styles = StyleSheet.create({
     elevation: 3,
     zIndex: 1,
   },
-  controlBtn: {
+  btn: {
     width: 32,
     height: 32,
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.white,
+    backgroundColor: '#FFF',
     borderWidth: 1,
-    borderColor: '#EEE',
+    borderColor: '#F1F5F9',
   },
-  controlBtnPrimary: {
-    backgroundColor: theme.colors.blue,
-    borderColor: theme.colors.blue,
-    marginLeft: 4,
+  btnAdd: {
+    backgroundColor: '#0EA5E9',
+    borderColor: '#0EA5E9',
   },
-  controlText: {
-    fontSize: theme.fonts.size.md,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.poppins.bold,
-    fontWeight: theme.fonts.weight.bold,
+  // Style cho text dấu -
+  btnTextMinus: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#000',
+    lineHeight: 22,
   },
-  controlTextPrimary: {
-    fontSize: theme.fonts.size.md,
-    color: theme.colors.white,
-    fontFamily: theme.fonts.poppins.bold,
-    fontWeight: theme.fonts.weight.bold,
+  // Style cho text dấu +
+  btnTextPlus: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: '#FFF',
+    lineHeight: 22,
   },
-  waterCount: {
-    fontSize: theme.fonts.size.md,
-    fontFamily: theme.fonts.poppins.bold,
-    fontWeight: theme.fonts.weight.bold,
-    paddingHorizontal: 8,
-    color: theme.colors.text,
+  divider: {
+    width: 1,
+    height: 20,
+    backgroundColor: '#E5E7EB',
+    marginHorizontal: 4,
   },
 });
 

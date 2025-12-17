@@ -7,6 +7,7 @@ import FootStepCountingScreen from '@screens/FootStepCounting/FootStepCountingSc
 import SleepTrackingScreen from '@screens/SleepTracking/SleepTrackingScreen';
 import HeartResultScreen from '@screens/HeartMeasurement/HeartResultScreen';
 import CaloriesScanProcess from '@screens/CaloriesScan/CaloriesScanProcess';
+import WaterTrackerScreen from '@screens/WaterTracker/WaterTrackerScreen';
 
 export type BrowserStackParamList = {
   Browser: undefined;
@@ -16,6 +17,7 @@ export type BrowserStackParamList = {
   FootStepCounting: undefined;
   SleepTracking: undefined;
   HeartResult: { bpm: number };
+  WaterTracker: undefined;
 };
 
 const Stack = createNativeStackNavigator<BrowserStackParamList>();
@@ -39,6 +41,7 @@ const BrowserStack = () => {
       />
       <Stack.Screen name="SleepTracking" component={SleepTrackingScreen} />
       <Stack.Screen name="HeartResult" component={HeartResultScreen} />
+      <Stack.Screen name="WaterTracker" component={WaterTrackerScreen} />
     </Stack.Navigator>
   );
 };
