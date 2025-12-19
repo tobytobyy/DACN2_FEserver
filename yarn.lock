@@ -1686,6 +1686,11 @@
     prompts "^2.4.2"
     semver "^7.5.2"
 
+"@react-native-documents/picker@^11.0.3":
+  version "11.0.3"
+  resolved "https://registry.npmjs.org/@react-native-documents/picker/-/picker-11.0.3.tgz"
+  integrity sha512-q+vQNT1NtZcFGwsDpTwMKNNcgOEq6foFDGlPQVt8H7KaEjCjC+wTGdXuVSe8JJr2uO9xZR6kJ7aRHReZ4XDRBw==
+
 "@react-native/assets-registry@0.82.1":
   version "0.82.1"
   resolved "https://registry.npmjs.org/@react-native/assets-registry/-/assets-registry-0.82.1.tgz"
@@ -6814,7 +6819,7 @@ react-native-webview@^13.16.0:
     escape-string-regexp "^4.0.0"
     invariant "2.2.4"
 
-react-native@*, "react-native@^0.0.0-0 || >=0.65 <1.0", "react-native@>= 0.30.0", "react-native@>= 0.76.0", react-native@>=0.59.0, react-native@0.82.1:
+react-native@*, "react-native@^0.0.0-0 || >=0.65 <1.0", "react-native@>= 0.30.0", "react-native@>= 0.76.0", react-native@>=0.59.0, react-native@>=0.79.0, react-native@0.82.1:
   version "0.82.1"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.82.1.tgz"
   integrity sha512-tFAqcU7Z4g49xf/KnyCEzI4nRTu1Opcx05Ov2helr8ZTg1z7AJR/3sr2rZ+AAVlAs2IXk+B0WOxXGmdD3+4czA==

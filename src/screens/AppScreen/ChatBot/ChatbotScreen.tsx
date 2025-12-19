@@ -10,11 +10,14 @@ import {
   Pressable,
   FlatList,
   ListRenderItem,
+  ScrollView,
 } from 'react-native';
+import { pick, types } from '@react-native-documents/picker';
+import type { DocumentPickerResponse } from '@react-native-documents/picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import axios from 'axios';
+import axios, { isCancel } from 'axios';
 
 import { ChatbotStackParamList } from '@navigation/AppStack/ChatbotStack';
 
@@ -64,6 +67,9 @@ const ChatbotScreen: React.FC = () => {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<DocumentPickerResponse[]>(
+    [],
+  );
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
@@ -77,8 +83,78 @@ const ChatbotScreen: React.FC = () => {
 
   const lastRequestTsRef = useRef<number>(0);
 
+  const suggestions = [
+    {
+      label: 'Tình hình sức khỏe hôm nay',
+      color: '#0EA5E9',
+    },
+    {
+      label: 'Nhịp tim trung bình tuần này',
+      color: '#22C55E',
+    },
+    {
+      label: 'Gợi ý bài tập nhẹ',
+      color: '#F59E0B',
+    },
+    {
+      label: 'Lượng nước đã uống',
+      color: '#6366F1',
+    },
+    {
+      label: 'Nhắc nhở giấc ngủ',
+      color: '#EF4444',
+    },
+  ];
+
+  const handleSuggestionPress = (text: string): void => {
+    setMessage(text);
+  };
+
+  const formatFileSize = (size?: number | null): string => {
+    if (!size) return '';
+    const kb = size / 1024;
+    if (kb < 1024) return `${kb.toFixed(1)} KB`;
+    const mb = kb / 1024;
+    return `${mb.toFixed(2)} MB`;
+  };
+
+  const handleAttachFile = async (): Promise<void> => {
+    if (isLoading) return;
+
+    try {
+      const results = await pick({
+        allowMultiSelection: true,
+        type: [types.allFiles],
+      });
+
+      if (results?.length) {
+        setAttachedFiles(prev => [...prev, ...results]);
+      }
+    } catch (err) {
+      if (isCancel(err)) return;
+
+      console.error('DocumentPicker error:', err);
+      setMessages(prev => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            'Không thể mở trình chọn tệp. Vui lòng kiểm tra quyền truy cập bộ nhớ và thử lại.',
+        },
+      ]);
+    }
+  };
+
+  const removeAttachment = (uri: string): void => {
+    setAttachedFiles(prev => prev.filter(file => file.uri !== uri));
+  };
+
   const handleSendMessage = async (): Promise<void> => {
-    if (message.trim().length === 0 || isLoading) return;
+    if (
+      (message.trim().length === 0 && attachedFiles.length === 0) ||
+      isLoading
+    )
+      return;
 
     // throttle gửi quá nhanh
     const now = Date.now();
@@ -94,9 +170,23 @@ const ChatbotScreen: React.FC = () => {
     }
     lastRequestTsRef.current = now;
 
-    const newMessage: ChatMessage = { role: 'user', content: message };
+    const attachmentText = attachedFiles.length
+      ? `\n\nĐính kèm: ${attachedFiles
+          .map(file => {
+            const fileName = file.name || file.uri.split('/').pop() || 'Tệp';
+            const sizeLabel = formatFileSize(file.size);
+            return sizeLabel ? `${fileName} (${sizeLabel})` : fileName;
+          })
+          .join(', ')}`
+      : '';
+
+    const newMessage: ChatMessage = {
+      role: 'user',
+      content: `${message.trim()}${attachmentText}`.trim(),
+    };
     setMessages(prev => [...prev, newMessage]);
     setMessage('');
+    setAttachedFiles([]);
     setIsLoading(true);
 
     try {
@@ -236,27 +326,97 @@ const ChatbotScreen: React.FC = () => {
         />
       </View>
 
+      {/* SUGGESTIONS */}
+      <View style={styles.suggestionWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.suggestionContainer}
+        >
+          {suggestions.map(item => (
+            <Pressable
+              key={item.label}
+              onPress={() => handleSuggestionPress(item.label)}
+              style={({ pressed }) => [
+                styles.suggestionButton,
+                pressed && styles.suggestionButtonPressed,
+              ]}
+            >
+              <View
+                style={[
+                  styles.suggestionIcon,
+                  {
+                    backgroundColor: `${item.color}1A`,
+                    borderColor: item.color,
+                  },
+                ]}
+              >
+                <DotIcon width={12} height={12} color={item.color} />
+              </View>
+              <Text style={styles.suggestionLabel}>{item.label}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+
       {/* INPUT */}
       <View style={styles.inputArea}>
-        <TouchableOpacity style={styles.iconButton}>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={handleAttachFile}
+          disabled={isLoading}
+        >
           <AttachIcon width={24} height={24} />
         </TouchableOpacity>
 
-        <TextInput
-          style={styles.textInput}
-          placeholder="Type a message..."
-          placeholderTextColor="#94A3B8"
-          value={message}
-          onChangeText={setMessage}
-        />
+        <View style={styles.inputContentArea}>
+          {attachedFiles.length > 0 && (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.attachmentsRow}
+            >
+              {attachedFiles.map(file => (
+                <View key={file.uri} style={styles.attachmentChip}>
+                  <Text style={styles.attachmentName} numberOfLines={1}>
+                    {file.name || file.uri.split('/').pop() || 'Tệp'}
+                  </Text>
+                  {file.size ? (
+                    <Text style={styles.attachmentSize}>
+                      {formatFileSize(file.size)}
+                    </Text>
+                  ) : null}
+                  <Pressable
+                    onPress={() => removeAttachment(file.uri)}
+                    style={({ pressed }) => [
+                      styles.attachmentRemove,
+                      pressed && styles.attachmentRemovePressed,
+                    ]}
+                  >
+                    <Text style={styles.attachmentRemoveText}>×</Text>
+                  </Pressable>
+                </View>
+              ))}
+            </ScrollView>
+          )}
 
-        {message.trim().length > 0 ? (
+          <TextInput
+            style={styles.textInput}
+            placeholder="Type a message..."
+            placeholderTextColor="#94A3B8"
+            value={message}
+            onChangeText={setMessage}
+          />
+        </View>
+
+        {message.trim().length > 0 || attachedFiles.length > 0 ? (
           <TouchableOpacity
             style={[styles.sendButton, isLoading && styles.handleSend]}
             onPress={handleSendMessage}
             disabled={isLoading}
+            activeOpacity={0.8}
           >
-            <ArrowRightIcon width={20} height={20} fill="#FFF" />
+            <ArrowRightIcon width={20} height={20} color="#FFFFFF" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.iconButton} disabled={isLoading}>
@@ -387,12 +547,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
+    borderRadius: 50,
     paddingHorizontal: 8,
     paddingVertical: 8,
     marginHorizontal: 16,
     marginTop: 4,
-    marginBottom: 24,
+    marginBottom: 30,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -400,6 +560,54 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     borderWidth: 1,
     borderColor: '#F1F5F9',
+  },
+  inputContentArea: {
+    flex: 1,
+    gap: 6,
+  },
+  attachmentsRow: {
+    gap: 8,
+    paddingHorizontal: 6,
+    paddingBottom: 6,
+  },
+  attachmentChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    maxWidth: 240,
+    gap: 6,
+  },
+  attachmentName: {
+    flexShrink: 1,
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  attachmentSize: {
+    color: '#475569',
+    fontSize: 12,
+  },
+  attachmentRemove: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attachmentRemovePressed: {
+    backgroundColor: '#CBD5E1',
+  },
+  attachmentRemoveText: {
+    color: '#0F172A',
+    fontSize: 14,
+    lineHeight: 16,
+    fontWeight: '800',
   },
   textInput: {
     flex: 1,
@@ -415,13 +623,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#0EA5E9',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: theme.colors.subText_2,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 4,
+    marginLeft: 6,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+    opacity: 0.5,
   },
 
   drawerOverlay: {
@@ -467,6 +681,47 @@ const styles = StyleSheet.create({
     borderColor: '#CBD5E1',
   },
   drawerItemText: { fontSize: 16, color: '#334155', fontWeight: '600' },
+
+  suggestionWrapper: {
+    marginTop: 8,
+    paddingHorizontal: 16,
+  },
+  suggestionContainer: {
+    gap: 8,
+    paddingVertical: 4,
+  },
+  suggestionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  suggestionButtonPressed: {
+    backgroundColor: '#F8FAFC',
+  },
+  suggestionIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+  },
+  suggestionLabel: {
+    fontSize: 14,
+    color: '#0F172A',
+    fontWeight: '600',
+  },
 });
 
 export default ChatbotScreen;
