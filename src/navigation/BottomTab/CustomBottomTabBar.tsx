@@ -25,6 +25,24 @@ const CustomBottomTabBarComponent: React.FC<Props> = ({
   state,
   navigation,
 }) => {
+  const shouldHideTabBar = () => {
+    const activeRoute = state.routes[state.index];
+
+    if (activeRoute.name !== 'BrowserTab') return false;
+
+    const stackState = activeRoute.state as
+      | { index: number; routes: { name: string }[] }
+      | undefined;
+    const activeStackRoute =
+      stackState && stackState.routes[stackState.index]?.name;
+
+    return activeStackRoute === 'AiCaloriesScan';
+  };
+
+  if (shouldHideTabBar()) {
+    return null;
+  }
+
   const homeIndex = state.routes.findIndex(r => r.name === 'HomeTab');
   const isHomeFocused = state.index === homeIndex;
 

@@ -6,14 +6,12 @@ import CaloriesScanScreen from '@screens/CaloriesScan/CaloriesScanScreen';
 import FootStepCountingScreen from '@screens/FootStepCounting/FootStepCountingScreen';
 import SleepTrackingScreen from '@screens/SleepTracking/SleepTrackingScreen';
 import HeartResultScreen from '@screens/HeartMeasurement/HeartResultScreen';
-import CaloriesScanProcess from '@screens/CaloriesScan/CaloriesScanProcess';
 import WaterTrackerScreen from '@screens/WaterTracker/WaterTrackerScreen';
 
 export type BrowserStackParamList = {
   Browser: undefined;
   HeartMeasurement: undefined;
   AiCaloriesScan: undefined;
-  CaloriesScanProcess: { imageUri: string };
   FootStepCounting: undefined;
   SleepTracking: undefined;
   HeartResult: { bpm: number };
@@ -31,10 +29,7 @@ const BrowserStack = () => {
         component={HeartMeasurementScreen}
       />
       <Stack.Screen name="AiCaloriesScan" component={CaloriesScanScreen} />
-      <Stack.Screen
-        name="CaloriesScanProcess"
-        component={CaloriesScanProcess}
-      />
+
       <Stack.Screen
         name="FootStepCounting"
         component={FootStepCountingScreen}

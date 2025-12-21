@@ -18,7 +18,7 @@ const AboutYouPage2 = () => {
 
     // Giả lập gọi API
     setTimeout(() => {
-      navigation.navigate('AboutYouPage2' as never);
+      navigation.getParent()?.navigate('App' as never);
       setLoading(false);
     }, 1500);
   };

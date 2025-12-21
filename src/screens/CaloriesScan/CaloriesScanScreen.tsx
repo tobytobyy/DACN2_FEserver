@@ -1,146 +1,185 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Image,
+  StatusBar,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import ArrowLeft from '@assets/icons/svgs/arrow_left_2424.svg';
-import CameraIcon from '@assets/icons/svgs/camera_5050.svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { theme } from '@assets/theme';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BrowserStackParamList } from '@navigation/AppStack/BrowserStack';
 
+import { styles, FRAME_SIZE } from './styles';
+import { ScanOverlay } from '@components/CaloriesScan/ScanOverlay/ScanOverlay';
+import { ScanControls } from '@components/CaloriesScan/ScanControls/ScanControls';
+import { ResultSheet } from '@components/CaloriesScan/ResultSheet/ResultSheet';
+
 type Props = NativeStackScreenProps<BrowserStackParamList, 'AiCaloriesScan'>;
+
+const DUMMY_IMAGE =
+  'https://images.unsplash.com/photo-1588137372308-15f75323ca8d?auto=format&fit=crop&w=800&q=80';
 
 const CaloriesScanScreen: React.FC<Props> = ({ navigation }) => {
   const insets = useSafeAreaInsets();
 
-  const handlePickImage = () => {
-    // TODO: mở camera / image picker, lấy về uri ảnh thật
-    const dummyUri =
-      'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg';
+  const [isScanning, setIsScanning] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
 
-    navigation.navigate('CaloriesScanProcess', { imageUri: dummyUri });
+  const scanLineAnim = useRef(new Animated.Value(0)).current;
+
+  const controlsBottomSpacing = Math.max(
+    insets.bottom + theme.spacing.sm,
+    theme.spacing.lg,
+  );
+
+  const scanAreaPadding = controlsBottomSpacing + theme.spacing.xl * 2;
+
+  /* ---------------- Animation ---------------- */
+
+  const startLineAnimation = useCallback(() => {
+    scanLineAnim.setValue(0);
+    Animated.loop(
+      Animated.timing(scanLineAnim, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+      }),
+    ).start();
+  }, [scanLineAnim]);
+
+  useEffect(() => {
+    if (isScanning) {
+      startLineAnimation();
+    } else {
+      scanLineAnim.stopAnimation();
+      scanLineAnim.setValue(0);
+    }
+  }, [isScanning, startLineAnimation, scanLineAnim]);
+
+  const animatedLineStyle = {
+    transform: [
+      {
+        translateY: scanLineAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, FRAME_SIZE],
+        }),
+      },
+    ],
   };
+
+  /* ---------------- Actions ---------------- */
+
+  const startScan = () => {
+    setIsScanning(true);
+    setCapturedImage(DUMMY_IMAGE);
+
+    setTimeout(() => {
+      setIsScanning(false);
+      setShowResult(true);
+    }, 3000);
+  };
+
+  const resetScan = () => {
+    setIsScanning(false);
+    setShowResult(false);
+    setCapturedImage(null);
+  };
+
+  /* ---------------- Render ---------------- */
 
   return (
     <LinearGradient
-      colors={theme.gradients.background.colors}
-      locations={theme.gradients.background.locations}
-      start={theme.gradients.background.start}
-      end={theme.gradients.background.end}
+      colors={['#020617', '#0B1221']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
       style={styles.container}
     >
-      <View style={[styles.safeArea, { paddingTop: insets.top || 12 }]}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            activeOpacity={0.7}
-            onPress={() => navigation.goBack()}
-          >
-            <ArrowLeft width={24} height={24} color={theme.colors.text} />
-          </TouchableOpacity>
+      <StatusBar barStyle="light-content" />
 
-          <Text style={styles.headerTitle}>AI Calories Scan</Text>
-
-          {/* placeholder bên phải cho cân layout (nếu cần) */}
-          <View style={styles.headerRightPlaceholder} />
-        </View>
-
-        {/* Content */}
-        <View style={styles.content}>
-          <TouchableOpacity
-            activeOpacity={0.9}
-            style={styles.uploadCard}
-            onPress={handlePickImage}
-          >
-            <View style={styles.iconWrapper}>
-              <CameraIcon width={50} height={50} color={theme.colors.primary} />
+      <View
+        style={[
+          styles.safeArea,
+          {
+            paddingTop: insets.top || theme.spacing.lg,
+            paddingBottom: Math.max(insets.bottom, theme.spacing.xl),
+          },
+        ]}
+      >
+        {/* Camera Area */}
+        <View style={styles.cameraWrapper}>
+          <View style={styles.imageBackground}>
+            <View style={styles.cameraFeed}>
+              {capturedImage ? (
+                <Image
+                  source={{ uri: capturedImage }}
+                  style={styles.capturedImage}
+                  resizeMode="cover"
+                />
+              ) : (
+                <View style={styles.placeholderContainer} />
+              )}
             </View>
 
-            <Text style={styles.cardTitle}>Take or upload photo</Text>
-            <Text style={styles.cardSubtitle}>Support JPG, PNG</Text>
-          </TouchableOpacity>
+            <View style={styles.overlayGradient} />
+
+            {/* Header */}
+            <View style={styles.header}>
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => navigation.goBack()}
+              >
+                <Ionicons
+                  name="arrow-back"
+                  size={20}
+                  color={theme.colors.white}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.headerButton}>
+                <Ionicons
+                  name="flash"
+                  size={20}
+                  color={isScanning ? theme.colors.orange : theme.colors.white}
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* Scan Overlay */}
+            {!showResult && (
+              <ScanOverlay
+                isScanning={isScanning}
+                capturedImage={capturedImage}
+                animatedLineStyle={animatedLineStyle}
+                scanAreaPadding={scanAreaPadding}
+              />
+            )}
+
+            {/* Controls */}
+            {!showResult && (
+              <ScanControls
+                isScanning={isScanning}
+                bottomSpacing={controlsBottomSpacing}
+                onCapture={startScan}
+              />
+            )}
+          </View>
         </View>
+
+        {/* Result */}
+        {showResult && (
+          <ResultSheet
+            bottomInset={Math.max(insets.bottom, theme.spacing.lg)}
+            onClose={resetScan}
+          />
+        )}
       </View>
     </LinearGradient>
   );
 };
 
 export default CaloriesScanScreen;
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: theme.spacing.md,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: theme.spacing.gap,
-    marginBottom: theme.spacing.lg,
-  },
-  backButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: theme.colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: theme.fonts.size.xl,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.nunito.regular,
-    fontWeight: theme.fonts.weight.semibold,
-  },
-  headerRightPlaceholder: {
-    width: 32,
-    height: 32,
-  },
-  content: {
-    flex: 1,
-    paddingTop: theme.spacing.lg * 3,
-  },
-  uploadCard: {
-    height: 300,
-    backgroundColor: theme.colors.white,
-    borderRadius: theme.spacing.lg,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#E5E7EB',
-    paddingVertical: theme.spacing.xl * 1.5,
-    paddingHorizontal: theme.spacing.lg,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  iconWrapper: {
-    padding: theme.spacing.gap,
-    borderRadius: 36,
-    backgroundColor: '#E0FFF6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
-  },
-  cardTitle: {
-    fontSize: theme.fonts.size.lg,
-    color: theme.colors.text,
-    textAlign: 'center',
-    fontFamily: theme.fonts.nunito.regular,
-    fontWeight: theme.fonts.weight.semibold,
-    lineHeight: theme.spacing.lg,
-    marginBottom: theme.spacing.xs,
-  },
-  cardSubtitle: {
-    fontSize: theme.fonts.size.sm,
-    color: theme.colors.subText,
-    fontFamily: theme.fonts.nunito.regular,
-    fontWeight: theme.fonts.weight.regular,
-    textAlign: 'center',
-    lineHeight: theme.spacing.lg,
-  },
-});
