@@ -9,6 +9,15 @@ import SleepIcon from '@assets/icons/svgs/sleep_2424.svg';
 import styles from '../styles';
 import { HealthSummary } from '../Calendar.types';
 
+/**
+ * Props cho DailySummary
+ * - selectedDate: ngày đang được chọn (ISO string)
+ * - summary: dữ liệu health summary của ngày đó
+ * - stepsValue: số bước hiện tại
+ * - stepProgress: tiến độ đạt được (0 → 1)
+ * - stepGoal: mục tiêu số bước
+ * - onPressAiAnalysis: callback khi bấm nút AI Analysis
+ */
 type DailySummaryProps = {
   selectedDate: string;
   summary?: HealthSummary;
@@ -18,6 +27,12 @@ type DailySummaryProps = {
   onPressAiAnalysis: () => void;
 };
 
+/**
+ * DailySummary
+ * - Hiển thị tổng quan sức khoẻ trong ngày
+ * - Gồm: Heart Rate, Steps, Sleep
+ * - Có nút AI Analysis để phân tích dữ liệu
+ */
 const DailySummary = ({
   selectedDate,
   summary,
@@ -27,28 +42,37 @@ const DailySummary = ({
   onPressAiAnalysis,
 }: DailySummaryProps) => (
   <View style={styles.summaryBox}>
+    {/* ===== Header ===== */}
     <View style={styles.summaryHeader}>
       <Text style={styles.summaryTitle}>Daily Summary</Text>
+
+      {/* Nút AI Analysis */}
       <TouchableOpacity style={styles.aiButton} onPress={onPressAiAnalysis}>
         <AiIcon width={16} height={16} color="#2D8C83" />
         <Text style={styles.aiButtonText}>AI Analysis</Text>
       </TouchableOpacity>
     </View>
 
+    {/* Ngày được chọn */}
     <Text style={styles.summaryDate}>
       {new Date(selectedDate).toDateString()}
     </Text>
 
+    {/* ===== Metrics ===== */}
     <View style={styles.metrics}>
+      {/* ===== Heart Rate ===== */}
       <View style={styles.metricCardHeart}>
         <View style={styles.metricRow}>
           <HeartIcon width={20} height={20} color="#DF394C" />
           <Text style={styles.metricLabel}>AVG HEART RATE</Text>
         </View>
+
         <View style={styles.valueRow}>
           <Text style={styles.metricValue}>
             {summary?.heartRate ?? '0 BPM'}
           </Text>
+
+          {/* Trạng thái nhịp tim */}
           <View style={styles.statusBadge}>
             <Text style={styles.statusText}>
               {summary?.heartStatus ?? '(Unknown)'}
@@ -57,32 +81,45 @@ const DailySummary = ({
         </View>
       </View>
 
+      {/* ===== Steps ===== */}
       <View style={styles.metricCardSteps}>
         <View style={styles.metricRow}>
           <StepsIcon width={20} height={20} color="#0EA5E9" />
           <Text style={styles.metricLabel}>STEPS</Text>
         </View>
+
         <Text style={styles.metricValue}>{summary?.steps ?? '0 steps'}</Text>
+
+        {/* Progress bar số bước */}
         <View style={styles.progressBar}>
           <View
             style={[
               styles.progressFill,
-              { width: `${Math.min(stepProgress, 1) * 100}%` },
+              {
+                // Giới hạn progress tối đa 100%
+                width: `${Math.min(stepProgress, 1) * 100}%`,
+              },
             ]}
           />
         </View>
+
+        {/* Text mô tả tiến độ */}
         <Text style={styles.progressText}>
           {stepsValue} / {stepGoal} steps ({Math.round(stepProgress * 100)}%)
         </Text>
       </View>
 
+      {/* ===== Sleep ===== */}
       <View style={styles.metricCardSleep}>
         <View style={styles.metricRow}>
           <SleepIcon width={20} height={20} color="#6366F1" />
           <Text style={styles.metricLabel}>SLEEP</Text>
         </View>
+
         <View style={styles.valueRow}>
           <Text style={styles.metricValue}>{summary?.sleep ?? '00h00m'}</Text>
+
+          {/* Trạng thái giấc ngủ */}
           <View style={styles.statusBadge}>
             <Text style={styles.statusTextSleep}>
               {summary?.sleepStatus ?? '(Unknown)'}

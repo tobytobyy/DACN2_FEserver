@@ -12,6 +12,16 @@ import { theme } from '@assets/theme';
 import { styles } from '../styles';
 import UnitPicker from '../UnitPicker/UnitPicker';
 
+/**
+ * Props cho AboutYouModal
+ * - visible: hiển thị / ẩn modal
+ * - activeField: field đang được chỉnh sửa (gender | birthday | weight | height)
+ * - gender, birthday, weight, height: giá trị hiện tại
+ * - weightUnit, heightUnit: đơn vị đo
+ * - openUnitPicker: xác định picker đơn vị nào đang mở
+ * - setXXX: hàm cập nhật state từ component cha
+ * - onClose: đóng modal
+ */
 type Props = {
   visible: boolean;
   activeField: 'gender' | 'birthday' | 'weight' | 'height' | null;
@@ -32,6 +42,9 @@ type Props = {
   onClose: () => void;
 };
 
+/**
+ * Modal chỉnh sửa thông tin cá nhân (About You)
+ */
 const AboutYouModal: React.FC<Props> = props => {
   const {
     visible,
@@ -52,20 +65,28 @@ const AboutYouModal: React.FC<Props> = props => {
     onClose,
   } = props;
 
+  /**
+   * Render nội dung modal dựa trên field đang active
+   */
   const renderContent = () => {
+    // Không có field nào được chọn → không render gì
     if (!activeField) return null;
 
+    /**
+     * ===== Chọn giới tính =====
+     */
     if (activeField === 'gender') {
       return (
         <>
           <Text style={styles.bottomSheetTitle}>Select gender</Text>
+
           {['Male', 'Female', 'Other'].map(option => (
             <Text
               key={option}
               style={styles.optionText}
               onPress={() => {
-                setGender(option);
-                onClose();
+                setGender(option); // Cập nhật gender
+                onClose(); // Đóng modal
               }}
             >
               {option}
@@ -75,11 +96,16 @@ const AboutYouModal: React.FC<Props> = props => {
       );
     }
 
+    /**
+     * ===== Chọn ngày sinh =====
+     */
     if (activeField === 'birthday') {
       return (
         <>
           <Text style={styles.bottomSheetTitle}>Choose your birthday</Text>
+
           <Calendar
+            // Highlight ngày đã chọn
             markedDates={
               birthday
                 ? {
@@ -90,6 +116,7 @@ const AboutYouModal: React.FC<Props> = props => {
                   }
                 : undefined
             }
+            // Khi chọn ngày → lưu & đóng modal
             onDayPress={d => {
               setBirthday(d.dateString);
               onClose();
@@ -99,6 +126,9 @@ const AboutYouModal: React.FC<Props> = props => {
       );
     }
 
+    /**
+     * ===== Cập nhật cân nặng / chiều cao =====
+     */
     const isWeight = activeField === 'weight';
 
     return (
@@ -108,6 +138,7 @@ const AboutYouModal: React.FC<Props> = props => {
         </Text>
 
         <View style={styles.inlineRow}>
+          {/* Picker chọn đơn vị (kg/lbs hoặc cm/ft) */}
           <UnitPicker
             type={isWeight ? 'weight' : 'height'}
             value={isWeight ? weightUnit : heightUnit}
@@ -119,15 +150,18 @@ const AboutYouModal: React.FC<Props> = props => {
               )
             }
             onChange={(v: string) => {
+              // Cập nhật đơn vị tương ứng
               isWeight ? setWeightUnit(v) : setHeightUnit(v);
               setOpenUnitPicker(null);
             }}
           />
 
+          {/* Input nhập số */}
           <View style={[styles.flexInput, styles.inputWrapper]}>
             <Text style={[styles.floatingLabel, styles.modalLabel]}>
               {isWeight ? 'Weight' : 'Height'}
             </Text>
+
             <TextInput
               style={[styles.input, styles.inputWithLabel]}
               keyboardType="numeric"
@@ -137,6 +171,7 @@ const AboutYouModal: React.FC<Props> = props => {
           </View>
         </View>
 
+        {/* Nút lưu */}
         <Button title="Save" onPress={onClose} />
       </>
     );
@@ -144,10 +179,12 @@ const AboutYouModal: React.FC<Props> = props => {
 
   return (
     <Modal visible={visible} transparent animationType="slide">
+      {/* Overlay – bấm ra ngoài để đóng modal */}
       <TouchableWithoutFeedback onPress={onClose}>
         <View style={styles.modalOverlay} />
       </TouchableWithoutFeedback>
 
+      {/* Bottom sheet */}
       <View style={styles.bottomSheetContainer}>
         <View style={styles.bottomSheet}>{renderContent()}</View>
       </View>

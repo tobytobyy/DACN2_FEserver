@@ -9,18 +9,36 @@ import {
   ViewStyle,
 } from 'react-native';
 
+/**
+ * Button dùng chung cho toàn app
+ * - Hỗ trợ loading state
+ * - Có thể custom kích thước, màu sắc, border radius
+ */
 interface ButtonProps {
+  /** Text hiển thị trên button */
   title?: string;
+
+  /** Kích thước button */
   width?: number | string;
   height?: number;
-  color?: string; // text color
-  backgroundColor?: string; // button background
+
+  /** Màu chữ */
+  color?: string;
+
+  /** Màu nền button */
+  backgroundColor?: string;
+
+  /** Bo góc */
   borderRadius?: number;
+
+  /** Callback khi bấm */
   onPress?: () => void;
 
-  // loading state
+  /** Trạng thái loading */
   loading?: boolean;
-  loadingText?: string; // nếu muốn text khác khi loading
+
+  /** Text hiển thị khi loading (nếu muốn khác title) */
+  loadingText?: string;
 }
 
 const Button: React.FC<ButtonProps> = ({
@@ -35,29 +53,37 @@ const Button: React.FC<ButtonProps> = ({
   loading = false,
   loadingText,
 }) => {
+  /**
+   * Quyết định text hiển thị:
+   * - Nếu đang loading và có loadingText → dùng loadingText
+   * - Ngược lại → dùng title
+   */
   const showText = loading && loadingText ? loadingText : title;
 
   return (
     <TouchableOpacity
       activeOpacity={0.8}
-      onPress={loading ? undefined : onPress} // đang loading thì không cho bấm
+      // Khi đang loading thì disable onPress
+      onPress={loading ? undefined : onPress}
+      disabled={loading}
       style={[
-        styles.button,
+        styles.button, // style base
         {
           width,
           height,
           backgroundColor,
           borderRadius,
-          opacity: loading ? 0.8 : 1,
+          opacity: loading ? 0.8 : 1, // giảm opacity khi loading
         } as ViewStyle,
       ]}
-      disabled={loading}
     >
       {/* Nội dung bên trong button */}
       {loading ? (
         <View style={styles.content}>
+          {/* Spinner khi loading */}
           <ActivityIndicator size="small" color={color} />
-          {/* Nếu vẫn muốn có text khi loading */}
+
+          {/* Có thể hiển thị text song song với spinner */}
           {showText ? (
             <Text style={[styles.text, { color } as TextStyle]}>
               {showText}
@@ -74,6 +100,9 @@ const Button: React.FC<ButtonProps> = ({
 };
 
 const styles = StyleSheet.create({
+  /**
+   * Style nền của button
+   */
   button: {
     justifyContent: 'center',
     alignItems: 'center',
@@ -83,12 +112,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.xs * 3,
   },
+
+  /**
+   * Wrapper cho nội dung bên trong button
+   * - Dùng cho cả trạng thái thường và loading
+   */
   content: {
     flexDirection: 'row',
     gap: theme.spacing.gap,
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  /**
+   * Text của button
+   */
   text: {
     fontFamily: theme.fonts.poppins.regular,
     fontSize: theme.fonts.size.lg,

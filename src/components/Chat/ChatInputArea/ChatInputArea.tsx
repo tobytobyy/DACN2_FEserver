@@ -15,6 +15,17 @@ import VoiceIcon from '@assets/icons/svgs/voice_1520.svg';
 
 import styles from './styles';
 
+/**
+ * Props cho ChatInputArea
+ * - message: nội dung tin nhắn hiện tại
+ * - attachedFiles: danh sách file đính kèm
+ * - isLoading: trạng thái chatbot đang xử lý
+ * - formatFileSize: helper format dung lượng file
+ * - onChangeMessage: cập nhật nội dung input
+ * - onAttachFile: mở picker chọn file
+ * - onRemoveAttachment: xoá file đính kèm
+ * - onSend: gửi tin nhắn
+ */
 interface ChatInputAreaProps {
   message: string;
   attachedFiles: DocumentPickerResponse[];
@@ -26,6 +37,12 @@ interface ChatInputAreaProps {
   onSend: () => void;
 }
 
+/**
+ * ChatInputArea
+ * - Khu vực nhập tin nhắn của chatbot
+ * - Hỗ trợ: text, đính kèm file, voice placeholder
+ * - Tự động đổi nút Send / Voice theo trạng thái input
+ */
 const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   message,
   attachedFiles,
@@ -37,6 +54,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
   onSend,
 }) => (
   <View style={styles.inputArea}>
+    {/* ===== Nút đính kèm file ===== */}
     <TouchableOpacity
       style={styles.iconButton}
       onPress={onAttachFile}
@@ -45,7 +63,9 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       <AttachIcon width={24} height={24} />
     </TouchableOpacity>
 
+    {/* ===== Khu vực input + attachments ===== */}
     <View style={styles.inputContentArea}>
+      {/* Danh sách file đính kèm (scroll ngang) */}
       {attachedFiles.length > 0 && (
         <ScrollView
           horizontal
@@ -54,14 +74,19 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         >
           {attachedFiles.map(file => (
             <View key={file.uri} style={styles.attachmentChip}>
+              {/* Tên file */}
               <Text style={styles.attachmentName} numberOfLines={1}>
                 {file.name || file.uri.split('/').pop() || 'Tệp'}
               </Text>
+
+              {/* Dung lượng file (nếu có) */}
               {file.size ? (
                 <Text style={styles.attachmentSize}>
                   {formatFileSize(file.size)}
                 </Text>
               ) : null}
+
+              {/* Nút xoá file */}
               <Pressable
                 onPress={() => onRemoveAttachment(file.uri)}
                 style={({ pressed }) => [
@@ -76,6 +101,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         </ScrollView>
       )}
 
+      {/* Input nhập text */}
       <TextInput
         style={styles.textInput}
         placeholder="Type a message..."
@@ -85,7 +111,9 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
       />
     </View>
 
+    {/* ===== Nút Send / Voice ===== */}
     {message.trim().length > 0 || attachedFiles.length > 0 ? (
+      // Hiển thị nút Send khi có nội dung hoặc file
       <TouchableOpacity
         style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
         onPress={onSend}
@@ -95,6 +123,7 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
         <ArrowRightIcon width={20} height={20} color="#FFFFFF" />
       </TouchableOpacity>
     ) : (
+      // Hiển thị icon Voice khi chưa có nội dung
       <TouchableOpacity style={styles.iconButton} disabled={isLoading}>
         <VoiceIcon width={20} height={24} />
       </TouchableOpacity>
