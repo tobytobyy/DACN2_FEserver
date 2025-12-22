@@ -15,7 +15,10 @@ const HomeScreen: React.FC = () => {
 
       {/* Header nằm tuyệt đối ở trên cùng để làm nền */}
       <View style={styles.headerContainer}>
-        <HeaderSection />
+        <HeaderSection
+          user={{ name: 'Nguyen Tien Dat', greeting: 'Welcome back!' }}
+          onPressAvatar={() => {}}
+        />
       </View>
 
       {/* ScrollView chứa nội dung chính */}
@@ -25,7 +28,14 @@ const HomeScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <ActivityCard />
-        <HeartSleepGrid />
+        <HeartSleepGrid
+          heartRate={78}
+          heartStatus={{ label: 'Normal', color: '#10B981' }}
+          sleepHours={7}
+          sleepMinutes={20}
+          sleepTargetHours={8}
+        />
+
         <WaterCard />
       </ScrollView>
     </View>

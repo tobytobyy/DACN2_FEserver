@@ -16,15 +16,17 @@ const defaultStackScreenOptions = {
 
 const RootNavigator = () => {
   // const { isAuthenticated } = useAuth();
-  const isAuthenticated = false;
 
   return (
     <Stack.Navigator
       screenOptions={defaultStackScreenOptions}
-      initialRouteName={isAuthenticated ? 'App' : 'Auth'}
+      // initialRouteName={isAuthenticated ? 'App' : 'Auth'}
     >
-      <Stack.Screen name="Auth" component={AuthStack} />
-      <Stack.Screen name="App" component={BottomTab} />
+      {true ? (
+        <Stack.Screen name="App" component={BottomTab} />
+      ) : (
+        <Stack.Screen name="Auth" component={AuthStack} />
+      )}
     </Stack.Navigator>
   );
 };

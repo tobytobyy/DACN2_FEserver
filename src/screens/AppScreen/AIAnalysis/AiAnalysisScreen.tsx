@@ -1,62 +1,52 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-const AiAnalysisScreen = () => {
-  const navigation = useNavigation();
+import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
+import type { CalendarStackParamList } from '@navigation/AppStack/CalendarStack';
+import styles from './styles';
+
+/* ======================================================
+ * Kiểu navigation cho màn AiAnalysis
+ * - Giúp TypeScript bắt lỗi khi navigate/goBack
+ * ====================================================== */
+type AiAnalysisNavigationProp = NativeStackNavigationProp<
+  CalendarStackParamList,
+  'AiAnalysis'
+>;
+
+/* ======================================================
+ * AiAnalysisScreen
+ * - Màn hình phân tích dữ liệu bằng AI (theo ngày)
+ * - Được mở từ CalendarScreen
+ * ====================================================== */
+const AiAnalysisScreen: React.FC = () => {
+  const navigation = useNavigation<AiAnalysisNavigationProp>();
 
   return (
     <View style={styles.container}>
-      {/* Header với nút trở về */}
+      {/* ================= Header ================= */}
+      {/* Header custom với nút Back */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backButton}
+          activeOpacity={0.7}
         >
           <ArrowLeftIcon width={24} height={24} color="#2D8C83" />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle}>AI Analysis</Text>
       </View>
 
-      {/* Nội dung chính */}
+      {/* ================= Content ================= */}
+      {/* Nội dung chính của màn hình */}
       <View style={styles.content}>
         <Text style={styles.text}>AI Analysis Screen (đang phát triển)</Text>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#f5f5f5',
-    elevation: 2,
-  },
-  backButton: {
-    marginRight: 12,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#2D8C83',
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-});
 
 export default AiAnalysisScreen;

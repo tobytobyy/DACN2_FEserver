@@ -1,16 +1,27 @@
 // src/components/FootStepCounting/FootStepMapHeader.tsx
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import WebView from 'react-native-webview';
 
-import { theme } from '@assets/theme';
 import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
 import SettingIcon from '@assets/icons/svgs/setting_2424.svg';
+import { theme } from '@assets/theme';
+import styles from './styles';
 
+/**
+ * Props cho FootStepMapHeader
+ * - onBack: callback khi bấm nút quay lại
+ */
 type Props = {
   onBack: () => void;
 };
 
+/**
+ * HTML hiển thị bản đồ OpenStreetMap
+ * - Sử dụng iframe embed
+ * - Có marker cố định (demo)
+ * - Chiếm toàn bộ diện tích WebView
+ */
 const MAP_HTML = `
 <!DOCTYPE html>
 <html>
@@ -39,13 +50,25 @@ const MAP_HTML = `
 </html>
 `;
 
+/**
+ * FootStepMapHeader
+ * - Header + map hiển thị hành trình đi bộ
+ * - Phần trên: nút back, trạng thái GPS, nút setting
+ * - Phần dưới: bản đồ OpenStreetMap render bằng WebView
+ */
 const FootStepMapHeader: React.FC<Props> = ({ onBack }) => {
+  /**
+   * State lưu lỗi load map (nếu có)
+   * - null: map load bình thường
+   * - string: nội dung lỗi
+   */
   const [mapError, setMapError] = useState<string | null>(null);
 
   return (
     <View style={styles.mapContainer}>
-      {/* Header */}
+      {/* ================= Header ================= */}
       <View style={styles.topHeader}>
+        {/* Nút quay lại */}
         <TouchableOpacity
           style={styles.circleIconButton}
           onPress={onBack}
@@ -54,22 +77,26 @@ const FootStepMapHeader: React.FC<Props> = ({ onBack }) => {
           <ArrowLeftIcon width={18} height={18} color={theme.colors.text} />
         </TouchableOpacity>
 
+        {/* Badge trạng thái GPS */}
         <View style={styles.gpsBadge}>
           <Text style={styles.gpsText}>GPS SIGNAL</Text>
         </View>
 
+        {/* Nút setting (chưa xử lý logic) */}
         <TouchableOpacity style={styles.circleIconButton} activeOpacity={0.7}>
           <SettingIcon width={18} height={18} color={theme.colors.text} />
         </TouchableOpacity>
       </View>
 
-      {/* Map (OpenStreetMap qua WebView) */}
+      {/* ================= Map Area ================= */}
       <View style={styles.mapWrapper}>
         {mapError ? (
+          // Fallback UI khi map bị lỗi
           <View style={styles.mapFallback}>
             <Text style={styles.mapFallbackText}>Map error: {mapError}</Text>
           </View>
         ) : (
+          // WebView hiển thị OpenStreetMap
           <WebView
             style={{ flex: 1 }}
             originWhitelist={['*']}
@@ -87,58 +114,3 @@ const FootStepMapHeader: React.FC<Props> = ({ onBack }) => {
 };
 
 export default FootStepMapHeader;
-
-const styles = StyleSheet.create({
-  mapContainer: {
-    flex: 1.1,
-    backgroundColor: '#E5E7EB',
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.sm,
-  },
-  topHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  circleIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.white,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  gpsBadge: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: 999,
-    backgroundColor: theme.colors.white,
-    elevation: 2,
-  },
-  gpsText: {
-    fontSize: theme.fonts.size.xs,
-    fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.text,
-  },
-  mapWrapper: {
-    flex: 1,
-    marginTop: theme.spacing.lg,
-    borderRadius: 24,
-    overflow: 'hidden',
-    backgroundColor: '#E5E5E5',
-  },
-  mapFallback: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapFallbackText: {
-    color: '#444',
-    fontSize: 14,
-  },
-});

@@ -71,7 +71,14 @@ export default function SettingScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         {/* Profile */}
-        <ProfileCard />
+        <ProfileCard
+          name="Đạt Nguyễn"
+          email="ngtiendat.94.04@gmail.com"
+          avatarLetter="D"
+          verified
+          provider="google"
+          onPressRefresh={() => console.log('refresh')}
+        />
 
         {/* Linked Accounts */}
         <SettingsSection title="LINKED ACCOUNTS">

@@ -1,0 +1,96 @@
+import { StyleSheet } from 'react-native';
+import { cardWidth } from '@screens/AppScreen/Browser/styles';
+
+export default StyleSheet.create({
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  seeAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#2D8C83',
+  },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  gridItem: {
+    width: cardWidth,
+    backgroundColor: '#FFF',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 2,
+    position: 'relative',
+  },
+  iconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  itemTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  itemDesc: {
+    fontSize: 11,
+    color: '#6B7280',
+    lineHeight: 14,
+  },
+  arrowIcon: {
+    position: 'absolute',
+    bottom: 16,
+    right: 16,
+    opacity: 0.5,
+  },
+  moreCard: {
+    width: cardWidth,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 130,
+  },
+  moreIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E5E7EB',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  moreText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#9CA3AF',
+  },
+});

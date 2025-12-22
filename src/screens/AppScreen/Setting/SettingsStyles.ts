@@ -320,6 +320,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#1F6E64',
   },
+  // styles dùng cho trạng thái disabled của nút logout
+  logoutButtonDisabled: {
+    opacity: 0.6,
+  },
 });
 
 export default styles;

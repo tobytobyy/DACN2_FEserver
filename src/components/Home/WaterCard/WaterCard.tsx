@@ -1,62 +1,86 @@
+// src/screens/HomeScreen/components/WaterCard/WaterCard.tsx
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 
-// 1. Import Context
-// Đảm bảo file src/context/WaterContext.tsx đã tồn tại.
-// Nếu báo lỗi import, hãy thử kiểm tra lại đường dẫn ../../../context/WaterContext
-import { useWater } from '../../../context/WaterContext';
+// Hook từ WaterContext (đảm bảo đã bọc WaterProvider ở tree cha)
+import { useWater } from '@context/WaterContext';
 
-// Import Icons
-// Nếu thiếu file này, bạn có thể comment dòng này lại và xóa thẻ <WaterDropIcon /> bên dưới
+// Icon giọt nước
 import WaterDropIcon from '@assets/icons/svgs/water_913.svg';
 
-const WaterCard = () => {
-  // 2. Sử dụng hook từ Context
+import styles from './styles';
+
+/**
+ * WaterCard
+ * - Hiển thị lượng nước đã uống trong ngày
+ * - Cho phép tăng/giảm theo kích thước cốc (cupSize)
+ * - Render progress bar theo % hoàn thành so với dailyTarget
+ */
+const WaterCard: React.FC = () => {
+  /**
+   * Lấy state + actions từ WaterContext
+   * - currentIntake: ml đã uống
+   * - dailyTarget: mục tiêu ml/ngày
+   * - cupSize: mỗi lần + / - bao nhiêu ml
+   * - addWater: action tăng/giảm ml
+   */
   const context = useWater();
 
-  // Kiểm tra an toàn: Nếu quên bọc Provider, tránh crash app
+  /**
+   * Guard: nếu component không nằm trong WaterProvider
+   * -> tránh crash và show thông báo lỗi
+   */
   if (!context) {
     return (
-      <View
-        style={[
-          styles.container,
-          { justifyContent: 'center', alignItems: 'center' },
-        ]}
-      >
-        <Text style={{ color: 'red' }}>Thiếu WaterProvider!</Text>
+      <View style={styles.missingProviderContainer}>
+        <Text style={styles.missingProviderText}>Thiếu WaterProvider!</Text>
       </View>
     );
   }
 
   const { currentIntake, dailyTarget, cupSize, addWater } = context;
 
-  // Hằng số cấu hình lấy từ context hoặc fallback
+  /**
+   * Fallback config
+   * - CUP_SIZE: mặc định 250ml nếu context không cung cấp
+   * - TARGET: mặc định 2000ml nếu context không cung cấp
+   */
   const CUP_SIZE = cupSize || 250;
   const TARGET = dailyTarget || 2000;
 
-  // Tính toán % tiến độ
+  /**
+   * Tính tiến độ (0 -> 100)
+   * - clamp tối đa 100%
+   * - tránh chia 0
+   */
   const progress =
     TARGET > 0 ? Math.min((currentIntake / TARGET) * 100, 100) : 0;
 
-  // Số lượng cốc (ước tính) để hiển thị
+  /**
+   * Số cốc ước tính để hiển thị
+   */
   const cups = Math.round(currentIntake / CUP_SIZE);
 
-  // Hàm xử lý tăng giảm
+  /**
+   * Handler tăng/giảm
+   * - addWater nhận giá trị +/- CUP_SIZE
+   */
   const handleIncrease = () => addWater(CUP_SIZE);
   const handleDecrease = () => addWater(-CUP_SIZE);
 
   return (
     <View style={styles.container}>
-      {/* Background Decor: Dùng View tròn đơn giản thay vì SVG để tránh lỗi thiếu file */}
+      {/* Background decor (vòng tròn trang trí) */}
       <View style={styles.bgDecor}>
         <View style={styles.circleDecor} />
       </View>
 
+      {/* Nội dung chính */}
       <View style={styles.content}>
-        {/* Header: Icon + Title */}
+        {/* Header: icon + title */}
         <View style={styles.header}>
           <View style={styles.iconCircle}>
-            {/* Nếu WaterDropIcon lỗi, bạn có thể thay bằng <Text>💧</Text> */}
+            {/* Nếu SVG lỗi, có thể thay bằng <Text>💧</Text> */}
             <WaterDropIcon
               width={20}
               height={20}
@@ -69,10 +93,11 @@ const WaterCard = () => {
 
         {/* Progress Bar */}
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: `${progress}%` }]} />
+          {/* width động theo progress (%), không inline */}
+          <View style={styles.progressFill(progress)} />
         </View>
 
-        {/* Info Text: Consumed / Target */}
+        {/* Text: Consumed / Target */}
         <View style={styles.infoRow}>
           <Text style={styles.currentValue}>{currentIntake}</Text>
           <Text style={styles.targetValue}> / {TARGET} ml</Text>
@@ -84,7 +109,7 @@ const WaterCard = () => {
         </Text>
       </View>
 
-      {/* Controls (+/- Buttons) */}
+      {/* Controls: nút +/- */}
       <View style={styles.controls}>
         <TouchableOpacity style={styles.btn} onPress={handleDecrease}>
           <Text style={styles.btnTextMinus}>-</Text>
@@ -102,138 +127,5 @@ const WaterCard = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: '#E0F2FE', // Light blue background
-    borderRadius: 24,
-    padding: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    overflow: 'hidden',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
-    marginTop: 20,
-  },
-  bgDecor: {
-    position: 'absolute',
-    right: -20,
-    bottom: -20,
-  },
-  // Hình tròn trang trí thay thế SVG
-  circleDecor: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#0EA5E9',
-    opacity: 0.1,
-  },
-  content: {
-    zIndex: 1,
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  iconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#BAE6FD',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  progressTrack: {
-    height: 6,
-    backgroundColor: '#BFDBFE',
-    borderRadius: 3,
-    marginBottom: 8,
-    width: '90%',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#0EA5E9',
-    borderRadius: 3,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  currentValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  targetValue: {
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  subtitle: {
-    fontSize: 11,
-    color: '#64748B',
-    marginTop: 2,
-  },
-  controls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 24,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    zIndex: 1,
-  },
-  btn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  btnAdd: {
-    backgroundColor: '#0EA5E9',
-    borderColor: '#0EA5E9',
-  },
-  // Style cho text dấu -
-  btnTextMinus: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
-    lineHeight: 22,
-  },
-  // Style cho text dấu +
-  btnTextPlus: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#FFF',
-    lineHeight: 22,
-  },
-  divider: {
-    width: 1,
-    height: 20,
-    backgroundColor: '#E5E7EB',
-    marginHorizontal: 4,
-  },
-});
 
 export default WaterCard;

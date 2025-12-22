@@ -1,68 +1,66 @@
 // src/screens/HomeScreen/components/HeaderSection.tsx
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import UserAvatar from '@assets/icons/svgs/account_circle.svg';
+import { View, Text } from 'react-native';
+import { Pressable } from 'react-native';
 
-const HeaderSection: React.FC = () => {
+import UserAvatar from '@assets/icons/svgs/account_circle.svg';
+import styles from './styles';
+
+/**
+ * Kiểu dữ liệu user hiển thị trên Header
+ * - name: tên hiển thị (VD: "Hồ Ngọc Bảo Long")
+ * - greeting: lời chào (optional) (VD: "Hello!", "Xin chào!")
+ */
+type UserHeaderData = {
+  name: string;
+  greeting?: string;
+};
+
+type Props = {
+  /** Data của user để render UI, tránh hard-code */
+  user: UserHeaderData;
+
+  /** Callback khi bấm avatar (optional) */
+  onPressAvatar?: () => void;
+};
+
+/**
+ * HeaderSection
+ * - Khu vực header màn Home
+ * - Hiển thị lời chào + tên user + avatar
+ * - Dữ liệu user được truyền từ ngoài vào (props) để tái sử dụng và dễ tích hợp API/store
+ */
+const HeaderSection: React.FC<Props> = ({ user, onPressAvatar }) => {
+  // Fallback nếu greeting không truyền vào
+  const greetingText = user.greeting ?? 'Hello!';
+
   return (
+    // Background của header (gradient/shape nằm trong styles)
     <View style={styles.headerBackground}>
+      {/* Container nội dung header */}
       <View style={styles.headerContent}>
+        {/* Cụm text bên trái: lời chào + username */}
         <View>
+          {/* Hàng "👋 Hello!" */}
           <View style={styles.helloRow}>
             <Text style={styles.waveIcon}>👋</Text>
-            <Text style={styles.helloText}>Hello!</Text>
+            <Text style={styles.helloText}>{greetingText}</Text>
           </View>
-          <Text style={styles.usernameText}>Username</Text>
+
+          {/* Tên user (lấy từ data truyền vào) */}
+          <Text style={styles.usernameText}>{user.name}</Text>
         </View>
 
-        <View style={styles.avatarButton}>
+        {/* Avatar bên phải
+            - Nếu muốn bấm được avatar thì bạn có thể bọc bằng Pressable/TouchableOpacity
+            - Ở đây giữ nguyên layout cũ, chỉ thêm onPress nếu cần
+        */}
+        <Pressable style={styles.avatarButton} onPress={onPressAvatar}>
           <UserAvatar />
-        </View>
+        </Pressable>
       </View>
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  headerBackground: {
-    backgroundColor: '#98F6D6',
-    height: 240,
-    width: '100%',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    position: 'absolute',
-    top: 0,
-    zIndex: 0,
-  },
-  headerContent: {
-    paddingHorizontal: 24,
-    paddingTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  helloRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  waveIcon: {
-    fontSize: 18,
-  },
-  helloText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-  usernameText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginTop: 2,
-  },
-  avatarButton: {
-    padding: 4,
-  },
-});
 
 export default HeaderSection;

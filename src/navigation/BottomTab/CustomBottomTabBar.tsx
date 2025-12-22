@@ -1,6 +1,7 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 
 import ChatAIIcon from '@assets/icons/svgs/chat_ai_3030.svg';
 import CalendarIcon from '@assets/icons/svgs/calendar_2521.svg';
@@ -9,63 +10,109 @@ import SettingsIcon from '@assets/icons/svgs/setting_2424.svg';
 import HomeIcon from '@assets/icons/svgs/home_3737.svg';
 import { theme } from '@assets/theme';
 
+/**
+ * Kích thước icon trong tab (trừ Home floating)
+ */
 const ICON_SIZE = 30;
 
-type Props = BottomTabBarProps;
+/**
+ * Danh sách route name của BottomTab (nên khớp với BottomTabParamList)
+ * -> giúp map icon type-safe, tránh typo.
+ */
+type TabRouteName =
+  | 'ChatbotTab'
+  | 'CalendarTab'
+  | 'HomeTab'
+  | 'BrowserTab'
+  | 'SettingsTab';
 
-// map tên route → icon component
-const TAB_ICONS: Record<string, React.ComponentType<any>> = {
+/**
+ * Map route name -> Icon component
+ * - type-safe: chỉ nhận đúng route của bottom tab
+ */
+const TAB_ICONS: Record<
+  Exclude<TabRouteName, 'HomeTab'>,
+  React.ComponentType<any>
+> = {
   ChatbotTab: ChatAIIcon,
   CalendarTab: CalendarIcon,
   BrowserTab: WindowIcon,
   SettingsTab: SettingsIcon,
 };
 
-const CustomBottomTabBarComponent: React.FC<Props> = ({
+/**
+ * CustomBottomTabBarComponent
+ * - Render tab bar custom (white bar + floating home button)
+ * - Tự điều hướng giữa các tab
+ * - Hỗ trợ ẩn tab bar theo nested route (VD: khi đang ở AiCaloriesScan)
+ */
+const CustomBottomTabBarComponent: React.FC<BottomTabBarProps> = ({
   state,
+  descriptors,
   navigation,
 }) => {
-  const shouldHideTabBar = () => {
-    const activeRoute = state.routes[state.index];
+  /**
+   * Ẩn tab bar cho một số màn hình đặc biệt (ví dụ: scan full-screen)
+   * - Hiện tại yêu cầu: ẩn tab bar khi đang ở BrowserTab -> AiCaloriesScan
+   *
+   * ✅ Dùng getFocusedRouteNameFromRoute để lấy nested route name an toàn
+   */
+  const shouldHideTabBar = useMemo(() => {
+    const currentTabRoute = state.routes[state.index];
 
-    if (activeRoute.name !== 'BrowserTab') return false;
+    // Chỉ kiểm tra nested route khi đang ở BrowserTab
+    if (currentTabRoute.name !== 'BrowserTab') return false;
 
-    const stackState = activeRoute.state as
-      | { index: number; routes: { name: string }[] }
-      | undefined;
-    const activeStackRoute =
-      stackState && stackState.routes[stackState.index]?.name;
+    // Lấy route name đang được focus trong BrowserStack
+    const focusedNestedRouteName =
+      getFocusedRouteNameFromRoute(currentTabRoute) ?? 'Browser';
 
-    return activeStackRoute === 'AiCaloriesScan';
-  };
+    return focusedNestedRouteName === 'AiCaloriesScan';
+  }, [state.index, state.routes]);
 
-  if (shouldHideTabBar()) {
-    return null;
-  }
+  // Nếu cần ẩn tab bar -> return null
+  if (shouldHideTabBar) return null;
 
+  /**
+   * Tìm tab Home để xác định trạng thái focus cho floating button
+   */
   const homeIndex = state.routes.findIndex(r => r.name === 'HomeTab');
   const isHomeFocused = state.index === homeIndex;
 
+  /**
+   * Màu icon theo trạng thái active/inactive
+   */
   const activeColor = theme.colors.primary;
   const inactiveColor = theme.colors.text;
 
   return (
     <View style={styles.bottomBarContainer}>
-      {/* White tab bar */}
+      {/* ===================== Main Tab Bar ===================== */}
       <View style={styles.bottomBar}>
         {state.routes.map((route, index) => {
+          const routeName = route.name as TabRouteName;
           const isFocused = state.index === index;
 
-          // chừa slot giữa cho nút home nổi
-          if (route.name === 'HomeTab') {
+          /**
+           * HomeTab được render bằng floating button,
+           * nên ở đây chỉ chừa khoảng trống (spacer) để cân layout.
+           */
+          if (routeName === 'HomeTab') {
             return <View key={route.key} style={styles.homeSpacer} />;
           }
 
-          const Icon = TAB_ICONS[route.name];
-          if (!Icon) return null;
-
+          /**
+           * Lấy Icon theo route
+           * - Vì TAB_ICONS không chứa HomeTab, nên đảm bảo Icon luôn tồn tại với các tab còn lại.
+           */
+          const Icon = TAB_ICONS[routeName as Exclude<TabRouteName, 'HomeTab'>];
           const color = isFocused ? activeColor : inactiveColor;
 
+          /**
+           * Handle press theo đúng hành vi của BottomTab:
+           * - emit tabPress (cho listener chặn nếu cần)
+           * - navigate nếu chưa focus
+           */
           const onPress = () => {
             const event = navigation.emit({
               type: 'tabPress',
@@ -74,7 +121,7 @@ const CustomBottomTabBarComponent: React.FC<Props> = ({
             });
 
             if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name as never);
+              navigation.navigate(routeName);
             }
           };
 
@@ -84,6 +131,12 @@ const CustomBottomTabBarComponent: React.FC<Props> = ({
               onPress={onPress}
               style={styles.navItem}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={
+                descriptors[route.key]?.options?.tabBarLabel?.toString() ??
+                routeName
+              }
             >
               <Icon width={ICON_SIZE} height={ICON_SIZE} color={color} />
             </TouchableOpacity>
@@ -91,11 +144,13 @@ const CustomBottomTabBarComponent: React.FC<Props> = ({
         })}
       </View>
 
-      {/* Floating home button */}
+      {/* ===================== Floating Home Button ===================== */}
       <TouchableOpacity
         style={styles.floatingHomeBtn}
         activeOpacity={0.9}
-        onPress={() => navigation.navigate('HomeTab' as never)}
+        onPress={() => navigation.navigate('HomeTab')}
+        accessibilityRole="button"
+        accessibilityLabel="Home"
       >
         <HomeIcon
           width={32}
@@ -109,18 +164,29 @@ const CustomBottomTabBarComponent: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
+  /**
+   * Wrapper ngoài cùng của tab bar
+   * - nằm sát đáy màn hình
+   * - dùng alignItems center để floating button luôn nằm giữa
+   */
   bottomBarContainer: {
-    // position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0, // dính sát đáy màn hình
+    bottom: 0,
     alignItems: 'center',
     backgroundColor: 'transparent',
   },
+
+  /**
+   * Thanh tab chính (nền trắng)
+   * - icon nằm theo hàng ngang
+   * - bo góc trên
+   * - shadow nhẹ
+   */
   bottomBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center', // icon nằm giữa theo chiều dọc
+    alignItems: 'center',
     backgroundColor: theme.colors.white,
     width: '100%',
     height: 80,
@@ -133,15 +199,30 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 10,
   },
+
+  /**
+   * Khoảng trống dành cho vị trí Home floating button
+   * - giúp các icon 2 bên cân đối
+   */
   homeSpacer: {
     width: 60,
   },
+
+  /**
+   * Item icon của mỗi tab (trừ Home)
+   */
   navItem: {
     paddingVertical: theme.spacing.gap,
     paddingHorizontal: theme.spacing.xs * 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  /**
+   * Nút Home nổi ở giữa
+   * - nằm đè lên thanh tab
+   * - shadow rõ hơn để nổi bật
+   */
   floatingHomeBtn: {
     position: 'absolute',
     top: -26,
