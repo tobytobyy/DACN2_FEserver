@@ -58,8 +58,8 @@ const styles = StyleSheet.create({
   /** Text trạng thái (Online / Đang trả lời) */
   status: {
     fontSize: 12,
-    color: '#22C55E',
-    marginLeft: 4,
+    color: '#475569',
+    marginLeft: 0,
     fontWeight: '500',
   },
 });

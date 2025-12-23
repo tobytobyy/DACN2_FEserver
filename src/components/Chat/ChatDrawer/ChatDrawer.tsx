@@ -2,11 +2,14 @@ import React from 'react';
 import {
   Animated,
   Pressable,
+  ScrollView,
   Text,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { ChatHistoryItem } from '@screens/AppScreen/ChatBot/Chatbot.types';
 
 import styles from './styles';
 
@@ -14,30 +17,33 @@ import styles from './styles';
  * Props cho ChatDrawer
  * - visible: trạng thái hiển thị drawer
  * - drawerAnim: Animated.Value điều khiển translateX (slide in/out)
+ * - histories: danh sách lịch sử chat (mới nhất -> cũ nhất)
  * - onClose: đóng drawer
  * - onNewConversation: tạo hội thoại mới
- * - onNavigateHistory: điều hướng sang màn lịch sử chat
+ * - onSelectHistory: chọn hội thoại cụ thể
  */
 interface ChatDrawerProps {
   visible: boolean;
   drawerAnim: Animated.Value;
+  histories: ChatHistoryItem[];
   onClose: () => void;
   onNewConversation: () => void;
-  onNavigateHistory: () => void;
+  onSelectHistory: (historyId: string) => void;
 }
 
 /**
  * ChatDrawer
- * - Drawer trượt từ cạnh (thường là trái) hiển thị các option
+ * - Drawer trượt từ cạnh (thường là trái) hiển thị danh sách hội thoại
  * - Nhấn ra ngoài overlay để đóng
  * - Nhấn vào item sẽ đóng drawer trước, sau đó chạy action tương ứng
  */
 const ChatDrawer: React.FC<ChatDrawerProps> = ({
   visible,
   drawerAnim,
+  histories,
   onClose,
   onNewConversation,
-  onNavigateHistory,
+  onSelectHistory,
 }) => {
   // Không hiển thị drawer khi visible = false (giảm render không cần thiết)
   if (!visible) return null;
@@ -62,34 +68,52 @@ const ChatDrawer: React.FC<ChatDrawerProps> = ({
             <SafeAreaView style={styles.safeArea}>
               <View style={styles.drawerContent}>
                 {/* Tiêu đề */}
-                <Text style={styles.drawerTitle}>Options</Text>
+                <Text style={styles.drawerTitle}>Conversation</Text>
 
-                {/* Option: New Conversation */}
+                <ScrollView
+                  style={styles.historyList}
+                  contentContainerStyle={styles.historyListContent}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {histories.map(history => {
+                    const lastMessage =
+                      history.messages[history.messages.length - 1];
+
+                    return (
+                      <Pressable
+                        key={history.id}
+                        style={({ pressed }) => [
+                          styles.historyItem,
+                          pressed && styles.drawerItemPressed,
+                        ]}
+                        onPress={() => {
+                          onClose();
+                          onSelectHistory(history.id);
+                        }}
+                      >
+                        <Text style={styles.historyTitle}>{history.title}</Text>
+
+                        {lastMessage && (
+                          <Text style={styles.historyPreview} numberOfLines={2}>
+                            {lastMessage.content}
+                          </Text>
+                        )}
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+
                 <Pressable
                   style={({ pressed }) => [
-                    styles.drawerItem,
-                    pressed && styles.drawerItemPressed, // hiệu ứng khi nhấn giữ
+                    styles.newChatButton,
+                    pressed && styles.newChatButtonPressed,
                   ]}
                   onPress={() => {
-                    onClose(); // đóng drawer trước
-                    onNewConversation(); // sau đó tạo cuộc hội thoại mới
+                    onClose();
+                    onNewConversation();
                   }}
                 >
                   <Text style={styles.drawerItemText}>New Conversation</Text>
-                </Pressable>
-
-                {/* Option: Chat History */}
-                <Pressable
-                  style={({ pressed }) => [
-                    styles.drawerItem,
-                    pressed && styles.drawerItemPressed,
-                  ]}
-                  onPress={() => {
-                    onClose(); // đóng drawer trước
-                    onNavigateHistory(); // sau đó điều hướng lịch sử chat
-                  }}
-                >
-                  <Text style={styles.drawerItemText}>Chat History</Text>
                 </Pressable>
               </View>
             </SafeAreaView>

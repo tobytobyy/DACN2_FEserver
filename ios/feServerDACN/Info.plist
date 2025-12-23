@@ -23,12 +23,18 @@
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsArbitraryLoads</key>
+        <string>$(CURRENT_PROJECT_VERSION)</string>
+        <key>LSRequiresIPhoneOS</key>
+        <true/>
+        <key>NSCameraUsageDescription</key>
+        <string>Ứng dụng cần quyền truy cập camera để chụp ảnh gửi lên chatbot.</string>
+        <key>NSPhotoLibraryUsageDescription</key>
+        <string>Ứng dụng cần quyền truy cập thư viện ảnh để bạn chọn ảnh gửi lên chatbot.</string>
+        <key>NSPhotoLibraryAddUsageDescription</key>
+        <string>Ứng dụng cần quyền lưu ảnh để thêm ảnh chụp vào thư viện của bạn.</string>
+        <key>NSAppTransportSecurity</key>
+        <dict>
+                <key>NSAllowsArbitraryLoads</key>
 		<false/>
 		<key>NSAllowsLocalNetworking</key>
 		<true/>

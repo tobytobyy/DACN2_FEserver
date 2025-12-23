@@ -13,7 +13,7 @@ import { theme } from '@assets/theme';
 /**
  * Kích thước icon trong tab (trừ Home floating)
  */
-const ICON_SIZE = 30;
+const ICON_SIZE = 25;
 
 /**
  * Danh sách route name của BottomTab (nên khớp với BottomTabParamList)
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: theme.colors.white,
     width: '100%',
-    height: 80,
+    height: 60,
     paddingHorizontal: theme.spacing.gap * 3,
     borderTopLeftRadius: theme.spacing.gap * 2,
     borderTopRightRadius: theme.spacing.gap * 2,
@@ -226,8 +226,8 @@ const styles = StyleSheet.create({
   floatingHomeBtn: {
     position: 'absolute',
     top: -26,
-    width: 72,
-    height: 72,
+    width: 60,
+    height: 60,
     borderRadius: 36,
     backgroundColor: theme.colors.white,
     justifyContent: 'center',

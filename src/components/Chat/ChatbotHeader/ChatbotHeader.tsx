@@ -1,9 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
-import DotIcon from '@assets/icons/svgs/dot_1010.svg';
 import MenuIcon from '@assets/icons/svgs/menu_dot_2020.svg';
-import { theme } from '@assets/theme';
 
 import styles from './styles';
 
@@ -41,15 +39,12 @@ const ChatbotHeader: React.FC<ChatbotHeaderProps> = ({
         <Text style={styles.title}>Health Assistant</Text>
 
         {/* Trạng thái hoạt động */}
-        <View style={styles.statusRow}>
-          {/* Dot trạng thái (online) */}
-          <DotIcon width={10} height={10} color={theme.colors.primary} />
-
-          {/* Text trạng thái */}
-          <Text style={styles.status}>
-            {isLoading ? 'Đang trả lời...' : 'Online'}
-          </Text>
-        </View>
+        {isLoading && (
+          <View style={styles.statusRow}>
+            {/* Text trạng thái */}
+            <Text style={styles.status}>thinking...</Text>
+          </View>
+        )}
       </View>
     </View>
   </View>

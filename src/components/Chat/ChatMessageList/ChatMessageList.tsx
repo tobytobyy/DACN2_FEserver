@@ -1,7 +1,7 @@
 import React from 'react';
 import { FlatList, ListRenderItem, Text, View } from 'react-native';
 
-import ChatAiIcon from '@assets/icons/svgs/robot_chat_200200.svg';
+import RobotChatIcon from '@assets/icons/svgs/robot_chat_200200.svg';
 import { ChatMessage } from '@screens/AppScreen/ChatBot/Chatbot.types';
 
 import styles from './styles';
@@ -30,7 +30,7 @@ const renderMessage: ListRenderItem<ChatMessage> = ({ item }) => (
     {/* Avatar của assistant */}
     {item.role === 'assistant' && (
       <View style={styles.botAvatar}>
-        <ChatAiIcon width={24} height={24} />
+        <RobotChatIcon width={26} height={26} />
       </View>
     )}
 

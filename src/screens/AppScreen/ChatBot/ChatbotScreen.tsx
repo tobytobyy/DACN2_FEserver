@@ -1,24 +1,62 @@
-import React, { useRef, useState } from 'react';
-import { Animated, View } from 'react-native';
-import { pick, types } from '@react-native-documents/picker';
+import React, { useMemo, useRef, useState } from 'react';
+import {
+  Animated,
+  NativeModules,
+  PermissionsAndroid,
+  Platform,
+  Pressable,
+  View,
+} from 'react-native';
 import type { DocumentPickerResponse } from '@react-native-documents/picker';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import axios, { isCancel } from 'axios';
+import type { Asset } from 'react-native-image-picker';
+import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import axios from 'axios';
 
 import { ChatDrawer } from '@components/Chat/ChatDrawer';
 import { ChatInputArea } from '@components/Chat/ChatInputArea';
 import { ChatMessageList } from '@components/Chat/ChatMessageList';
 import { ChatbotHeader } from '@components/Chat/ChatbotHeader';
 import { ChatSuggestions } from '@components/Chat/ChatSuggestions';
-import { ChatbotStackParamList } from '@navigation/AppStack/ChatbotStack';
 
 import styles from './styles';
-import { ChatMessage, ChatSuggestion } from './Chatbot.types';
+import { ChatHistoryItem, ChatMessage, ChatSuggestion } from './Chatbot.types';
 
 const DRAWER_WIDTH = 280;
 
 const MIN_INTERVAL_MS = 2000;
+
+const hasImagePickerModule = (): boolean => {
+  const modules = NativeModules || {};
+  if (modules.ImagePickerManager || modules.RNCImagePicker) {
+    return true;
+  }
+
+  return (
+    typeof launchCamera === 'function' ||
+    typeof launchImageLibrary === 'function'
+  );
+};
+
+const requestAndroidPermission = async (
+  permission: string,
+  rationale: any,
+): Promise<boolean> => {
+  if (Platform.OS !== 'android') return true;
+
+  try {
+    const granted = await PermissionsAndroid.check(permission as any);
+    if (granted) return true;
+
+    const result = await PermissionsAndroid.request(
+      permission as any,
+      rationale,
+    );
+    return result === PermissionsAndroid.RESULTS.GRANTED;
+  } catch (error) {
+    console.warn('Permission request failed', error);
+    return false;
+  }
+};
 
 // ====== GROQ API KEY ======
 // TODO: DÁN KEY GROQ CỦA BẠN VÀO ĐÂY (ví dụ: gsk_xxx)
@@ -42,24 +80,89 @@ const callGroq = async (payload: any) => {
   return res;
 };
 
+const INITIAL_CHAT_HISTORY: ChatHistoryItem[] = [
+  {
+    id: 'chat-1',
+    title: 'Theo dõi nhịp tim',
+    updatedAt: '2024-09-14T10:30:00.000Z',
+    messages: [
+      {
+        role: 'assistant',
+        content:
+          'Nhịp tim của bạn đang ổn định ở mức 78 BPM. Bạn có muốn kiểm tra xu hướng trong tuần không?',
+      },
+      {
+        role: 'user',
+        content: 'Tuần này tôi tập 3 buổi cardio, nhịp tim có ổn không?',
+      },
+    ],
+  },
+  {
+    id: 'chat-2',
+    title: 'Gợi ý bài tập',
+    updatedAt: '2024-09-13T15:45:00.000Z',
+    messages: [
+      {
+        role: 'assistant',
+        content: 'Tôi có thể gợi ý bài tập nhẹ 20 phút giúp cải thiện sức bền.',
+      },
+      {
+        role: 'user',
+        content: 'Gợi ý bài tập nhẹ giúp thư giãn buổi tối.',
+      },
+    ],
+  },
+  {
+    id: 'chat-3',
+    title: 'Theo dõi giấc ngủ',
+    updatedAt: '2024-09-12T21:10:00.000Z',
+    messages: [
+      {
+        role: 'assistant',
+        content:
+          'Bạn ngủ trung bình 7 giờ mỗi đêm. Tôi có thể nhắc bạn tắt màn hình sớm hơn 30 phút.',
+      },
+      {
+        role: 'user',
+        content: 'Tuần này tôi ngủ có đủ không?',
+      },
+    ],
+  },
+];
+
+const sortHistories = (histories: ChatHistoryItem[]): ChatHistoryItem[] =>
+  [...histories].sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+  );
+
 const ChatbotScreen: React.FC = () => {
+  const initialHistories = useMemo(
+    () => sortHistories(INITIAL_CHAT_HISTORY),
+    [],
+  );
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [isAttachmentMenuVisible, setIsAttachmentMenuVisible] = useState(false);
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<DocumentPickerResponse[]>(
     [],
   );
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      role: 'assistant',
-      content:
-        "Hi there! I am your AI health assistant. Based on today's data, your heart rate is quite stable (78 BPM).",
-    },
-  ]);
+  const [chatHistories, setChatHistories] =
+    useState<ChatHistoryItem[]>(initialHistories);
+  const [activeHistoryId, setActiveHistoryId] = useState<string>(
+    initialHistories[0]?.id || '',
+  );
+  const [messages, setMessages] = useState<ChatMessage[]>(
+    initialHistories[0]?.messages || [
+      {
+        role: 'assistant',
+        content:
+          "Hi there! I am your AI health assistant. Based on today's data, your heart rate is quite stable (78 BPM).",
+      },
+    ],
+  );
 
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
-  const navigation =
-    useNavigation<NativeStackNavigationProp<ChatbotStackParamList>>();
 
   const lastRequestTsRef = useRef<number>(0);
 
@@ -98,35 +201,261 @@ const ChatbotScreen: React.FC = () => {
     return `${mb.toFixed(2)} MB`;
   };
 
-  const handleAttachFile = async (): Promise<void> => {
-    if (isLoading) return;
+  const updateActiveHistoryMessages = (
+    updatedMessages: ChatMessage[],
+  ): void => {
+    setMessages(updatedMessages);
+
+    if (!activeHistoryId) return;
+
+    setChatHistories(prev =>
+      sortHistories(
+        prev.map(history =>
+          history.id === activeHistoryId
+            ? {
+                ...history,
+                messages: updatedMessages,
+                updatedAt: new Date().toISOString(),
+              }
+            : history,
+        ),
+      ),
+    );
+  };
+
+  const assetsToAttachments = (assets: Asset[]): DocumentPickerResponse[] =>
+    assets
+      .filter(asset => asset.uri)
+      .map(asset => ({
+        uri: asset.uri ?? '',
+        name: asset.fileName ?? 'photo.jpg',
+        error: null,
+        size: asset.fileSize ?? null,
+        type: asset.type ?? 'image/jpeg',
+        nativeType: asset.type ?? null,
+        isVirtual: false,
+        convertibleToMimeTypes: null,
+        hasRequestedType: true,
+        fileCopyUri: null,
+      }));
+
+  const showPickerError = (title: string, description?: string): void => {
+    updateActiveHistoryMessages([
+      ...messages,
+      {
+        role: 'assistant',
+        content: `${title}. ${
+          description || 'Vui lòng kiểm tra quyền truy cập và thử lại.'
+        }`,
+      },
+    ]);
+  };
+
+  const ensureCameraPermission = async (): Promise<boolean> => {
+    const cameraGranted = await requestAndroidPermission(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+      {
+        title: 'Quyền truy cập camera',
+        message: 'Ứng dụng cần quyền truy cập camera để chụp ảnh.',
+        buttonPositive: 'Đồng ý',
+        buttonNegative: 'Từ chối',
+      },
+    );
+
+    if (!cameraGranted) return false;
+
+    // Older Android versions require storage permission to save the taken photo
+    if (Platform.OS === 'android' && Platform.Version < 33) {
+      const writeGranted = await requestAndroidPermission(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: 'Quyền lưu ảnh',
+          message: 'Ứng dụng cần quyền lưu ảnh vừa chụp vào thư viện.',
+          buttonPositive: 'Đồng ý',
+          buttonNegative: 'Từ chối',
+        },
+      );
+
+      return writeGranted;
+    }
+
+    return true;
+  };
+
+  const ensureMediaPermission = async (): Promise<boolean> => {
+    if (Platform.OS !== 'android') return true;
+
+    const permissions = (
+      Platform.Version >= 33
+        ? [PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES]
+        : [
+            PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          ]
+    ).filter(Boolean);
+
+    if (permissions.length === 0) return true;
 
     try {
-      const results = await pick({
-        allowMultiSelection: true,
-        type: [types.allFiles],
+      const alreadyGranted = await Promise.all(
+        permissions.map(permission =>
+          PermissionsAndroid.check(permission as any),
+        ),
+      );
+
+      if (alreadyGranted.every(Boolean)) return true;
+      const results = await PermissionsAndroid.requestMultiple(
+        permissions as any,
+      );
+
+      return permissions.every(
+        key => results[key] === PermissionsAndroid.RESULTS.GRANTED,
+      );
+    } catch (error) {
+      console.warn('Permission request failed', error);
+      return false;
+    }
+  };
+
+  const handleTakePhoto = async (): Promise<void> => {
+    setIsAttachmentMenuVisible(false);
+
+    if (!hasImagePickerModule()) {
+      showPickerError(
+        'Không thể mở camera',
+        'Thư viện chọn ảnh chưa được cấu hình trên thiết bị. Hãy cài đặt native module react-native-image-picker (android/ios) và chạy lại ứng dụng.',
+      );
+      return;
+    }
+
+    const hasCameraAccess = await ensureCameraPermission();
+    if (!hasCameraAccess) {
+      showPickerError(
+        'Không thể mở camera',
+        'Quyền truy cập camera bị từ chối. Hãy cấp quyền trong phần Cài đặt và thử lại.',
+      );
+      return;
+    }
+
+    try {
+      const result = await launchCamera({
+        mediaType: 'photo',
+        saveToPhotos: true,
       });
 
-      if (results?.length) {
-        setAttachedFiles(prev => [...prev, ...results]);
-      }
-    } catch (err) {
-      if (isCancel(err)) return;
+      if (result.didCancel) return;
 
-      console.error('DocumentPicker error:', err);
-      setMessages(prev => [
-        ...prev,
-        {
-          role: 'assistant',
-          content:
-            'Không thể mở trình chọn tệp. Vui lòng kiểm tra quyền truy cập bộ nhớ và thử lại.',
-        },
-      ]);
+      if (result.errorCode) {
+        showPickerError('Không thể mở camera', result.errorMessage);
+        return;
+      }
+
+      if (result.assets?.length) {
+        setAttachedFiles(prev => [
+          ...prev,
+          ...assetsToAttachments(result.assets ?? []),
+        ]);
+      }
+    } catch (error) {
+      showPickerError(
+        'Không thể mở camera',
+        error instanceof Error
+          ? error.message
+          : 'Thư viện chọn ảnh chưa được cài đặt hoặc chưa liên kết.',
+      );
     }
+  };
+
+  const handleSelectPhotoFromLibrary = async (): Promise<void> => {
+    setIsAttachmentMenuVisible(false);
+
+    if (!hasImagePickerModule()) {
+      showPickerError(
+        'Không thể mở thư viện ảnh',
+        'Thư viện chọn ảnh chưa được cấu hình trên thiết bị. Hãy cài đặt native module react-native-image-picker (android/ios) và chạy lại ứng dụng.',
+      );
+      return;
+    }
+
+    const hasMediaAccess = await ensureMediaPermission();
+    if (!hasMediaAccess) {
+      showPickerError(
+        'Không thể mở thư viện ảnh',
+        'Quyền truy cập thư viện ảnh bị từ chối. Hãy cấp quyền trong phần Cài đặt và thử lại.',
+      );
+      return;
+    }
+
+    try {
+      const result = await launchImageLibrary({
+        mediaType: 'photo',
+        selectionLimit: 0,
+      });
+
+      if (result.didCancel) return;
+
+      if (result.errorCode) {
+        showPickerError('Không thể mở thư viện ảnh', result.errorMessage);
+        return;
+      }
+
+      if (result.assets?.length) {
+        setAttachedFiles(prev => [
+          ...prev,
+          ...assetsToAttachments(result.assets ?? []),
+        ]);
+      }
+    } catch (error) {
+      showPickerError(
+        'Không thể mở thư viện ảnh',
+        error instanceof Error
+          ? error.message
+          : 'Thư viện chọn ảnh chưa được cài đặt hoặc chưa liên kết.',
+      );
+    }
+  };
+
+  const handleToggleAttachmentMenu = (): void => {
+    if (isLoading) return;
+    setIsAttachmentMenuVisible(prev => !prev);
+  };
+
+  const handleCloseAttachmentMenu = (): void => {
+    setIsAttachmentMenuVisible(false);
   };
 
   const removeAttachment = (uri: string): void => {
     setAttachedFiles(prev => prev.filter(file => file.uri !== uri));
+  };
+
+  const handleSelectHistory = (historyId: string): void => {
+    const selectedHistory = chatHistories.find(
+      history => history.id === historyId,
+    );
+    if (!selectedHistory) return;
+
+    setActiveHistoryId(historyId);
+    setMessages(selectedHistory.messages);
+  };
+
+  const handleCreateNewConversation = (): void => {
+    const now = new Date();
+    const newHistory: ChatHistoryItem = {
+      id: `chat-${now.getTime()}`,
+      title: `Cuộc trò chuyện mới ${chatHistories.length + 1}`,
+      updatedAt: now.toISOString(),
+      messages: [
+        {
+          role: 'assistant',
+          content:
+            'Xin chào! Tôi có thể hỗ trợ bạn theo dõi sức khỏe. Bạn muốn hỏi điều gì?',
+        },
+      ],
+    };
+
+    setChatHistories(prev => sortHistories([newHistory, ...prev]));
+    setActiveHistoryId(newHistory.id);
+    setMessages(newHistory.messages);
   };
 
   const handleSendMessage = async (): Promise<void> => {
@@ -139,8 +468,8 @@ const ChatbotScreen: React.FC = () => {
     // throttle gửi quá nhanh
     const now = Date.now();
     if (now - lastRequestTsRef.current < MIN_INTERVAL_MS) {
-      setMessages(prev => [
-        ...prev,
+      updateActiveHistoryMessages([
+        ...messages,
         {
           role: 'assistant',
           content: 'Bạn đang gửi quá nhanh, vui lòng đợi một chút rồi thử lại.',
@@ -164,13 +493,15 @@ const ChatbotScreen: React.FC = () => {
       role: 'user',
       content: `${message.trim()}${attachmentText}`.trim(),
     };
-    setMessages(prev => [...prev, newMessage]);
+    const updatedMessages = [...messages, newMessage];
+
+    updateActiveHistoryMessages(updatedMessages);
     setMessage('');
     setAttachedFiles([]);
     setIsLoading(true);
 
     try {
-      const recentMessages = messages.slice(-10);
+      const recentMessages = updatedMessages.slice(-10);
 
       const payload = {
         // Model trên Groq – Llama 3, 8B, context 8K
@@ -189,7 +520,12 @@ const ChatbotScreen: React.FC = () => {
       const response = await callGroq(payload);
       const aiReply: string = response.data.choices[0].message.content;
 
-      setMessages(prev => [...prev, { role: 'assistant', content: aiReply }]);
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: aiReply,
+      };
+
+      updateActiveHistoryMessages([...updatedMessages, assistantMessage]);
     } catch (error: any) {
       console.error(
         'Groq error:',
@@ -226,8 +562,8 @@ const ChatbotScreen: React.FC = () => {
         errorMessage = `Lỗi mạng: ${error.message}`;
       }
 
-      setMessages(prev => [
-        ...prev,
+      updateActiveHistoryMessages([
+        ...updatedMessages,
         { role: 'assistant', content: errorMessage },
       ]);
     } finally {
@@ -256,6 +592,13 @@ const ChatbotScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
+      {isAttachmentMenuVisible && (
+        <Pressable
+          style={styles.attachmentBackdrop}
+          onPress={handleCloseAttachmentMenu}
+        />
+      )}
+
       <ChatbotHeader isLoading={isLoading} onMenuPress={openDrawer} />
 
       <ChatMessageList messages={messages} />
@@ -269,9 +612,12 @@ const ChatbotScreen: React.FC = () => {
         message={message}
         attachedFiles={attachedFiles}
         isLoading={isLoading}
+        attachmentMenuVisible={isAttachmentMenuVisible}
         formatFileSize={formatFileSize}
         onChangeMessage={setMessage}
-        onAttachFile={handleAttachFile}
+        onToggleAttachmentMenu={handleToggleAttachmentMenu}
+        onTakePhoto={handleTakePhoto}
+        onSelectPhoto={handleSelectPhotoFromLibrary}
         onRemoveAttachment={removeAttachment}
         onSend={handleSendMessage}
       />
@@ -279,11 +625,10 @@ const ChatbotScreen: React.FC = () => {
       <ChatDrawer
         visible={drawerVisible}
         drawerAnim={drawerAnim}
+        histories={chatHistories}
         onClose={closeDrawer}
-        onNewConversation={() => setMessages([])}
-        onNavigateHistory={() =>
-          navigation.navigate('HistoryChat' as keyof ChatbotStackParamList)
-        }
+        onNewConversation={handleCreateNewConversation}
+        onSelectHistory={handleSelectHistory}
       />
     </View>
   );

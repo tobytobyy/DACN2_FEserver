@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   note: {
     fontSize: theme.fonts.size.xs,
     fontFamily: theme.fonts.poppins.regular,
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     marginTop: theme.spacing.md,
     fontStyle: 'italic',
     textAlign: 'center',

@@ -1,3 +1,4 @@
+import { theme } from '@assets/theme';
 import { StyleSheet } from 'react-native';
 
 const styles = StyleSheet.create({
@@ -53,15 +54,37 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  /* ================= Drawer Items ================= */
+  /* ================= History Items ================= */
 
-  /** Item trong drawer (button option) */
-  drawerItem: {
+  historyList: {
+    flex: 1,
+  },
+
+  historyListContent: {
+    paddingBottom: 12,
+  },
+
+  historyItem: {
     paddingVertical: 14,
     paddingHorizontal: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
     borderRadius: 12,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+
+  historyTitle: {
+    fontSize: 16,
+    color: '#0F172A',
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+
+  historyPreview: {
+    fontSize: 13,
+    color: '#475569',
+    lineHeight: 18,
   },
 
   /** Style khi item được nhấn giữ */
@@ -73,8 +96,22 @@ const styles = StyleSheet.create({
   /** Text trong drawer item */
   drawerItemText: {
     fontSize: 16,
-    color: '#334155',
+    color: '#FFFFFF',
     fontWeight: '600',
+    textAlign: 'center',
+  },
+
+  newChatButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    backgroundColor: theme.colors.primary,
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 30,
+  },
+
+  newChatButtonPressed: {
+    backgroundColor: '#0284C7',
   },
 });
 

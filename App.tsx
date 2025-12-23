@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AuthProvider from './src/context/AuthContext';
@@ -8,8 +8,12 @@ import RootNavigator from './src/navigation/RootNavigator';
 
 // Import WaterProvider
 import { WaterProvider } from './src/context/WaterContext';
+import { NativeModules } from 'react-native';
 
 const App = () => {
+  useEffect(() => {
+    console.log('ImagePicker module:', NativeModules.ImagePicker);
+  }, []);
   return (
     <AuthProvider>
       <SafeAreaProvider>
