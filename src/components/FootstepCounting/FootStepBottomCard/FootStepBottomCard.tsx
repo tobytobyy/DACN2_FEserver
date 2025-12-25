@@ -96,24 +96,53 @@ const FootStepBottomCard: React.FC<Props> = ({
 
         {/* Trạng thái đang tracking */}
         {isTracking && !isPaused && !hasFinished && (
-          <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={styles.pauseButton}
-              onPress={onPause}
-              disabled={isDisabled}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.startButtonIcon}>⏸</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={onCancel}
-              disabled={isDisabled}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.startButtonIcon}>✖</Text>
-            </TouchableOpacity>
-          </View>
+          <>
+            <Text style={styles.distanceLabel}>DISTANCE</Text>
+            <View style={styles.distanceRow}>
+              <Text style={styles.distanceValue}>{distanceText}</Text>
+              <Text style={styles.distanceUnit}>km</Text>
+            </View>
+
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Text style={styles.statLabel}>TIME</Text>
+                <Text style={styles.statValue}>{timeText}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <View style={styles.statLabelRow}>
+                  <FootstepIcon width={14} height={14} />
+                  <Text style={styles.statLabelColored}>FOOTSTEP</Text>
+                </View>
+                <Text style={styles.statValue}>{steps}</Text>
+              </View>
+              <View style={styles.statItem}>
+                <View style={styles.statLabelRow}>
+                  <FireIcon width={14} height={14} />
+                  <Text style={styles.statLabelCalo}>CALO</Text>
+                </View>
+                <Text style={styles.statValue}>{calories}</Text>
+              </View>
+            </View>
+
+            <View style={styles.actionRow}>
+              <TouchableOpacity
+                style={styles.pauseButton}
+                onPress={onPause}
+                disabled={isDisabled}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.startButtonIcon}>⏸</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={onCancel}
+                disabled={isDisabled}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.startButtonIcon}>✖</Text>
+              </TouchableOpacity>
+            </View>
+          </>
         )}
 
         {/* Trạng thái paused hoặc finished */}
