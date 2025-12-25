@@ -10,7 +10,7 @@ import CaloriesScanScreen from '@screens/CaloriesScan/CaloriesScanScreen';
 import FootStepCountingScreen from '@screens/FootStepCounting/FootStepCountingScreen';
 import SleepTrackingScreen from '@screens/SleepTracking/SleepTrackingScreen';
 import WaterTrackerScreen from '@screens/WaterTracker/WaterTrackerScreen';
-import FootStepHistoryUI from '@components/FootstepCounting/FootStepHistory/FootStepHistoryUI';
+import FootStepHistoryUI from '@screens/FootStepCounting/FootStepHistory/FootStepHistoryUI';
 
 /* ======================================================
  * 1. Định nghĩa Param List cho Stack
