@@ -30,6 +30,7 @@ interface ButtonProps {
 
   /** Bo góc */
   borderRadius?: number;
+  disabled?: boolean;
 
   /** Callback khi bấm */
   onPress?: () => void;

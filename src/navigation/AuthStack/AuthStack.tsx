@@ -18,21 +18,11 @@ import AboutYouPage2 from '@screens/AuthScreen/AboutYouPage2/AboutYouPage2';
 export type AuthStackParamList = {
   /** Màn hình login chính */
   LogIn: undefined;
-
-  /**
-   * Màn nhập thông tin đăng nhập (email/phone)
-   * method quyết định UI hiển thị & validate
-   */
-  CredentialInput: {
-    method: 'email' | 'phone';
-  };
-
-  /**
-   * Màn nhập OTP xác thực
-   * method dùng để hiển thị text phù hợp (OTP email/OTP phone)
-   */
+  CredentialInput: { method: 'email' | 'phone' };
   OtpVerification: {
     method: 'email' | 'phone';
+    otpRequestId: string;
+    identifier: string;
   };
 
   /** Onboarding thông tin cơ bản - trang 1 */

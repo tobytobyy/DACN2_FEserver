@@ -1,86 +1,66 @@
 import { StyleSheet } from 'react-native';
 import { theme } from '@assets/theme';
 
-const styles = StyleSheet.create({
-  /* ================= Map Container ================= */
-
-  /** Container chính bao gồm header + map */
+export const styles = StyleSheet.create({
   mapContainer: {
-    flex: 1.1,
+    flex: 1.2,
+    height: '40%',
     backgroundColor: '#E5E7EB',
     paddingHorizontal: theme.spacing.md,
     paddingTop: theme.spacing.sm,
   },
-
-  /* ================= Header ================= */
-
-  /** Header phía trên map (back / GPS / setting) */
   topHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
-
-  /** Button icon hình tròn (back / setting) */
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
   circleIconButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.white,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
-
-    // Shadow Android
+    // shadow cho nổi bật trên map
     elevation: 3,
-
-    // Shadow iOS
     shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
-
-  /** Badge hiển thị trạng thái GPS */
+  centerMap: {
+    fontSize: 12,
+  },
   gpsBadge: {
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.xs,
     borderRadius: 999,
     backgroundColor: theme.colors.white,
-    elevation: 2,
   },
-
-  /** Text trong GPS badge */
   gpsText: {
     fontSize: theme.fonts.size.xs,
     fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.text,
   },
-
-  /* ================= Map Area ================= */
-
-  /** Wrapper chứa WebView map */
   mapWrapper: {
     flex: 1,
     marginTop: theme.spacing.lg,
     borderRadius: 24,
-    overflow: 'hidden', // bo góc cho WebView
-    backgroundColor: '#E5E5E5',
+    overflow: 'hidden',
   },
-
-  /* ================= Fallback ================= */
-
-  /** Container hiển thị khi map lỗi */
-  mapFallback: {
+  mapView: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
-
-  /** Text thông báo lỗi map */
-  mapFallbackText: {
-    color: '#444',
-    fontSize: 14,
+  walkerWrapper: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4,
   },
 });
-
-export default styles;

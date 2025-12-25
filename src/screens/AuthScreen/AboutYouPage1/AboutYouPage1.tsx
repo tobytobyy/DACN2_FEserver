@@ -1,6 +1,5 @@
-import React, { useMemo, useState } from 'react';
+import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import HeartPulse from '@assets/icons/svgs/heart_pulse.svg';
 import Account from '@assets/icons/svgs/account_circle.svg';
@@ -10,29 +9,30 @@ import { styles } from './styles';
 
 import FieldTrigger from '@components/Auth/FieldTrigger/FieldTrigger';
 import AboutYouModal from '@components/Auth/AboutYouModal/AboutYouModal';
+import { useAboutYouPage1Logic } from './index';
 
 const AboutYouPage1 = () => {
-  const navigation = useNavigation();
-  const [loading] = useState(false);
-
-  const [gender, setGender] = useState('');
-  const [birthday, setBirthday] = useState('');
-  const [weight, setWeight] = useState('');
-  const [height, setHeight] = useState('');
-  const [weightUnit, setWeightUnit] = useState('kg');
-  const [heightUnit, setHeightUnit] = useState('cm');
-  const [activeField, setActiveField] = useState<
-    'gender' | 'birthday' | 'weight' | 'height' | null
-  >(null);
-  const [openUnitPicker, setOpenUnitPicker] = useState<
-    'weight' | 'height' | null
-  >(null);
-
-  const formattedBirthday = useMemo(() => {
-    if (!birthday) return 'Select your birthday';
-    const [y, m, d] = birthday.split('-');
-    return `${d}/${m}/${y}`;
-  }, [birthday]);
+  const {
+    loading,
+    gender,
+    birthday,
+    weight,
+    height,
+    weightUnit,
+    heightUnit,
+    activeField,
+    openUnitPicker,
+    formattedBirthday,
+    setGender,
+    setBirthday,
+    setWeight,
+    setHeight,
+    setWeightUnit,
+    setHeightUnit,
+    setActiveField,
+    setOpenUnitPicker,
+    handleNext,
+  } = useAboutYouPage1Logic();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -88,11 +88,7 @@ const AboutYouPage1 = () => {
         </View>
 
         <View style={styles.buttonWrapper}>
-          <Button
-            title="Next"
-            loading={loading}
-            onPress={() => navigation.navigate('AboutYouPage2' as never)}
-          />
+          <Button title="Next" loading={loading} onPress={handleNext} />
         </View>
       </ScrollView>
 
