@@ -14,7 +14,6 @@ const formatDuration = (start: string, end: string) => {
   const seconds = Math.floor((diffMs % 60000) / 1000);
   return `${minutes} phút ${seconds} giây`;
 };
-
 // Ước lượng bước chân từ quãng đường (nếu DB chưa có)
 const estimateSteps = (distanceKm: number, strideLengthM = 0.8): number => {
   const distanceM = distanceKm * 1000;
@@ -25,7 +24,6 @@ const estimateSteps = (distanceKm: number, strideLengthM = 0.8): number => {
 const estimateCalories = (distanceKm: number, kcalPerKm = 50): number => {
   return Math.round(distanceKm * kcalPerKm);
 };
-
 const FootStepHistoryUI: React.FC = () => {
   const { workouts, goBack } = useFootStepHistory();
 
