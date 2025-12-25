@@ -61,7 +61,7 @@ const requestAndroidPermission = async (
 // ====== GROQ API KEY ======
 // TODO: DÁN KEY GROQ CỦA BẠN VÀO ĐÂY (ví dụ: gsk_xxx)
 //
-// ⚠️ Đừng commit file này lên GitHub public nếu còn key thật.
+//  Đừng commit file này lên GitHub public nếu còn key thật.
 const GROQ_API_KEY = '';
 
 // Hàm gọi Groq (OpenAI-compatible endpoint)

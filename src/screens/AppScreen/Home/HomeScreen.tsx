@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, ScrollView, StatusBar, StyleSheet } from 'react-native';
 
 import HeaderSection from '@components/Home/HeaderSection/HeaderSection';
@@ -6,8 +6,23 @@ import ActivityCard from '@components/Home/ActivityCard/ActivityCard';
 import HeartSleepGrid from '@components/Home/HeartSleepGrid/HeartSleepGrid';
 import WaterCard from '@components/Home/WaterCard/WaterCard';
 
+// Giả sử bạn có hàm gọi API /auth/me
+import { getUserProfile } from '../../../components/Home/HeaderSection/types';
+
 const HomeScreen: React.FC = () => {
-  // WaterCard now manages its own state via hook; no local water state needed
+  const [email, setEmail] = useState<string>('');
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const userData = await getUserProfile(); // gọi API /auth/me
+        setEmail(userData?.primaryEmail ?? '');
+      } catch (error) {
+        console.log('Error fetching user profile:', error);
+      }
+    };
+    fetchUser();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -16,7 +31,8 @@ const HomeScreen: React.FC = () => {
       {/* Header nằm tuyệt đối ở trên cùng để làm nền */}
       <View style={styles.headerContainer}>
         <HeaderSection
-          user={{ name: 'Nguyen Tien Dat', greeting: 'Welcome back!' }}
+          email={email}
+          greeting="Welcome!"
           onPressAvatar={() => {}}
         />
       </View>
