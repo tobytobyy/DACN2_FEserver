@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Alert,
   Image,
   StatusBar,
   TouchableOpacity,
@@ -16,7 +17,10 @@ import type { BrowserStackParamList } from '@navigation/AppStack/BrowserStack';
 import { styles, FRAME_SIZE } from './styles';
 import { ScanOverlay } from '@components/CaloriesScan/ScanOverlay/ScanOverlay';
 import { ScanControls } from '@components/CaloriesScan/ScanControls/ScanControls';
-import { ResultSheet } from '@components/CaloriesScan/ResultSheet/ResultSheet';
+import {
+  ResultSheet,
+  FoodAnalysis,
+} from '@components/CaloriesScan/ResultSheet/ResultSheet';
 
 type Props = NativeStackScreenProps<BrowserStackParamList, 'AiCaloriesScan'>;
 
@@ -28,7 +32,10 @@ const CaloriesScanScreen: React.FC<Props> = ({ navigation }) => {
 
   const [isScanning, setIsScanning] = useState(false);
   const [showResult, setShowResult] = useState(false);
+  const [resultMode, setResultMode] = useState<'high' | 'medium'>('high');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [result, setResult] = useState<FoodAnalysis | null>(null);
+  const [candidates, setCandidates] = useState<FoodAnalysis[]>([]);
 
   const scanLineAnim = useRef(new Animated.Value(0)).current;
 
@@ -74,13 +81,82 @@ const CaloriesScanScreen: React.FC<Props> = ({ navigation }) => {
 
   /* ---------------- Actions ---------------- */
 
+  const mockResult: FoodAnalysis = {
+    id: '1',
+    name: 'Avocado Toast',
+    calories: 320,
+    badge: 'Độ tin cậy cao',
+    macros: [
+      { label: 'Protein', value: '12g', color: '#0EA5E9', percentage: 40 },
+      { label: 'Carbs', value: '45g', color: '#F59E0B', percentage: 60 },
+      { label: 'Fat', value: '18g', color: '#EF4444', percentage: 30 },
+    ],
+    note: 'Món ăn giàu chất béo lành mạnh và chất xơ.',
+  };
+
+  const mockCandidates: FoodAnalysis[] = [
+    {
+      id: '2',
+      name: 'Bánh mì bơ trứng',
+      calories: 310,
+      badge: 'Tin cậy 78%',
+      macros: [
+        { label: 'Protein', value: '14g', color: '#0EA5E9', percentage: 45 },
+        { label: 'Carbs', value: '38g', color: '#F59E0B', percentage: 55 },
+        { label: 'Fat', value: '17g', color: '#EF4444', percentage: 35 },
+      ],
+      note: 'Có thể là biến thể với trứng luộc.',
+    },
+    {
+      id: '3',
+      name: 'Bánh mì bơ cà chua',
+      calories: 300,
+      badge: 'Tin cậy 76%',
+      macros: [
+        { label: 'Protein', value: '10g', color: '#0EA5E9', percentage: 32 },
+        { label: 'Carbs', value: '44g', color: '#F59E0B', percentage: 62 },
+        { label: 'Fat', value: '15g', color: '#EF4444', percentage: 28 },
+      ],
+      note: 'Thêm cà chua và rau xanh.',
+    },
+    {
+      id: '4',
+      name: 'Bánh mì bơ thuần chay',
+      calories: 290,
+      badge: 'Tin cậy 74%',
+      macros: [
+        { label: 'Protein', value: '9g', color: '#0EA5E9', percentage: 30 },
+        { label: 'Carbs', value: '46g', color: '#F59E0B', percentage: 64 },
+        { label: 'Fat', value: '13g', color: '#EF4444', percentage: 26 },
+      ],
+      note: 'Không có trứng hay sản phẩm từ sữa.',
+    },
+  ];
+
   const startScan = () => {
     setIsScanning(true);
     setCapturedImage(DUMMY_IMAGE);
 
     setTimeout(() => {
       setIsScanning(false);
-      setShowResult(true);
+      const confidenceRoll = Math.random();
+      if (confidenceRoll > 0.6) {
+        setResultMode('high');
+        setResult(mockResult);
+        setShowResult(true);
+      } else if (confidenceRoll > 0.2) {
+        setResultMode('medium');
+        setCandidates(mockCandidates);
+        setResult(null);
+        setShowResult(true);
+      } else {
+        setShowResult(false);
+        setCapturedImage(null);
+        Alert.alert(
+          'Không nhận diện được',
+          'Vật thể không phải món ăn. Vui lòng đưa món ăn vào khung và thử lại.',
+        );
+      }
     }, 3000);
   };
 
@@ -88,6 +164,12 @@ const CaloriesScanScreen: React.FC<Props> = ({ navigation }) => {
     setIsScanning(false);
     setShowResult(false);
     setCapturedImage(null);
+    setResult(null);
+    setCandidates([]);
+  };
+
+  const handleSelectCandidate = (food: FoodAnalysis) => {
+    setResult(food);
   };
 
   /* ---------------- Render ---------------- */
@@ -175,6 +257,10 @@ const CaloriesScanScreen: React.FC<Props> = ({ navigation }) => {
           <ResultSheet
             bottomInset={Math.max(insets.bottom, theme.spacing.lg)}
             onClose={resetScan}
+            mode={resultMode}
+            result={result}
+            candidates={candidates}
+            onSelectCandidate={handleSelectCandidate}
           />
         )}
       </View>

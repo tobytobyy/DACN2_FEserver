@@ -273,6 +273,56 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
+  resultDescription: {
+    fontSize: theme.fonts.size.sm,
+    color: theme.colors.subText_1,
+    lineHeight: 20,
+    marginBottom: theme.spacing.md,
+  },
+
+  candidateList: {
+    flexDirection: 'column',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
+  },
+
+  candidateCard: {
+    padding: theme.spacing.md,
+    borderRadius: theme.spacing.md,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    backgroundColor: '#f8fafc',
+  },
+
+  candidateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+
+  candidateTitle: {
+    fontSize: theme.fonts.size.md,
+    fontWeight: theme.fonts.weight.bold,
+    color: theme.colors.text,
+  },
+
+  candidateConfidence: {
+    fontSize: theme.fonts.size.xs,
+    color: theme.colors.subText_2,
+  },
+
+  candidateMeta: {
+    fontSize: theme.fonts.size.sm,
+    color: theme.colors.subText_1,
+    marginBottom: theme.spacing.xs,
+  },
+
+  candidateNote: {
+    fontSize: theme.fonts.size.sm,
+    color: theme.colors.subText_1,
+  },
+
   closeButton: {
     padding: theme.spacing.xs,
     borderRadius: 999,
