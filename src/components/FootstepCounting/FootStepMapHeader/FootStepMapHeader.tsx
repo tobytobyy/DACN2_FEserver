@@ -43,7 +43,9 @@ const FootStepMapHeader: React.FC<
           <View
             style={[
               externalStyles.dot,
-              { backgroundColor: currentLat ? '#4ADE80' : '#F87171' },
+              currentLat
+                ? externalStyles.currentActive
+                : externalStyles.currentSearch,
             ]}
           />
           <Text style={externalStyles.gpsText}>
@@ -57,7 +59,7 @@ const FootStepMapHeader: React.FC<
             if (currentLat && currentLng) centerMap(currentLat, currentLng);
           }}
         >
-          <Text style={{ fontSize: 16 }}>🎯</Text>
+          <Text style={externalStyles.touch}>🎯</Text>
         </TouchableOpacity>
       </View>
 

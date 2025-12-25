@@ -56,6 +56,10 @@ const FootStepCountingScreen: React.FC = () => {
     }
   };
 
+  const handleViewHistory = () => {
+    navigation.navigate('WorkoutHistory'); // 👈 chuyển sang màn hình lịch sử
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <FootStepMapHeader
@@ -81,6 +85,7 @@ const FootStepCountingScreen: React.FC = () => {
         onCancel={handleCancel}
         onReset={reset}
         onSave={handleSaveActivity}
+        onViewHistory={handleViewHistory} // 👈 truyền prop mới
       />
     </SafeAreaView>
   );

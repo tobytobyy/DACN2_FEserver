@@ -142,6 +142,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
 
+  /* ================= History Button ================= */
+  historyButtonWrapper: {
+    marginTop: theme.spacing.md,
+    alignItems: 'center',
+  },
+  historyButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 22,
+    backgroundColor: theme.colors.blue, // màu khác để phân biệt
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: theme.spacing.sm,
+  },
+  historyButtonText: {
+    color: theme.colors.white,
+    fontSize: theme.fonts.size.sm,
+    fontFamily: theme.fonts.poppins.bold,
+  },
+
   /* ================= Result ================= */
   resultTopRow: {
     marginBottom: theme.spacing.sm,

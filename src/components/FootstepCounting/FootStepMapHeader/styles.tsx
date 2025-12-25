@@ -14,6 +14,15 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  touch: {
+    fontSize: 16,
+  },
+  currentActive: {
+    backgroundColor: '#4ADE80',
+  },
+  currentSearch: {
+    backgroundColor: '#F87171',
+  },
   dot: {
     width: 8,
     height: 8,

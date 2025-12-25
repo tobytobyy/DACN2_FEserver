@@ -23,6 +23,7 @@ type Props = {
   onCancel: () => void;
   onReset: () => void;
   onSave: () => void;
+  onViewHistory: () => void;
 };
 
 const FootStepBottomCard: React.FC<Props> = ({
@@ -41,6 +42,7 @@ const FootStepBottomCard: React.FC<Props> = ({
   onCancel,
   onReset,
   onSave,
+  onViewHistory,
 }) => {
   return (
     <View style={styles.bottomCard}>
@@ -89,6 +91,17 @@ const FootStepBottomCard: React.FC<Props> = ({
                 activeOpacity={0.8}
               >
                 <Text style={styles.startButtonIcon}>▶</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Nút xem lịch sử luôn hiển thị */}
+            <View style={styles.historyButtonWrapper}>
+              <TouchableOpacity
+                style={styles.historyButton}
+                onPress={onViewHistory}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.historyButtonText}>XEM LỊCH SỬ</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -198,7 +211,8 @@ const FootStepBottomCard: React.FC<Props> = ({
               </View>
 
               <View style={styles.resultActionsRow}>
-                {isPaused && (
+                {/* Resume chỉ hiện khi paused nhưng chưa finished */}
+                {isPaused && !hasFinished && (
                   <TouchableOpacity
                     style={styles.resumeButton}
                     onPress={onResume}
@@ -208,25 +222,48 @@ const FootStepBottomCard: React.FC<Props> = ({
                   </TouchableOpacity>
                 )}
 
-                <TouchableOpacity
-                  style={styles.trashButton}
-                  onPress={onReset}
-                  activeOpacity={0.8}
-                >
-                  <TrashIcon
-                    width={18}
-                    height={18}
-                    color={theme.colors.danger}
-                  />
-                </TouchableOpacity>
+                {/* Khi đã finished thì chỉ hiện nút xem lịch sử + thoát */}
+                {hasFinished ? (
+                  <>
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      activeOpacity={0.8}
+                      onPress={onViewHistory}
+                    >
+                      <Text style={styles.saveButtonText}>XEM LỊCH SỬ ĐO</Text>
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.saveButton}
-                  activeOpacity={0.8}
-                  onPress={onSave}
-                >
-                  <Text style={styles.saveButtonText}>SAVE ACTIVITY</Text>
-                </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.cancelButton}
+                      onPress={onReset}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={styles.startButtonIcon}>✖</Text>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <TouchableOpacity
+                      style={styles.trashButton}
+                      onPress={onReset}
+                      activeOpacity={0.8}
+                    >
+                      <TrashIcon
+                        width={18}
+                        height={18}
+                        color={theme.colors.danger}
+                      />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.saveButton}
+                      activeOpacity={0.8}
+                      onPress={onSave}
+                    >
+                      <Text style={styles.saveButtonText}>SAVE ACTIVITY</Text>
+                    </TouchableOpacity>
+                  </>
+                )}
               </View>
             </View>
           </>
