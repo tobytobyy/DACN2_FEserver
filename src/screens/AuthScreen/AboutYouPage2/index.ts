@@ -25,8 +25,8 @@ export function useAboutYouPage2Logic(): UseAboutYouPage2LogicReturn {
         // Cập nhật user vào context
         setUser(response.data);
 
-        // Không cần navigation ở đây, RootNavigator sẽ tự re-render
-        // vì isProfileComplete được tính toán từ user.profile
+        //  RootNavigator sẽ tự re-render
+        //isProfileComplete được tính toán từ user.profile
       }
     } catch (err: any) {
       console.error('Sync Error:', err.response?.data || err.message);

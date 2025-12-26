@@ -1,4 +1,3 @@
-// useWorkoutTracking.ts
 import { useRef, useState, useCallback } from 'react';
 import { Alert, PermissionsAndroid, Platform } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
@@ -6,8 +5,7 @@ import { workoutApi } from '../services/api';
 
 const GPS_INTERVAL_MS = 1000;
 const UI_TIMER_INTERVAL_MS = 1000;
-// Nới lỏng để ghi nhận di chuyển thực tế
-const MIN_DISTANCE_METERS = 1;
+const MIN_DISTANCE_METERS = 20;
 const MAX_ACCURACY_METERS = 50;
 
 // Chiều dài bước chân mặc định (có thể cho phép user cấu hình)

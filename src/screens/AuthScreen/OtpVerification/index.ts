@@ -19,9 +19,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '@context/UserContext';
 
 const CODE_LENGTH = 6;
-const MAX_ATTEMPTS = 5;
-const RESEND_START_SECONDS = 59;
+const MAX_ATTEMPTS = 5; //số lần thử tối đa
+const RESEND_START_SECONDS = 59; //time chờ
 
+//kiểu dữ liệu
 type MethodType = 'email' | 'phone';
 type OtpRouteProp = RouteProp<AuthStackParamList, 'OtpVerification'>;
 type NavigationProp = CompositeNavigationProp<
@@ -29,6 +30,7 @@ type NavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<RootStackParamList>
 >;
 
+//khởi tạo hook
 export function useOtpVerificationLogic() {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<OtpRouteProp>();
@@ -49,12 +51,13 @@ export function useOtpVerificationLogic() {
   const [secondsRemaining, setSecondsRemaining] =
     useState<number>(RESEND_START_SECONDS);
 
-  const inputsRef = useRef<Array<TextInput | null>>([]);
+  const inputsRef = useRef<Array<TextInput | null>>([]); //lưu tham số đến các ô nhập OTP đkhien focus
 
   useEffect(() => {
     inputsRef.current[0]?.focus();
   }, []);
 
+  //tạo focus
   useEffect(() => {
     if (secondsRemaining === 0) return;
     const timerId = setInterval(() => {
@@ -82,6 +85,7 @@ export function useOtpVerificationLogic() {
     }
   };
 
+  //Backspace
   const handleKeyPress = (
     event: NativeSyntheticEvent<TextInputKeyPressEventData>,
     index: number,
@@ -104,7 +108,7 @@ export function useOtpVerificationLogic() {
     setError(false);
     setHelperMessage(`You have ${attemptsRemaining} attempts remaining.`);
     setLoading(true);
-
+    //
     try {
       const { data } = await api.post('/auth/otp/verify', {
         otpRequestId,
@@ -145,6 +149,7 @@ export function useOtpVerificationLogic() {
     }
   };
 
+  //bấm  gửi
   const handleResend = async () => {
     if (secondsRemaining > 0) return;
 

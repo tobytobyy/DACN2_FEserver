@@ -6,10 +6,11 @@ import { AuthStackParamList } from '@navigation/AuthStack/AuthStack';
 import { api } from '../../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// Union type cho các field
+// khai báo kiểu dữ liệu
 export type FieldType = 'gender' | 'birthday' | 'weight' | 'height' | null;
 export type UnitType = 'weight' | 'height' | null;
 
+//cấu trúc dữ liệu trả về từ hook
 interface UseAboutYouPage1LogicReturn {
   navigation: NativeStackNavigationProp<AuthStackParamList>;
   loading: boolean;
@@ -33,6 +34,7 @@ interface UseAboutYouPage1LogicReturn {
   handleNext: () => Promise<void>;
 }
 
+//tạo custon hook
 export function useAboutYouPage1Logic(): UseAboutYouPage1LogicReturn {
   const navigation =
     useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
@@ -45,6 +47,7 @@ export function useAboutYouPage1Logic(): UseAboutYouPage1LogicReturn {
   const [weightUnit, setWeightUnit] = useState<string>('kg');
   const [heightUnit, setHeightUnit] = useState<string>('cm');
 
+  //state qly UI
   const [activeField, setActiveField] = useState<FieldType>(null);
   const [openUnitPicker, setOpenUnitPicker] = useState<UnitType>(null);
 
