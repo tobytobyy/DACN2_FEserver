@@ -23,6 +23,16 @@ export type FoodAnalysis = {
 
 type ResultMode = 'high' | 'medium';
 
+type Props = {
+  bottomInset: number;
+  onClose: () => void;
+  mode: ResultMode;
+  result: FoodAnalysis | null;
+  candidates?: FoodAnalysis[];
+  onSelectCandidate?: (food: FoodAnalysis) => void;
+  onAddToLog?: () => void;
+};
+
 /**
  * Props cho ResultSheet
  * - bottomInset: khoảng padding dưới (dùng cho safe area / bottom sheet)
@@ -32,14 +42,6 @@ type ResultMode = 'high' | 'medium';
  * - candidates: danh sách gợi ý khi độ tin cậy trung bình
  * - onSelectCandidate: callback khi chọn món trong danh sách gợi ý
  */
-type Props = {
-  bottomInset: number;
-  onClose: () => void;
-  mode: ResultMode;
-  result: FoodAnalysis | null;
-  candidates?: FoodAnalysis[];
-  onSelectCandidate?: (food: FoodAnalysis) => void;
-};
 
 const modeBadge: Record<ResultMode, string> = {
   high: 'Độ tin cậy cao',
@@ -64,6 +66,7 @@ export const ResultSheet: React.FC<Props> = ({
   result,
   candidates,
   onSelectCandidate,
+  onAddToLog,
 }) => {
   const isSelectionMode = mode === 'medium' && !result;
 
@@ -156,7 +159,7 @@ export const ResultSheet: React.FC<Props> = ({
             </View>
           </View>
 
-          <TouchableOpacity style={styles.addButton}>
+          <TouchableOpacity style={styles.addButton} onPress={onAddToLog}>
             <Text style={styles.addButtonText}>Thêm vào nhật ký</Text>
           </TouchableOpacity>
         </>

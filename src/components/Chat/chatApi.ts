@@ -20,13 +20,25 @@ export const fetchMessages = async (sessionId: string) => {
   );
 };
 
-export const sendMessage = async (sessionId: string, content: string) => {
+type SendMessageOpts = {
+  imageObjectKey?: string;
+  meta?: Record<string, any>;
+};
+
+export const sendMessage = async (
+  sessionId: string,
+  content: string,
+  opts?: SendMessageOpts,
+) => {
   const res = await api.post(`/chat/sessions/${sessionId}/messages`, {
     content,
+    imageObjectKey: opts?.imageObjectKey,
+    meta: opts?.meta,
   });
+
   const data = res.data?.data;
   return {
-    user: data?.usermessage,
-    assistant: data?.assistantmessage,
+    user: data?.userMessage,
+    assistant: data?.assistantMessage,
   };
 };
