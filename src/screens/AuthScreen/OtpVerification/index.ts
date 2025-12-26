@@ -5,11 +5,18 @@ import {
   NativeSyntheticEvent,
   TextInputKeyPressEventData,
 } from 'react-native';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import {
+  useNavigation,
+  useRoute,
+  CompositeNavigationProp,
+  RouteProp,
+} from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@navigation/AuthStack/AuthStack';
+import { RootStackParamList } from '@navigation/RootNavigator';
 import { api } from '../../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useUser } from '@context/UserContext';
 
 const CODE_LENGTH = 6;
 const MAX_ATTEMPTS = 5;
@@ -17,11 +24,15 @@ const RESEND_START_SECONDS = 59;
 
 type MethodType = 'email' | 'phone';
 type OtpRouteProp = RouteProp<AuthStackParamList, 'OtpVerification'>;
+type NavigationProp = CompositeNavigationProp<
+  NativeStackNavigationProp<AuthStackParamList>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 export function useOtpVerificationLogic() {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<AuthStackParamList>>();
+  const navigation = useNavigation<NavigationProp>();
   const route = useRoute<OtpRouteProp>();
+  const { setUser } = useUser();
 
   const method: MethodType = route.params?.method ?? 'email';
   const otpRequestId = route.params?.otpRequestId;
@@ -106,7 +117,18 @@ export function useOtpVerificationLogic() {
       await AsyncStorage.setItem('accessToken', data.accessToken);
       await AsyncStorage.setItem('refreshToken', data.refreshToken);
 
-      navigation.navigate('AboutYouPage1');
+      setUser({
+        id: data.userId,
+        displayIdentifier: data.displayIdentifier,
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+      });
+
+      if (data.isNewUser) {
+        navigation.navigate('AboutYouPage1');
+      } else {
+        navigation.replace('App'); // vào thẳng BottomTab
+      }
     } catch {
       const nextAttempts = attempts + 1;
       setAttempts(nextAttempts);

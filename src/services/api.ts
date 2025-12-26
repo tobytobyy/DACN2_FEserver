@@ -2,7 +2,7 @@ import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const api = axios.create({
-  baseURL: 'http://10.63.161.203:8080',
+  baseURL: 'http://192.168.1.128:8080',
   timeout: 15000,
 });
 
@@ -16,7 +16,7 @@ api.interceptors.request.use(
   },
   error => Promise.reject(error),
 );
-const USE_MOCK = false; // ← CHỈ ĐỔI DÒNG NÀY
+const USE_MOCK = false;
 
 export const workoutApi = USE_MOCK
   ? require('../screens/FootStepCounting/workoutApi.mock')

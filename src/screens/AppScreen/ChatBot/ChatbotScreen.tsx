@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   NativeModules,
@@ -10,7 +10,6 @@ import {
 import type { DocumentPickerResponse } from '@react-native-documents/picker';
 import type { Asset } from 'react-native-image-picker';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import axios from 'axios';
 
 import { ChatDrawer } from '@components/Chat/ChatDrawer';
 import { ChatInputArea } from '@components/Chat/ChatInputArea';
@@ -21,16 +20,25 @@ import { ChatSuggestions } from '@components/Chat/ChatSuggestions';
 import styles from './styles';
 import { ChatHistoryItem, ChatMessage, ChatSuggestion } from './Chatbot.types';
 
-const DRAWER_WIDTH = 280;
+// import chatApi đã kế thừa từ api.ts
+import {
+  fetchChatSessions,
+  createChatSession,
+  fetchMessages,
+  sendMessage,
+} from '@components/Chat/chatApi';
 
+const DRAWER_WIDTH = 280;
 const MIN_INTERVAL_MS = 2000;
 
+// ==================================================
+// Helpers: image picker availability & Android permissions
+// ==================================================
 const hasImagePickerModule = (): boolean => {
   const modules = NativeModules || {};
   if (modules.ImagePickerManager || modules.RNCImagePicker) {
     return true;
   }
-
   return (
     typeof launchCamera === 'function' ||
     typeof launchImageLibrary === 'function'
@@ -42,11 +50,9 @@ const requestAndroidPermission = async (
   rationale: any,
 ): Promise<boolean> => {
   if (Platform.OS !== 'android') return true;
-
   try {
     const granted = await PermissionsAndroid.check(permission as any);
     if (granted) return true;
-
     const result = await PermissionsAndroid.request(
       permission as any,
       rationale,
@@ -58,136 +64,84 @@ const requestAndroidPermission = async (
   }
 };
 
-// ====== GROQ API KEY ======
-// TODO: DÁN KEY GROQ CỦA BẠN VÀO ĐÂY (ví dụ: gsk_xxx)
-//
-//  Đừng commit file này lên GitHub public nếu còn key thật.
-const GROQ_API_KEY = '';
-
-// Hàm gọi Groq (OpenAI-compatible endpoint)
-const callGroq = async (payload: any) => {
-  const res = await axios.post(
-    'https://api.groq.com/openai/v1/chat/completions',
-    payload,
-    {
-      headers: {
-        Authorization: `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      timeout: 20000,
-    },
-  );
-  return res;
-};
-
-const INITIAL_CHAT_HISTORY: ChatHistoryItem[] = [
-  {
-    id: 'chat-1',
-    title: 'Theo dõi nhịp tim',
-    updatedAt: '2024-09-14T10:30:00.000Z',
-    messages: [
-      {
-        role: 'assistant',
-        content:
-          'Nhịp tim của bạn đang ổn định ở mức 78 BPM. Bạn có muốn kiểm tra xu hướng trong tuần không?',
-      },
-      {
-        role: 'user',
-        content: 'Tuần này tôi tập 3 buổi cardio, nhịp tim có ổn không?',
-      },
-    ],
-  },
-  {
-    id: 'chat-2',
-    title: 'Gợi ý bài tập',
-    updatedAt: '2024-09-13T15:45:00.000Z',
-    messages: [
-      {
-        role: 'assistant',
-        content: 'Tôi có thể gợi ý bài tập nhẹ 20 phút giúp cải thiện sức bền.',
-      },
-      {
-        role: 'user',
-        content: 'Gợi ý bài tập nhẹ giúp thư giãn buổi tối.',
-      },
-    ],
-  },
-  {
-    id: 'chat-3',
-    title: 'Theo dõi giấc ngủ',
-    updatedAt: '2024-09-12T21:10:00.000Z',
-    messages: [
-      {
-        role: 'assistant',
-        content:
-          'Bạn ngủ trung bình 7 giờ mỗi đêm. Tôi có thể nhắc bạn tắt màn hình sớm hơn 30 phút.',
-      },
-      {
-        role: 'user',
-        content: 'Tuần này tôi ngủ có đủ không?',
-      },
-    ],
-  },
+// ==================================================
+// Initial UI data (suggestions)
+// ==================================================
+const suggestions: ChatSuggestion[] = [
+  { label: 'Tình hình sức khỏe hôm nay', color: '#0EA5E9' },
+  { label: 'Nhịp tim trung bình tuần này', color: '#22C55E' },
+  { label: 'Gợi ý bài tập nhẹ', color: '#F59E0B' },
+  { label: 'Lượng nước đã uống', color: '#6366F1' },
+  { label: 'Nhắc nhở giấc ngủ', color: '#EF4444' },
 ];
 
-const sortHistories = (histories: ChatHistoryItem[]): ChatHistoryItem[] =>
-  [...histories].sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-  );
-
+// ==================================================
+// Component
+// ==================================================
 const ChatbotScreen: React.FC = () => {
-  const initialHistories = useMemo(
-    () => sortHistories(INITIAL_CHAT_HISTORY),
-    [],
-  );
+  // Drawer + attachment menu
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [isAttachmentMenuVisible, setIsAttachmentMenuVisible] = useState(false);
+
+  // Chat state
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<DocumentPickerResponse[]>(
-    [],
-  );
-  const [chatHistories, setChatHistories] =
-    useState<ChatHistoryItem[]>(initialHistories);
-  const [activeHistoryId, setActiveHistoryId] = useState<string>(
-    initialHistories[0]?.id || '',
-  );
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    initialHistories[0]?.messages || [
-      {
-        role: 'assistant',
-        content:
-          "Hi there! I am your AI health assistant. Based on today's data, your heart rate is quite stable (78 BPM).",
-      },
-    ],
-  );
+  const [AFiles, setAFiles] = useState<DocumentPickerResponse[]>([]);
 
+  const [chatHistories, setChatHistories] = useState<ChatHistoryItem[]>([]);
+  const [activeHistoryId, setActiveHistoryId] = useState<string>('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  // Animation
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
 
+  // Throttle
   const lastRequestTsRef = useRef<number>(0);
 
-  const suggestions: ChatSuggestion[] = [
-    {
-      label: 'Tình hình sức khỏe hôm nay',
-      color: '#0EA5E9',
-    },
-    {
-      label: 'Nhịp tim trung bình tuần này',
-      color: '#22C55E',
-    },
-    {
-      label: 'Gợi ý bài tập nhẹ',
-      color: '#F59E0B',
-    },
-    {
-      label: 'Lượng nước đã uống',
-      color: '#6366F1',
-    },
-    {
-      label: 'Nhắc nhở giấc ngủ',
-      color: '#EF4444',
-    },
-  ];
+  // ==================================================
+  // Effects: Load sessions on mount
+  // ==================================================
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const sessions = await fetchChatSessions();
+        setChatHistories(sessions || []);
+        if (sessions && sessions.length > 0) {
+          const firstId = sessions[0].id;
+          setActiveHistoryId(firstId);
+          const msgs = await fetchMessages(firstId);
+          setMessages(msgs || []);
+        } else {
+          // Nếu chưa có session, tạo một session mới để user bắt đầu chat
+          const newSession = await createChatSession();
+          setChatHistories(prev =>
+            Array.isArray(prev) ? [newSession, ...prev] : [newSession],
+          );
+
+          setActiveHistoryId(newSession.id);
+          setMessages([
+            {
+              role: 'assistant',
+              content:
+                'Xin chào! Tôi có thể hỗ trợ bạn theo dõi sức khỏe. Bạn muốn hỏi điều gì?',
+            },
+          ]);
+        }
+      } catch (error) {
+        console.warn('Load sessions failed:', error);
+      }
+    };
+    init();
+  }, []);
+
+  // ==================================================
+  // UI helpers
+  // ==================================================
+  const sortHistories = (histories: ChatHistoryItem[]): ChatHistoryItem[] =>
+    [...histories].sort(
+      (a, b) =>
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+    );
 
   const handleSuggestionPress = (text: string): void => {
     setMessage(text);
@@ -205,9 +159,7 @@ const ChatbotScreen: React.FC = () => {
     updatedMessages: ChatMessage[],
   ): void => {
     setMessages(updatedMessages);
-
     if (!activeHistoryId) return;
-
     setChatHistories(prev =>
       sortHistories(
         prev.map(history =>
@@ -251,6 +203,9 @@ const ChatbotScreen: React.FC = () => {
     ]);
   };
 
+  // ==================================================
+  // Permissions
+  // ==================================================
   const ensureCameraPermission = async (): Promise<boolean> => {
     const cameraGranted = await requestAndroidPermission(
       PermissionsAndroid.PERMISSIONS.CAMERA,
@@ -261,7 +216,6 @@ const ChatbotScreen: React.FC = () => {
         buttonNegative: 'Từ chối',
       },
     );
-
     if (!cameraGranted) return false;
 
     // Older Android versions require storage permission to save the taken photo
@@ -275,10 +229,8 @@ const ChatbotScreen: React.FC = () => {
           buttonNegative: 'Từ chối',
         },
       );
-
       return writeGranted;
     }
-
     return true;
   };
 
@@ -302,12 +254,11 @@ const ChatbotScreen: React.FC = () => {
           PermissionsAndroid.check(permission as any),
         ),
       );
-
       if (alreadyGranted.every(Boolean)) return true;
+
       const results = await PermissionsAndroid.requestMultiple(
         permissions as any,
       );
-
       return permissions.every(
         key => results[key] === PermissionsAndroid.RESULTS.GRANTED,
       );
@@ -317,6 +268,9 @@ const ChatbotScreen: React.FC = () => {
     }
   };
 
+  // ==================================================
+  // Attachment handlers
+  // ==================================================
   const handleTakePhoto = async (): Promise<void> => {
     setIsAttachmentMenuVisible(false);
 
@@ -344,14 +298,12 @@ const ChatbotScreen: React.FC = () => {
       });
 
       if (result.didCancel) return;
-
       if (result.errorCode) {
         showPickerError('Không thể mở camera', result.errorMessage);
         return;
       }
-
       if (result.assets?.length) {
-        setAttachedFiles(prev => [
+        setAFiles(prev => [
           ...prev,
           ...assetsToAttachments(result.assets ?? []),
         ]);
@@ -393,14 +345,12 @@ const ChatbotScreen: React.FC = () => {
       });
 
       if (result.didCancel) return;
-
       if (result.errorCode) {
         showPickerError('Không thể mở thư viện ảnh', result.errorMessage);
         return;
       }
-
       if (result.assets?.length) {
-        setAttachedFiles(prev => [
+        setAFiles(prev => [
           ...prev,
           ...assetsToAttachments(result.assets ?? []),
         ]);
@@ -425,152 +375,12 @@ const ChatbotScreen: React.FC = () => {
   };
 
   const removeAttachment = (uri: string): void => {
-    setAttachedFiles(prev => prev.filter(file => file.uri !== uri));
+    setAFiles(prev => prev.filter(file => file.uri !== uri));
   };
 
-  const handleSelectHistory = (historyId: string): void => {
-    const selectedHistory = chatHistories.find(
-      history => history.id === historyId,
-    );
-    if (!selectedHistory) return;
-
-    setActiveHistoryId(historyId);
-    setMessages(selectedHistory.messages);
-  };
-
-  const handleCreateNewConversation = (): void => {
-    const now = new Date();
-    const newHistory: ChatHistoryItem = {
-      id: `chat-${now.getTime()}`,
-      title: `Cuộc trò chuyện mới ${chatHistories.length + 1}`,
-      updatedAt: now.toISOString(),
-      messages: [
-        {
-          role: 'assistant',
-          content:
-            'Xin chào! Tôi có thể hỗ trợ bạn theo dõi sức khỏe. Bạn muốn hỏi điều gì?',
-        },
-      ],
-    };
-
-    setChatHistories(prev => sortHistories([newHistory, ...prev]));
-    setActiveHistoryId(newHistory.id);
-    setMessages(newHistory.messages);
-  };
-
-  const handleSendMessage = async (): Promise<void> => {
-    if (
-      (message.trim().length === 0 && attachedFiles.length === 0) ||
-      isLoading
-    )
-      return;
-
-    // throttle gửi quá nhanh
-    const now = Date.now();
-    if (now - lastRequestTsRef.current < MIN_INTERVAL_MS) {
-      updateActiveHistoryMessages([
-        ...messages,
-        {
-          role: 'assistant',
-          content: 'Bạn đang gửi quá nhanh, vui lòng đợi một chút rồi thử lại.',
-        },
-      ]);
-      return;
-    }
-    lastRequestTsRef.current = now;
-
-    const attachmentText = attachedFiles.length
-      ? `\n\nĐính kèm: ${attachedFiles
-          .map(file => {
-            const fileName = file.name || file.uri.split('/').pop() || 'Tệp';
-            const sizeLabel = formatFileSize(file.size);
-            return sizeLabel ? `${fileName} (${sizeLabel})` : fileName;
-          })
-          .join(', ')}`
-      : '';
-
-    const newMessage: ChatMessage = {
-      role: 'user',
-      content: `${message.trim()}${attachmentText}`.trim(),
-    };
-    const updatedMessages = [...messages, newMessage];
-
-    updateActiveHistoryMessages(updatedMessages);
-    setMessage('');
-    setAttachedFiles([]);
-    setIsLoading(true);
-
-    try {
-      const recentMessages = updatedMessages.slice(-10);
-
-      const payload = {
-        // Model trên Groq – Llama 3, 8B, context 8K
-        model: 'llama-3.1-8b-instant',
-        messages: [
-          {
-            role: 'system',
-            content:
-              'Bạn là một trợ lý AI chỉ trả lời các câu hỏi liên quan đến sức khỏe. Nếu câu hỏi không liên quan đến sức khỏe, hãy từ chối trả lời.',
-          },
-          ...recentMessages,
-          newMessage,
-        ],
-      };
-
-      const response = await callGroq(payload);
-      const aiReply: string = response.data.choices[0].message.content;
-
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: aiReply,
-      };
-
-      updateActiveHistoryMessages([...updatedMessages, assistantMessage]);
-    } catch (error: any) {
-      console.error(
-        'Groq error:',
-        error.response?.status,
-        JSON.stringify(error.response?.data || {}, null, 2),
-      );
-
-      let errorMessage = 'Có lỗi xảy ra khi gọi Groq API.';
-      const status = error.response?.status;
-
-      if (status === 401) {
-        errorMessage =
-          'GROQ API key không hợp lệ hoặc bị từ chối (401 Unauthorized). Vui lòng kiểm tra lại key.';
-      } else if (status === 429) {
-        const serverMsg = error.response?.data?.error?.message;
-        if (
-          typeof serverMsg === 'string' &&
-          serverMsg.toLowerCase().includes('quota')
-        ) {
-          errorMessage =
-            'Bạn đã vượt quá hạn mức (quota) của Groq. Vui lòng kiểm tra lại usage/quota trên Groq.';
-        } else {
-          errorMessage =
-            'Bạn đang gửi quá nhiều yêu cầu hoặc bị giới hạn bởi Groq (429). Vui lòng thử lại sau một lát.';
-        }
-      } else if (status) {
-        const serverMsg = error.response?.data?.error?.message;
-        if (serverMsg) {
-          errorMessage = `Lỗi ${status}: ${serverMsg}`;
-        } else {
-          errorMessage = `Đã xảy ra lỗi (HTTP ${status}).`;
-        }
-      } else if (error.message) {
-        errorMessage = `Lỗi mạng: ${error.message}`;
-      }
-
-      updateActiveHistoryMessages([
-        ...updatedMessages,
-        { role: 'assistant', content: errorMessage },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  // ==================================================
+  // Drawer handlers
+  // ==================================================
   const openDrawer = (): void => {
     setDrawerVisible(true);
     Animated.timing(drawerAnim, {
@@ -590,6 +400,142 @@ const ChatbotScreen: React.FC = () => {
     });
   };
 
+  const handleSelectHistory = async (historyId: string): Promise<void> => {
+    try {
+      const selectedHistory = chatHistories.find(h => h.id === historyId);
+      if (!selectedHistory) return;
+
+      setActiveHistoryId(historyId);
+      const msgs = await fetchMessages(historyId);
+      setMessages(msgs || []);
+    } catch (error) {
+      console.warn('Fetch messages failed:', error);
+    }
+  };
+
+  const handleCreateNewConversation = async (): Promise<void> => {
+    try {
+      const newSession = await createChatSession();
+      setChatHistories(prev => sortHistories([newSession, ...prev]));
+      setActiveHistoryId(newSession.id);
+      setMessages([
+        {
+          role: 'assistant',
+          content:
+            'Xin chào! Tôi có thể hỗ trợ bạn theo dõi sức khỏe. Bạn muốn hỏi điều gì?',
+        },
+      ]);
+    } catch (error) {
+      console.warn('Create session failed:', error);
+    }
+  };
+
+  // ==================================================
+  // Send message (connect BE chat-controller)
+  // ==================================================
+  const handleSendMessage = async (): Promise<void> => {
+    if ((message.trim().length === 0 && AFiles.length === 0) || isLoading)
+      return;
+
+    // throttle
+    const now = Date.now();
+    if (now - lastRequestTsRef.current < MIN_INTERVAL_MS) {
+      updateActiveHistoryMessages([
+        ...messages,
+        {
+          role: 'assistant',
+          content: 'Bạn đang gửi quá nhanh, vui lòng đợi một chút rồi thử lại.',
+        },
+      ]);
+      return;
+    }
+    lastRequestTsRef.current = now;
+
+    // Gắn tên file vào nội dung tin nhắn (tạm thời),
+    // khi tích hợp media-controller có presign, ta sẽ upload và gửi URL thay thế
+    const attachmentText = AFiles.length
+      ? `\n\nĐính kèm: ${AFiles.map(file => {
+          const fileName = file.name || file.uri.split('/').pop() || 'Tệp';
+          const sizeLabel = formatFileSize(file.size);
+          return sizeLabel ? `${fileName} (${sizeLabel})` : fileName;
+        }).join(', ')}`
+      : '';
+
+    const newUserMessage: ChatMessage = {
+      role: 'user',
+      content: `${message.trim()}${attachmentText}`.trim(),
+    };
+
+    const updatedMessages = [...messages, newUserMessage];
+    updateActiveHistoryMessages(updatedMessages);
+    setMessage('');
+    setAFiles([]);
+    setIsLoading(true);
+
+    try {
+      let sessionId = activeHistoryId;
+      if (!sessionId) {
+        const newSession = await createChatSession();
+        if (!newSession?.id) {
+          updateActiveHistoryMessages([
+            ...messages,
+            {
+              role: 'assistant',
+              content: 'Không thể tạo phiên chat. Vui lòng thử lại sau.',
+            },
+          ]);
+          return;
+        }
+        sessionId = newSession.id;
+        setChatHistories(prev => [newSession, ...(prev || [])]);
+        setActiveHistoryId(sessionId);
+      }
+
+      // Gọi BE: gửi tin nhắn vào session hiện tại
+      const reply = await sendMessage(sessionId, newUserMessage.content);
+
+      if (reply?.assistant?.content) {
+        updateActiveHistoryMessages([
+          ...updatedMessages,
+          {
+            role: 'assistant',
+            content: reply.assistant.content,
+          },
+        ]);
+      } else {
+        updateActiveHistoryMessages([
+          ...updatedMessages,
+          {
+            role: 'assistant',
+            content:
+              'Không nhận được phản hồi từ hệ thống. Vui lòng thử lại sau.',
+          },
+        ]);
+      }
+
+      const assistantMessage: ChatMessage = {
+        role: 'assistant',
+        content: reply.assistant.content,
+      };
+      updateActiveHistoryMessages([...updatedMessages, assistantMessage]);
+    } catch (error: any) {
+      console.warn('Send message failed:', error);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        'Có lỗi xảy ra khi gửi tin nhắn đến server.';
+      updateActiveHistoryMessages([
+        ...updatedMessages,
+        { role: 'assistant', content: errorMessage },
+      ]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ==================================================
+  // Render
+  // ==================================================
   return (
     <View style={styles.container}>
       {isAttachmentMenuVisible && (
@@ -610,7 +556,7 @@ const ChatbotScreen: React.FC = () => {
 
       <ChatInputArea
         message={message}
-        attachedFiles={attachedFiles}
+        attachedFiles={AFiles}
         isLoading={isLoading}
         attachmentMenuVisible={isAttachmentMenuVisible}
         formatFileSize={formatFileSize}

@@ -1,0 +1,32 @@
+import { api } from '../../services/api';
+
+export const fetchChatSessions = async () => {
+  const res = await api.get('/chat/sessions');
+  return res.data?.data || [];
+};
+
+export const createChatSession = async () => {
+  const res = await api.post('/chat/sessions', {});
+  return res.data?.data || null;
+};
+
+export const fetchMessages = async (sessionId: string) => {
+  const res = await api.get(`/chat/sessions/${sessionId}/messages`);
+  return (
+    res.data?.data?.map((msg: any) => ({
+      role: msg.role === 'USER' ? 'user' : 'assistant',
+      content: msg.content,
+    })) || []
+  );
+};
+
+export const sendMessage = async (sessionId: string, content: string) => {
+  const res = await api.post(`/chat/sessions/${sessionId}/messages`, {
+    content,
+  });
+  const data = res.data?.data;
+  return {
+    user: data?.usermessage,
+    assistant: data?.assistantmessage,
+  };
+};
