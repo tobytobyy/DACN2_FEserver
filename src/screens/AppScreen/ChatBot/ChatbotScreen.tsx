@@ -16,6 +16,8 @@ import { ChatInputArea } from '@components/Chat/ChatInputArea';
 import { ChatMessageList } from '@components/Chat/ChatMessageList';
 import { ChatbotHeader } from '@components/Chat/ChatbotHeader';
 import { ChatSuggestions } from '@components/Chat/ChatSuggestions';
+import { presignChatPut } from '../../../services/mediaApi';
+import { uriToBlob, uploadBlobToPresignedUrl } from '../../../services/upload';
 
 import styles from './styles';
 import { ChatHistoryItem, ChatMessage, ChatSuggestion } from './Chatbot.types';
@@ -29,7 +31,6 @@ import {
 } from '@components/Chat/chatApi';
 
 const DRAWER_WIDTH = 280;
-const MIN_INTERVAL_MS = 2000;
 
 // ==================================================
 // Helpers: image picker availability & Android permissions
@@ -94,9 +95,6 @@ const ChatbotScreen: React.FC = () => {
 
   // Animation
   const drawerAnim = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
-
-  // Throttle
-  const lastRequestTsRef = useRef<number>(0);
 
   // ==================================================
   // Effects: Load sessions on mount
@@ -437,28 +435,15 @@ const ChatbotScreen: React.FC = () => {
     if ((message.trim().length === 0 && AFiles.length === 0) || isLoading)
       return;
 
-    // throttle
-    const now = Date.now();
-    if (now - lastRequestTsRef.current < MIN_INTERVAL_MS) {
-      updateActiveHistoryMessages([
-        ...messages,
-        {
-          role: 'assistant',
-          content: 'Bạn đang gửi quá nhanh, vui lòng đợi một chút rồi thử lại.',
-        },
-      ]);
-      return;
-    }
-    lastRequestTsRef.current = now;
-
-    // Gắn tên file vào nội dung tin nhắn (tạm thời),
-    // khi tích hợp media-controller có presign, ta sẽ upload và gửi URL thay thế
-    const attachmentText = AFiles.length
-      ? `\n\nĐính kèm: ${AFiles.map(file => {
-          const fileName = file.name || file.uri.split('/').pop() || 'Tệp';
-          const sizeLabel = formatFileSize(file.size);
-          return sizeLabel ? `${fileName} (${sizeLabel})` : fileName;
-        }).join(', ')}`
+    const filesSnapshot = [...AFiles];
+    const attachmentText = filesSnapshot.length
+      ? `\n\nĐính kèm: ${filesSnapshot
+          .map(file => {
+            const fileName = file.name || file.uri.split('/').pop() || 'Tệp';
+            const sizeLabel = formatFileSize(file.size);
+            return sizeLabel ? `${fileName} (${sizeLabel})` : fileName;
+          })
+          .join(', ')}`
       : '';
 
     const newUserMessage: ChatMessage = {
@@ -468,6 +453,7 @@ const ChatbotScreen: React.FC = () => {
 
     const updatedMessages = [...messages, newUserMessage];
     updateActiveHistoryMessages(updatedMessages);
+
     setMessage('');
     setAFiles([]);
     setIsLoading(true);
@@ -476,50 +462,47 @@ const ChatbotScreen: React.FC = () => {
       let sessionId = activeHistoryId;
       if (!sessionId) {
         const newSession = await createChatSession();
-        if (!newSession?.id) {
-          updateActiveHistoryMessages([
-            ...messages,
-            {
-              role: 'assistant',
-              content: 'Không thể tạo phiên chat. Vui lòng thử lại sau.',
-            },
-          ]);
-          return;
-        }
+        if (!newSession?.id) throw new Error('Không thể tạo phiên chat.');
         sessionId = newSession.id;
         setChatHistories(prev => [newSession, ...(prev || [])]);
         setActiveHistoryId(sessionId);
       }
 
-      // Gọi BE: gửi tin nhắn vào session hiện tại
-      const reply = await sendMessage(sessionId, newUserMessage.content);
+      // 1) nếu có ảnh -> upload -> lấy objectKey
+      let imageObjectKey: string | undefined;
 
-      if (reply?.assistant?.content) {
-        updateActiveHistoryMessages([
-          ...updatedMessages,
-          {
-            role: 'assistant',
-            content: reply.assistant.content,
-          },
-        ]);
-      } else {
-        updateActiveHistoryMessages([
-          ...updatedMessages,
-          {
-            role: 'assistant',
-            content:
-              'Không nhận được phản hồi từ hệ thống. Vui lòng thử lại sau.',
-          },
-        ]);
+      const firstImage = filesSnapshot.find(f =>
+        (f.type || '').startsWith('image/'),
+      );
+      if (firstImage?.uri) {
+        const contentType = firstImage.type || 'image/jpeg';
+        const blob = await uriToBlob(firstImage.uri);
+        const presign = await presignChatPut(contentType, blob.size);
+        await uploadBlobToPresignedUrl(presign.uploadUrl, blob, contentType);
+        imageObjectKey = presign.objectKey;
       }
 
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: reply.assistant.content,
-      };
-      updateActiveHistoryMessages([...updatedMessages, assistantMessage]);
+      // 2) gửi message theo contract BE (content + imageObjectKey + meta)
+      const reply = await sendMessage(sessionId, message.trim(), {
+        imageObjectKey,
+        meta: firstImage
+          ? {
+              fileName: firstImage.name,
+              contentType: firstImage.type,
+              size: firstImage.size,
+            }
+          : undefined,
+      });
+
+      const assistantText =
+        reply?.assistant?.content ||
+        'Không nhận được phản hồi từ hệ thống. Vui lòng thử lại sau.';
+
+      updateActiveHistoryMessages([
+        ...updatedMessages,
+        { role: 'assistant', content: assistantText },
+      ]);
     } catch (error: any) {
-      console.warn('Send message failed:', error);
       const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
