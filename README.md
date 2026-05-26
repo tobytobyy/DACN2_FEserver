@@ -114,3 +114,24 @@ Sử dụng lệnh sau để commit đúng chuẩn:
 ```bash
 npm run commit
 ```
+## 🖥️ Backend local
+
+Backend được tách riêng trong file `backend/server.js` và chạy độc lập với React Native app. Backend này cung cấp các API mà FE đang gọi: Auth/OTP, profile, chat, upload presign, nutrition scan và workout tracking.
+
+### Chạy backend
+
+```bash
+npm run backend
+```
+
+Mặc định server chạy ở `http://localhost:8080` và mã OTP dev là `123456`.
+
+### Kết nối FE ↔ BE
+
+`src/services/api.ts` đã tự chọn base URL theo môi trường chạy app:
+
+- Android emulator: `http://10.0.2.2:8080`
+- iOS simulator / local: `http://localhost:8080`
+- Có thể override bằng biến môi trường `API_BASE_URL` khi cần dùng IP máy thật.
+
+Nếu chạy trên điện thoại thật, hãy đặt `API_BASE_URL` thành IP LAN của máy đang chạy backend, ví dụ `http://192.168.1.10:8080`, và bảo đảm điện thoại cùng mạng Wi-Fi.
