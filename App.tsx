@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AuthProvider from './src/context/AuthContext';
+import { UserProvider } from './src/context/UserContext';
 
 // Import Root Navigator (Nơi chứa logic chuyển trang chính)
 import RootNavigator from './src/navigation/RootNavigator';
@@ -17,12 +18,14 @@ const App = () => {
   return (
     <AuthProvider>
       <SafeAreaProvider>
-        <NavigationContainer>
-          {/* Bọc ứng dụng trong WaterProvider để chia sẻ dữ liệu nước uống toàn app */}
-          <WaterProvider>
-            <RootNavigator />
-          </WaterProvider>
-        </NavigationContainer>
+        <UserProvider>
+          <NavigationContainer>
+            {/* Bọc ứng dụng trong WaterProvider để chia sẻ dữ liệu nước uống toàn app */}
+            <WaterProvider>
+              <RootNavigator />
+            </WaterProvider>
+          </NavigationContainer>
+        </UserProvider>
       </SafeAreaProvider>
     </AuthProvider>
   );

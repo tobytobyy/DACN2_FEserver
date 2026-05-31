@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
-import { useNavigation } from '@react-navigation/native'; // để điều hướng
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
 import { theme } from '@assets/theme';
 import { CalendarStackParamList } from '@navigation/AppStack/CalendarStack';
 
@@ -12,37 +13,66 @@ import CalendarHeader from '@components/Calendar/CalendarHeader/CalendarHeader';
 import { HealthSummary } from '@components/Calendar/Calendar.types';
 import { styles } from '@components/Calendar/styles';
 
-const healthData: Record<string, HealthSummary> = {
-  '2025-11-15': {
-    heartRate: '78 BPM',
-    heartStatus: 'Normal',
-    steps: '6,240 steps',
-    sleep: '7h 20m',
-    sleepStatus: 'Good',
-  },
-  '2025-11-22': {
-    heartRate: '82 BPM',
-    heartStatus: 'Slightly High',
-    steps: '4,800 steps',
-    sleep: '6h 10m',
-    sleepStatus: 'Fair',
-  },
-};
+import { generateMockSleepAndHeart } from '@components/Calendar/mockHealthData';
+import { api } from '../../../services/api';
 
-const STEP_GOAL = 10000; // mục tiêu bước chân
+const STEP_GOAL = 10000;
 
 const CalendarScreen = () => {
-  const [selectedDate, setSelectedDate] = useState('2025-11-15');
-  const summary = healthData[selectedDate];
+  const [selectedDate, setSelectedDate] = useState('2025-12-26');
+  const [healthData, setHealthData] = useState<Record<string, HealthSummary>>(
+    {},
+  );
 
-  // Khai báo navigation với kiểu đúng
   type NavigationProp = NativeStackNavigationProp<
     CalendarStackParamList,
     'Calendar'
   >;
   const navigation = useNavigation<NavigationProp>();
 
-  // Tính % hoàn thành bước chân
+  useEffect(() => {
+    const fetchStepsAndCompose = async (date: string) => {
+      try {
+        // Tạo khoảng thời gian trong ngày đó
+        const from = `${date}T00:00:00.000Z`;
+        const to = `${date}T23:59:59.999Z`;
+
+        // Gọi API /health/workouts
+        const res = await api.get('/health/workouts', {
+          params: { from, to },
+        });
+
+        const workouts: any[] = res.data ?? [];
+        let stepsValue = 0;
+
+        if (workouts.length > 0) {
+          // Lấy bản ghi mới nhất trong ngày
+          const latest = workouts.sort(
+            (a, b) =>
+              new Date(b.time.endAt).getTime() -
+              new Date(a.time.endAt).getTime(),
+          )[0];
+          stepsValue = latest.steps ?? 0;
+        }
+
+        // Ghép với sleep/heart mock
+        const sleepHeart = generateMockSleepAndHeart();
+
+        const summary: HealthSummary = {
+          ...sleepHeart,
+          steps: `${stepsValue.toLocaleString()} steps`,
+        };
+
+        setHealthData(prev => ({ ...prev, [date]: summary }));
+      } catch (err) {
+        console.error('Failed to fetch workouts:', err);
+      }
+    };
+
+    fetchStepsAndCompose(selectedDate);
+  }, [selectedDate]);
+
+  const summary = healthData[selectedDate];
   const stepsValue = parseInt(summary?.steps?.replace(/[^\d]/g, '') ?? '0', 10);
   const stepProgress = Math.min(stepsValue / STEP_GOAL, 1);
 
@@ -53,7 +83,6 @@ const CalendarScreen = () => {
         style={styles.container}
         contentContainerStyle={styles.scrollContent}
       >
-        {/* Calendar */}
         <Calendar
           current={selectedDate}
           onDayPress={day => setSelectedDate(day.dateString)}
@@ -71,14 +100,16 @@ const CalendarScreen = () => {
           style={styles.calendar}
         />
 
-        <DailySummary
-          onPressAiAnalysis={() => navigation.navigate('AiAnalysis')}
-          selectedDate={selectedDate}
-          stepGoal={STEP_GOAL}
-          stepProgress={stepProgress}
-          stepsValue={stepsValue}
-          summary={summary}
-        />
+        {summary && (
+          <DailySummary
+            onPressAiAnalysis={() => navigation.navigate('AiAnalysis')}
+            selectedDate={selectedDate}
+            stepGoal={STEP_GOAL}
+            stepProgress={stepProgress}
+            stepsValue={stepsValue}
+            summary={summary}
+          />
+        )}
       </ScrollView>
     </SafeAreaView>
   );

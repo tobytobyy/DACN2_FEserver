@@ -14,6 +14,7 @@ type Props = {
   isScanning: boolean;
   bottomSpacing: number;
   onCapture: () => void;
+  onOpenLibrary?: () => void;
 };
 
 /**
@@ -25,24 +26,21 @@ export const ScanControls: React.FC<Props> = ({
   isScanning,
   bottomSpacing,
   onCapture,
+  onOpenLibrary,
 }) => (
   <View style={[styles.controls, { bottom: bottomSpacing }]}>
-    {/* Nút mở thư viện ảnh */}
-    <TouchableOpacity style={styles.smallButton}>
+    <TouchableOpacity style={styles.smallButton} onPress={onOpenLibrary}>
       <Ionicons name="image-outline" size={22} color={theme.colors.white} />
     </TouchableOpacity>
 
-    {/* Nút chụp ảnh */}
     <TouchableOpacity
       style={[styles.captureButton, isScanning && styles.captureDisabled]}
-      disabled={isScanning} // disable khi đang scanning
+      disabled={isScanning}
       onPress={onCapture}
     >
-      {/* Vòng tròn bên trong nút chụp */}
       <View style={styles.captureInner} />
     </TouchableOpacity>
 
-    {/* Placeholder để giữ layout cân đối */}
     <View style={styles.smallButton} />
   </View>
 );

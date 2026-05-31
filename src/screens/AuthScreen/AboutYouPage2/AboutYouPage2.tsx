@@ -1,35 +1,22 @@
-import { useState } from 'react';
+import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Button from '@components/Auth/Button/Button';
 import HeartPulse from '@assets/icons/svgs/heart_pulse.svg';
 import Account from '@assets/icons/svgs/account_circle.svg';
 import { theme } from '@assets/theme';
 import { styles } from './styles';
+import { useAboutYouPage2Logic } from './index';
 
 const AboutYouPage2 = () => {
-  const [loading, setLoading] = useState(false);
-  const navigation = useNavigation();
+  const { loading, handleStart } = useAboutYouPage2Logic();
 
-  // handle login action
-  const handleNext = () => {
-    setLoading(true);
-
-    // Giả lập gọi API
-    setTimeout(() => {
-      navigation.getParent()?.navigate('App' as never);
-      setLoading(false);
-    }, 1500);
-  };
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container}>
         {/* Logo */}
         <View style={styles.header}>
           <HeartPulse width={30} height={30} strokeWidth={3} />
-
-          {/* Title */}
           <Text style={styles.title}>About you</Text>
         </View>
 
@@ -49,7 +36,7 @@ const AboutYouPage2 = () => {
           Welcome to your personal health companion. Whether you are tracking
           your daily steps, monitoring your heart rhythm, or improving your
           sleep quality, we are here to help you understand your body better. No
-          extra hardware needed-just accurate insights at your fingertips.
+          extra hardware needed—just accurate insights at your fingertips.
         </Text>
 
         {/* Button */}
@@ -58,7 +45,7 @@ const AboutYouPage2 = () => {
             title="Let's Get Started"
             loading={loading}
             loadingText="Loading..."
-            onPress={handleNext}
+            onPress={handleStart} // 👈 dùng logic
           />
         </View>
       </ScrollView>
