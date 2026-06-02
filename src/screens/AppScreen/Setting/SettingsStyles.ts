@@ -24,6 +24,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-start',
   },
+  headerSpacer: {
+    width: 40,
+  },
   scrollView: {
     flex: 1,
   },
@@ -62,6 +65,12 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: 'bold',
     color: '#2D8C83',
+  },
+  profileAvatarImage: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#E0F2F1',
   },
   smallIconBadge: {
     position: 'absolute',
@@ -103,6 +112,53 @@ const styles = StyleSheet.create({
   },
   refreshBtn: {
     padding: 8,
+  },
+  profileFormCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    elevation: 1,
+  },
+  formLabel: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontWeight: '600',
+    marginBottom: 6,
+  },
+  formInput: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
+    color: '#111827',
+  },
+  metricGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  metricChip: {
+    backgroundColor: '#F0FDFA',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#CCFBF1',
+  },
+  metricLabel: {
+    fontSize: 11,
+    color: '#0F766E',
+    fontWeight: '700',
+  },
+  metricValue: {
+    fontSize: 14,
+    color: '#111827',
+    fontWeight: '700',
+    marginTop: 2,
   },
 
   // Setting Groups

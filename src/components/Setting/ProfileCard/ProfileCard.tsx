@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Image, View, Text, TouchableOpacity } from 'react-native';
 
 import GoogleIcon from '@assets/icons/svgs/google_color_2122.svg';
 import RefreshIcon from '@assets/icons/svgs/reload_2424.svg';
@@ -18,6 +18,9 @@ type Props = {
 
   /** Chữ cái avatar (fallback khi không có ảnh) */
   avatarLetter: string;
+
+  /** URL ảnh đại diện nếu user đã cập nhật */
+  avatarUrl?: string | null;
 
   /** Trạng thái verified */
   verified?: boolean;
@@ -46,6 +49,7 @@ const ProfileCard: React.FC<Props> = ({
   name,
   email,
   avatarLetter,
+  avatarUrl,
   verified = true,
   provider = 'google',
   onPressRefresh,
@@ -54,10 +58,17 @@ const ProfileCard: React.FC<Props> = ({
     <View style={styles.profileCard}>
       {/* ===== Left: Avatar + Provider badge ===== */}
       <View style={styles.profileIconContainer}>
-        {/* Avatar placeholder (chữ cái đầu) */}
-        <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarText}>{avatarLetter}</Text>
-        </View>
+        {/* Avatar image hoặc placeholder (chữ cái đầu) */}
+        {avatarUrl ? (
+          <Image
+            source={{ uri: avatarUrl }}
+            style={styles.profileAvatarImage}
+          />
+        ) : (
+          <View style={styles.avatarPlaceholder}>
+            <Text style={styles.avatarText}>{avatarLetter}</Text>
+          </View>
+        )}
 
         {/* Badge icon provider (VD: Google) */}
         {provider === 'google' ? (

@@ -11,6 +11,7 @@ import FootStepCountingScreen from '@screens/FootStepCounting/FootStepCountingSc
 import SleepTrackingScreen from '@screens/SleepTracking/SleepTrackingScreen';
 import WaterTrackerScreen from '@screens/WaterTracker/WaterTrackerScreen';
 import FootStepHistoryUI from '@screens/FootStepCounting/FootStepHistory/FootStepHistoryScreen';
+import MedicationReminderScreen from '@screens/MedicationReminder/MedicationReminderScreen';
 
 /* ======================================================
  * 1. Định nghĩa Param List cho Stack
@@ -43,6 +44,9 @@ export type BrowserStackParamList = {
 
   /** Lịch sử đo bước chân */
   WorkoutHistory: undefined;
+
+  /** Nhắc thuốc và từ điển thuốc */
+  MedicationReminder: undefined;
 };
 
 /* ======================================================
@@ -86,6 +90,12 @@ const BrowserStack = () => {
 
       {/* Water Tracking */}
       <Stack.Screen name="WaterTracker" component={WaterTrackerScreen} />
+
+      {/* Medication reminders */}
+      <Stack.Screen
+        name="MedicationReminder"
+        component={MedicationReminderScreen}
+      />
     </Stack.Navigator>
   );
 };

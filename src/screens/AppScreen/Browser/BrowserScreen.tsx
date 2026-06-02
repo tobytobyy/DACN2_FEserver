@@ -8,6 +8,7 @@ import FootstepIcon from '@assets/icons/svgs/footprint_1515.svg';
 import MoonIcon from '@assets/icons/svgs/sleep_2424.svg';
 import ChatAiIcon from '@assets/icons/svgs/chat_ai_3030.svg';
 import WaterDropIcon from '@assets/icons/svgs/water_913.svg';
+import MedicationIcon from '@assets/icons/svgs/health_care_logo.svg';
 import BrowserHeader from '@components/Browser/BrowserHeader/BrowserHeader';
 import FeaturedBanner from '@components/Browser/FeaturedBanner/FeaturedBanner';
 import FeatureGrid, {
@@ -71,6 +72,16 @@ const BrowserScreen = () => {
         iconColor: '#0891B2',
         borderColor: '#A5F3FC',
         screen: 'WaterTracker',
+      },
+      {
+        id: 'medication',
+        title: 'Medication',
+        desc: 'Drug dictionary & pill reminders',
+        icon: MedicationIcon,
+        bgColor: '#DCFCE7',
+        iconColor: '#16A34A',
+        borderColor: '#BBF7D0',
+        screen: 'MedicationReminder',
       },
     ],
     [],

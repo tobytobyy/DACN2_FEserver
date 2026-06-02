@@ -121,17 +121,16 @@ export function useOtpVerificationLogic() {
       await AsyncStorage.setItem('accessToken', data.accessToken);
       await AsyncStorage.setItem('refreshToken', data.refreshToken);
 
-      setUser({
-        id: data.userId,
-        displayIdentifier: data.displayIdentifier,
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken,
-      });
-
       if (data.isNewUser) {
         navigation.navigate('AboutYouPage1');
       } else {
-        navigation.replace('App'); // vào thẳng BottomTab
+        const me = await api.get('/auth/me');
+        setUser({
+          ...me.data,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        });
+        navigation.replace('App');
       }
     } catch {
       const nextAttempts = attempts + 1;

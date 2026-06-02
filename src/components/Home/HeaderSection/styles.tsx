@@ -78,6 +78,12 @@ const styles = StyleSheet.create({
   avatarButton: {
     padding: 4,
   },
+  avatarImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E0F2F1',
+  },
 });
 
 export default styles;

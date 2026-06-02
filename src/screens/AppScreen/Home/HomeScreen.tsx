@@ -1,28 +1,40 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, ScrollView, StatusBar, StyleSheet } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import HeaderSection from '@components/Home/HeaderSection/HeaderSection';
 import ActivityCard from '@components/Home/ActivityCard/ActivityCard';
 import HeartSleepGrid from '@components/Home/HeartSleepGrid/HeartSleepGrid';
 import WaterCard from '@components/Home/WaterCard/WaterCard';
 
-// Giả sử bạn có hàm gọi API /auth/me
 import { getUserProfile } from '../../../components/Home/HeaderSection/types';
 
+type HomeUser = Awaited<ReturnType<typeof getUserProfile>> | null;
+
 const HomeScreen: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
+  const [user, setUser] = useState<HomeUser>(null);
+
+  const fetchUser = useCallback(async () => {
+    try {
+      const userData = await getUserProfile();
+      setUser(userData);
+    } catch (error) {
+      console.log('Error fetching user profile:', error);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const userData = await getUserProfile(); // gọi API /auth/me
-        setEmail(userData?.primaryEmail ?? '');
-      } catch (error) {
-        console.log('Error fetching user profile:', error);
-      }
-    };
     fetchUser();
-  }, []);
+  }, [fetchUser]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchUser();
+    }, [fetchUser]),
+  );
+
+  const profile = user?.profile;
+  const email = user?.primaryEmail ?? user?.displayIdentifier ?? '';
 
   return (
     <View style={styles.container}>
@@ -32,6 +44,8 @@ const HomeScreen: React.FC = () => {
       <View style={styles.headerContainer}>
         <HeaderSection
           email={email}
+          displayName={profile?.fullName || user?.username}
+          avatarUrl={profile?.avatarUrl}
           greeting="Welcome!"
           onPressAvatar={() => {}}
         />

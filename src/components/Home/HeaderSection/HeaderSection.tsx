@@ -1,37 +1,32 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 
 import UserAvatar from '@assets/icons/svgs/account_circle.svg';
 import styles from './styles';
 
 type Props = {
   email: string;
+  displayName?: string;
+  avatarUrl?: string | null;
   greeting?: string;
   onPressAvatar?: () => void;
 };
 
-/**
- * Hàm lấy tên từ email
- * - Lấy phần trước dấu @
- * - Thay dấu . hoặc _ bằng khoảng trắng
- * - Viết hoa chữ cái đầu
- */
 const getNameFromEmail = (email: string): string => {
   if (!email) return 'User';
   const namePart = email.split('@')[0];
-  const formatted = namePart
-    .replace(/[._]/g, ' ')
-    .replace(/\b\w/g, c => c.toUpperCase());
-  return formatted;
+  return namePart.replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 };
 
-/**
- * HeaderSection
- * - Hiển thị lời chào + tên user (từ email) + avatar
- */
-const HeaderSection: React.FC<Props> = ({ email, greeting, onPressAvatar }) => {
+const HeaderSection: React.FC<Props> = ({
+  email,
+  displayName,
+  avatarUrl,
+  greeting,
+  onPressAvatar,
+}) => {
   const greetingText = greeting ?? 'Hello!';
-  const userName = getNameFromEmail(email);
+  const userName = displayName?.trim() || getNameFromEmail(email);
 
   return (
     <View style={styles.headerBackground}>
@@ -47,7 +42,11 @@ const HeaderSection: React.FC<Props> = ({ email, greeting, onPressAvatar }) => {
 
         {/* Avatar bên phải */}
         <Pressable style={styles.avatarButton} onPress={onPressAvatar}>
-          <UserAvatar />
+          {avatarUrl ? (
+            <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
+          ) : (
+            <UserAvatar />
+          )}
         </Pressable>
       </View>
     </View>

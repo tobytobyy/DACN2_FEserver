@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { format } from 'date-fns';
 import { listWorkouts } from './types';
 
 type ActivityData = {
@@ -12,6 +11,8 @@ type ActivityData = {
   targetCalories: number; // mục tiêu calo
   targetSteps: number; // mục tiêu bước chân
 };
+
+const formatDateKey = (date: Date): string => date.toISOString().slice(0, 10);
 
 const DEFAULT_STEPS_TARGET = 10000;
 const DEFAULT_CALORIES_TARGET = 1000;
@@ -58,8 +59,7 @@ export const useActivityToday = () => {
         const latest = sorted[0];
 
         const startTime = new Date(latest.time?.startAt);
-        const isToday =
-          format(startTime, 'yyyy-MM-dd') === format(now, 'yyyy-MM-dd');
+        const isToday = formatDateKey(startTime) === formatDateKey(now);
         const title = isToday ? 'Activity today' : 'Recent activity';
 
         const distanceKm = latest.distanceKm ?? 0;

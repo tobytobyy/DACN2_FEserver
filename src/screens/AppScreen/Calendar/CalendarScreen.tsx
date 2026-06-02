@@ -102,7 +102,9 @@ const CalendarScreen = () => {
 
         {summary && (
           <DailySummary
-            onPressAiAnalysis={() => navigation.navigate('AiAnalysis')}
+            onPressAiAnalysis={() =>
+              navigation.navigate('AiAnalysis', { selectedDate, summary })
+            }
             selectedDate={selectedDate}
             stepGoal={STEP_GOAL}
             stepProgress={stepProgress}

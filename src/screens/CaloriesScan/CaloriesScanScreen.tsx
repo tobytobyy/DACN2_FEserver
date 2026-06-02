@@ -36,8 +36,25 @@ type NutritionCandidateDto = {
   code: string;
   score?: number | null; // 0..1
   status?: 'OK' | 'UNKNOWN' | string;
+  name?: string | null;
+  kcal?: number | null;
+  calories?: number | null;
+  protein?: number | null;
+  carbs?: number | null;
+  fat?: number | null;
+  serving?: string | null;
+  aiInsight?: string | null;
   foodItem?: {
     name?: string | null;
+    kcal?: number | null;
+    calories?: number | null;
+    protein?: number | null;
+    carbs?: number | null;
+    fat?: number | null;
+    serving?: string | null;
+  } | null;
+  nutrition?: {
+    calories?: number | null;
     kcal?: number | null;
     protein?: number | null;
     carbs?: number | null;
@@ -96,10 +113,22 @@ const uploadBlobToPresignedUrl = async (
 const buildFoodAnalysis = (candidate: NutritionCandidateDto): FoodAnalysis => {
   const fi = candidate.foodItem ?? null;
 
-  const calories = Number(fi?.kcal ?? 0);
-  const protein = Number(fi?.protein ?? 0);
-  const carbs = Number(fi?.carbs ?? 0);
-  const fat = Number(fi?.fat ?? 0);
+  const calories = Number(
+    fi?.kcal ??
+      fi?.calories ??
+      candidate.kcal ??
+      candidate.calories ??
+      candidate.nutrition?.calories ??
+      candidate.nutrition?.kcal ??
+      0,
+  );
+  const protein = Number(
+    fi?.protein ?? candidate.protein ?? candidate.nutrition?.protein ?? 0,
+  );
+  const carbs = Number(
+    fi?.carbs ?? candidate.carbs ?? candidate.nutrition?.carbs ?? 0,
+  );
+  const fat = Number(fi?.fat ?? candidate.fat ?? candidate.nutrition?.fat ?? 0);
 
   const totalEnergy = protein * 4 + carbs * 4 + fat * 9;
   const pct = (energy: number) =>
@@ -110,8 +139,9 @@ const buildFoodAnalysis = (candidate: NutritionCandidateDto): FoodAnalysis => {
 
   return {
     id: candidate.code,
-    name: (fi?.name || candidate.code) as string,
+    name: (fi?.name || candidate.name || candidate.code) as string,
     calories,
+    serving: fi?.serving || candidate.serving || '1 khẩu phần ước tính',
     badge,
     macros: [
       {
@@ -136,7 +166,10 @@ const buildFoodAnalysis = (candidate: NutritionCandidateDto): FoodAnalysis => {
     note:
       candidate.status === 'UNKNOWN'
         ? 'Món này chưa có đủ dữ liệu trong hệ thống. Bạn có thể chọn món khác hoặc thử lại.'
-        : undefined,
+        : candidate.aiInsight ||
+          `AI ước tính ${calories} kcal cho ${
+            fi?.serving || candidate.serving || '1 khẩu phần'
+          }. Hãy điều chỉnh khẩu phần nếu bạn ăn ít hoặc nhiều hơn ảnh chụp.`,
   };
 };
 

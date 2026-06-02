@@ -350,6 +350,25 @@ export const styles = StyleSheet.create({
     color: theme.colors.subText_2,
   },
 
+  servingPill: {
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    backgroundColor: '#E0F2FE',
+    borderRadius: 999,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    marginTop: -theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+
+  servingText: {
+    color: '#0369A1',
+    fontSize: theme.fonts.size.sm,
+    fontWeight: theme.fonts.weight.semibold,
+  },
+
   /* ================= Macros ================= */
 
   macroRow: {

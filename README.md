@@ -81,7 +81,7 @@ npm run android
 **Chạy trên iOS:**
 
 ```bash
-npm run ios
+npm run ios 
 ```
 
 ## ⚠️ Các vấn đề thường gặp (Troubleshooting)

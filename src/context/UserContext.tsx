@@ -1,15 +1,17 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '../services/api';
 
 export interface User {
-  id: string; // từ backend: userId
-  displayIdentifier: string; // email hoặc phone hiển thị
-  accessToken: string;
-  refreshToken: string;
+  id: string;
+  displayIdentifier: string;
+  accessToken?: string;
+  refreshToken?: string;
   username?: string;
   primaryEmail?: string;
   profile?: {
-    // fullName?: string;
-    // avatarUrl?: string;
+    fullName?: string;
+    avatarUrl?: string;
     gender?: string;
     birthday?: string;
     birthDate?: string;
@@ -17,13 +19,22 @@ export interface User {
     height?: number;
     weightKg?: number;
     weight?: number;
+  } | null;
+  healthMetrics?: {
+    heightCm?: number;
+    weightKg?: number;
+    bloodType?: string | null;
+    conditions?: string[];
+    restingHeartRate?: number;
   };
 }
 
 interface UserContextType {
   user: User | null;
+  isBootstrapping: boolean;
   setUser: (user: User | null) => void;
-  clearUser: () => void;
+  refreshUser: () => Promise<void>;
+  clearUser: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -32,11 +43,36 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
 
-  const clearUser = () => setUser(null);
+  const refreshUser = async () => {
+    const token = await AsyncStorage.getItem('accessToken');
+    if (!token) {
+      setUser(null);
+      return;
+    }
+    const res = await api.get<User>('/auth/me');
+    setUser(res.data);
+  };
+
+  const clearUser = async () => {
+    await AsyncStorage.multiRemove(['accessToken', 'refreshToken']);
+    setUser(null);
+  };
+
+  useEffect(() => {
+    refreshUser()
+      .catch(error => {
+        console.warn('Bootstrap user failed:', error);
+        setUser(null);
+      })
+      .finally(() => setIsBootstrapping(false));
+  }, []);
 
   return (
-    <UserContext.Provider value={{ user, setUser, clearUser }}>
+    <UserContext.Provider
+      value={{ user, isBootstrapping, setUser, refreshUser, clearUser }}
+    >
       {children}
     </UserContext.Provider>
   );

@@ -22,7 +22,7 @@ export function useAboutYouPage2Logic(): UseAboutYouPage2LogicReturn {
       if (response.data) {
         console.log('Sync User Success:', response.data);
 
-        // Cập nhật user vào context
+        // Cập nhật user vào context sau khi onboarding hoàn tất
         setUser(response.data);
 
         //  RootNavigator sẽ tự re-render

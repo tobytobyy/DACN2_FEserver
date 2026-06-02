@@ -16,6 +16,7 @@ export type FoodAnalysis = {
   id: string;
   name: string;
   calories: number;
+  serving?: string;
   macros: FoodMacro[];
   badge?: string;
   note?: string;
@@ -77,6 +78,7 @@ export const ResultSheet: React.FC<Props> = ({
 
       {/* ===== Header ===== */}
       <View style={styles.sheetHeader}>
+        {/* eslint-disable-next-line react-native/no-inline-styles */}
         <View style={{ flex: 1 }}>
           <Text style={styles.resultTitle}>
             {result?.name || 'Chọn đúng món ăn'}
@@ -113,7 +115,8 @@ export const ResultSheet: React.FC<Props> = ({
               </View>
 
               <Text style={styles.candidateMeta}>
-                {food.calories} kcal · {food.macros[1].value} carbs
+                {food.calories} kcal · {food.serving || '1 khẩu phần'} ·{' '}
+                {food.macros[1].value} carbs
               </Text>
               {food.note ? (
                 <Text style={styles.candidateNote}>{food.note}</Text>
@@ -129,6 +132,11 @@ export const ResultSheet: React.FC<Props> = ({
           <View style={styles.calorieRow}>
             <Text style={styles.calorieValue}>{result.calories}</Text>
             <Text style={styles.calorieUnit}>kcal</Text>
+          </View>
+
+          <View style={styles.servingPill}>
+            <Ionicons name="restaurant-outline" size={16} color="#0369A1" />
+            <Text style={styles.servingText}>Khẩu phần: {result.serving}</Text>
           </View>
 
           <View style={styles.macroRow}>
@@ -153,8 +161,8 @@ export const ResultSheet: React.FC<Props> = ({
             <View style={styles.insightTextWrapper}>
               <Text style={styles.insightTitle}>Gợi ý cải thiện</Text>
               <Text style={styles.insightBody}>
-                Bổ sung thêm chất xơ hoặc rau xanh để cân bằng dinh dưỡng và
-                giúp no lâu hơn.
+                {result.note ||
+                  'Bổ sung thêm chất xơ hoặc rau xanh để cân bằng dinh dưỡng và giúp no lâu hơn.'}
               </Text>
             </View>
           </View>

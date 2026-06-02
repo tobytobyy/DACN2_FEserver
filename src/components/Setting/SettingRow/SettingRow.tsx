@@ -18,8 +18,14 @@ type SettingRowProps = {
   /** Chọn màu nền iconBox theo variant (không truyền color string để tránh inline) */
   iconBgVariant?: IconVariant;
 
+  /** Backward compatible background color from existing SettingScreen usage. */
+  color?: string;
+
   /** Màu icon theo variant (để không phải truyền color string inline) */
   iconVariant?: 'default' | 'muted' | 'primary' | 'danger' | 'success';
+
+  /** Backward compatible icon color from existing SettingScreen usage. */
+  iconColor?: string;
 
   /** Tiêu đề dòng setting */
   title: string;
@@ -50,13 +56,13 @@ type SettingRowProps = {
  * Mapping style background cho iconBox theo variant
  * - Không dùng inline style object
  */
-const ICON_BG_STYLE_MAP: Record<IconVariant, any> = {
-  white: theme.colors.white,
-  gray: theme.colors.grayDark,
-  blue: theme.colors.blue,
-  green: theme.colors.green,
-  primary: theme.colors.primary,
-  danger: theme,
+const ICON_BG_STYLE_MAP: Record<IconVariant, { backgroundColor: string }> = {
+  white: { backgroundColor: theme.colors.white },
+  gray: { backgroundColor: theme.colors.grayDark },
+  blue: { backgroundColor: theme.colors.blue },
+  green: { backgroundColor: theme.colors.green },
+  primary: { backgroundColor: theme.colors.primary },
+  danger: { backgroundColor: theme.colors.danger },
 };
 
 /**
@@ -83,7 +89,9 @@ const ICON_COLOR_MAP: Record<
 const SettingRow: React.FC<SettingRowProps> = ({
   IconComponent,
   iconBgVariant = 'white',
+  color,
   iconVariant = 'default',
+  iconColor,
   title,
   value,
   type = 'link',
@@ -106,8 +114,9 @@ const SettingRow: React.FC<SettingRowProps> = ({
    * Resolve iconBox background style theo variant
    */
   const iconBgStyle = useMemo(
-    () => ICON_BG_STYLE_MAP[iconBgVariant],
-    [iconBgVariant],
+    () =>
+      color ? { backgroundColor: color } : ICON_BG_STYLE_MAP[iconBgVariant],
+    [color, iconBgVariant],
   );
 
   /**
@@ -116,8 +125,8 @@ const SettingRow: React.FC<SettingRowProps> = ({
    */
   const resolvedIconColor = useMemo(() => {
     if (isOriginalIcon) return undefined;
-    return ICON_COLOR_MAP[iconVariant];
-  }, [iconVariant, isOriginalIcon]);
+    return iconColor ?? ICON_COLOR_MAP[iconVariant];
+  }, [iconColor, iconVariant, isOriginalIcon]);
 
   return (
     <TouchableOpacity

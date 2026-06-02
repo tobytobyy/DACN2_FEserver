@@ -27,7 +27,7 @@ export const styles = StyleSheet.create({
   },
   description: {
     width: '100%',
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     textAlign: 'center',
     fontFamily: theme.fonts.nunito.regular,
     fontSize: theme.fonts.size.md,
@@ -40,7 +40,7 @@ export const styles = StyleSheet.create({
     gap: theme.spacing.xs,
   },
   username: {
-    color: theme.colors.subText,
+    color: theme.colors.subText_1,
     textAlign: 'center',
     fontFamily: theme.fonts.nunito.regular,
     fontWeight: theme.fonts.weight.regular,
