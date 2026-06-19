@@ -133,6 +133,11 @@ export const styles = StyleSheet.create({
   },
 
   /** Text hiển thị trong selector */
+  selectorPressed: {
+    borderColor: theme.colors.primary,
+    opacity: 0.9,
+  },
+
   selectorText: {
     fontSize: 13,
     color: theme.colors.subText_1,
@@ -184,10 +189,13 @@ export const styles = StyleSheet.create({
   },
 
   /* ================= Modal / Bottom Sheet ================= */
+  modalRoot: {
+    flex: 1,
+  },
 
   /** Overlay mờ phía sau modal */
   modalOverlay: {
-    flex: 1,
+    ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(0,0,0,0.3)',
   },
 

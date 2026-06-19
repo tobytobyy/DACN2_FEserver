@@ -6,6 +6,22 @@ import { AuthStackParamList } from '@navigation/AuthStack/AuthStack';
 import { api } from '../../../services/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+const roundToTwoDecimals = (value: number) => Math.round(value * 100) / 100;
+
+const normalizeWeightToKg = (value: string, unit: string) => {
+  const numericValue = parseFloat(value);
+  return unit === 'lbs'
+    ? roundToTwoDecimals(numericValue * 0.45359237)
+    : numericValue;
+};
+
+const normalizeHeightToCm = (value: string, unit: string) => {
+  const numericValue = parseFloat(value);
+  return unit === 'ft'
+    ? roundToTwoDecimals(numericValue * 30.48)
+    : numericValue;
+};
+
 // khai báo kiểu dữ liệu
 export type FieldType = 'gender' | 'birthday' | 'weight' | 'height' | null;
 export type UnitType = 'weight' | 'height' | null;
@@ -75,8 +91,8 @@ export function useAboutYouPage1Logic(): UseAboutYouPage1LogicReturn {
         avatarUrl: 'string',
         gender: gender.toLowerCase(),
         birthDate: new Date(birthday).toISOString(),
-        heightCm: parseFloat(height),
-        weightKg: parseFloat(weight),
+        heightCm: normalizeHeightToCm(height, heightUnit),
+        weightKg: normalizeWeightToKg(weight, weightUnit),
       };
 
       const response = await api.put('/users/me/profile', profileData);

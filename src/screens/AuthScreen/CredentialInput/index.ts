@@ -1,11 +1,26 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
+import axios from 'axios';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AuthStackParamList } from '@navigation/AuthStack/AuthStack';
-import { api } from '../../../services/api';
+import { API_BASE_URL, api } from '../../../services/api';
 
 type MethodType = 'email' | 'phone';
+
+const getOtpRequestErrorMessage = (err: unknown) => {
+  if (axios.isAxiosError(err) && !err.response) {
+    return `Không thể kết nối tới máy chủ OTP (${API_BASE_URL}). Vui lòng kiểm tra backend đã chạy và thiết bị/emulator có truy cập được địa chỉ này.`;
+  }
+
+  const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+
+  if (status === 400) {
+    return 'Email hoặc số điện thoại không hợp lệ. Vui lòng kiểm tra lại.';
+  }
+
+  return 'Không thể gửi mã OTP. Vui lòng thử lại sau.';
+};
 
 // Route type cho màn hình CredentialInput
 type CredentialRouteProp = RouteProp<AuthStackParamList, 'CredentialInput'>;
@@ -48,8 +63,7 @@ export function useCredentialInputLogic() {
         identifier: trimmed,
       });
     } catch (err) {
-      console.error('OTP request failed:', err);
-      Alert.alert('Error', 'Failed to request OTP. Please try again.');
+      Alert.alert('Error', getOtpRequestErrorMessage(err));
     } finally {
       setLoading(false);
     }

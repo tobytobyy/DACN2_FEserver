@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
 import { styles } from '../styles';
 
 /**
@@ -23,12 +23,26 @@ type Props = {
 const FieldTrigger: React.FC<Props> = ({ label, value, onPress }) => (
   <View style={styles.fieldContainer}>
     {/* Floating label phía trên field */}
-    <Text style={[styles.floatingLabel, styles.surfaceLabel]}>{label}</Text>
+    <Text
+      pointerEvents="none"
+      style={[styles.floatingLabel, styles.surfaceLabel]}
+    >
+      {label}
+    </Text>
 
     {/* Vùng bấm để mở modal / picker */}
-    <TouchableOpacity style={styles.selector} onPress={onPress}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${value}`}
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.selector,
+        pressed && styles.selectorPressed,
+      ]}
+      onPress={onPress}
+    >
       <Text style={styles.selectorText}>{value}</Text>
-    </TouchableOpacity>
+    </Pressable>
   </View>
 );
 

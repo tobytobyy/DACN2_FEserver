@@ -3,8 +3,10 @@ import {
   View,
   Text,
   Modal,
-  TouchableWithoutFeedback,
+  Pressable,
   TextInput,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import Button from '@components/Auth/Button/Button';
@@ -81,16 +83,19 @@ const AboutYouModal: React.FC<Props> = props => {
           <Text style={styles.bottomSheetTitle}>Select gender</Text>
 
           {['Male', 'Female', 'Other'].map(option => (
-            <Text
+            <Pressable
               key={option}
-              style={styles.optionText}
+              accessibilityRole="button"
+              accessibilityLabel={`Select ${option}`}
+              style={styles.optionButton}
               onPress={() => {
                 setGender(option); // Cập nhật gender
                 onClose(); // Đóng modal
               }}
             >
               {option}
-            </Text>
+              <Text style={styles.optionText}>{option}</Text>
+            </Pressable>
           ))}
         </>
       );
@@ -158,15 +163,24 @@ const AboutYouModal: React.FC<Props> = props => {
 
           {/* Input nhập số */}
           <View style={[styles.flexInput, styles.inputWrapper]}>
-            <Text style={[styles.floatingLabel, styles.modalLabel]}>
+            <Text
+              pointerEvents="none"
+              style={[styles.floatingLabel, styles.modalLabel]}
+            >
               {isWeight ? 'Weight' : 'Height'}
             </Text>
 
             <TextInput
+              autoFocus
+              selectTextOnFocus
               style={[styles.input, styles.inputWithLabel]}
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
+              placeholder={isWeight ? 'Enter weight' : 'Enter height'}
+              placeholderTextColor={theme.colors.subText_1}
               value={isWeight ? weight : height}
               onChangeText={isWeight ? setWeight : setHeight}
+              returnKeyType="done"
+              onSubmitEditing={onClose}
             />
           </View>
         </View>
@@ -178,16 +192,29 @@ const AboutYouModal: React.FC<Props> = props => {
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide">
-      {/* Overlay – bấm ra ngoài để đóng modal */}
-      <TouchableWithoutFeedback onPress={onClose}>
-        <View style={styles.modalOverlay} />
-      </TouchableWithoutFeedback>
+    <Modal
+      visible={visible}
+      transparent
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.modalRoot}
+      >
+        {/* Overlay – bấm ra ngoài để đóng modal */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Close about you editor"
+          style={styles.modalOverlay}
+          onPress={onClose}
+        />
 
-      {/* Bottom sheet */}
-      <View style={styles.bottomSheetContainer}>
-        <View style={styles.bottomSheet}>{renderContent()}</View>
-      </View>
+        {/* Bottom sheet */}
+        <View pointerEvents="box-none" style={styles.bottomSheetContainer}>
+          <View style={styles.bottomSheet}>{renderContent()}</View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 };

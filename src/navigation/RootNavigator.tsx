@@ -1,45 +1,29 @@
+// src/navigation/RootNavigator.tsx
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import AuthStack from '@navigation/AuthStack/AuthStack';
-import BottomTab from '@navigation/BottomTab/BottomTab';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
-import { useUser } from '@context/UserContext';
+import { useAuth } from '@context/AuthContext';
 
-export type RootStackParamList = {
-  Auth: undefined;
-  App: undefined;
-};
+import AuthStack from './AuthStack/AuthStack'; // Chứa Login, Register, OTP Screen
+import BottomTab from './BottomTab/BottomTab'; // Giao diện App thông thường của User
+import AdminDashboard from '@screens/Admin/AdminDashboard'; // (Bạn tạo thêm màn hình View cho Admin)
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
-
-const RootNavigator = () => {
-  const { user, isBootstrapping } = useUser();
-
-  if (isBootstrapping) {
-    return (
-      <View style={styles.bootContainer}>
-        <ActivityIndicator />
-      </View>
-    );
-  }
+export const RootNavigator = () => {
+  const { isAuthenticated, userRole } = useAuth();
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!user ? (
-        <Stack.Screen name="Auth" component={AuthStack} />
+    <>
+      {/* Cửa môn phân luồng bảo mật tối cao */}
+      {!isAuthenticated ? (
+        // Luồng 1: Chưa đăng nhập -> Buộc vào cụm Auth (Login/Register/OTP)
+        <AuthStack />
+      ) : userRole === 'admin' ? (
+        // Luồng 2: Đã đăng nhập & Là ADMIN -> Vào màn Dashboard quản trị
+        <AdminDashboard />
       ) : (
-        <Stack.Screen name="App" component={BottomTab} />
+        // Luồng 3: Đã đăng nhập & Là USER thường -> Vào app theo dõi sức khỏe
+        <BottomTab />
       )}
-    </Stack.Navigator>
+    </>
   );
 };
-
-const styles = StyleSheet.create({
-  bootContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 export default RootNavigator;
