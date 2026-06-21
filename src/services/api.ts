@@ -2,8 +2,9 @@ import { Platform } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DEFAULT_ANDROID_BASE_URL = 'http://10.0.2.2:5000';
-const DEFAULT_IOS_BASE_URL = 'http://localhost:5000';
+// Đã cập nhật từ cổng 5000 sang cổng 8080 để khớp với Spring Boot Server
+const DEFAULT_ANDROID_BASE_URL = 'http://localhost:8080';
+const DEFAULT_IOS_BASE_URL = 'http://localhost:8080';
 
 export const API_BASE_URL =
   process.env.API_BASE_URL ||
@@ -24,6 +25,7 @@ api.interceptors.request.use(
   },
   error => Promise.reject(error),
 );
+
 const USE_MOCK = false;
 
 export const workoutApi = USE_MOCK

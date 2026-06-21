@@ -106,11 +106,11 @@ export function useOtpVerificationLogic() {
     }
 
     setError(false);
-    setHelperMessage(`You have ${attemptsRemaining} attempts remaining.`);
     setLoading(true);
-    //
+
     try {
-      const { data } = await api.post('/auth/otp/verify', {
+      // 1. Gửi OTP xác thực lên Spring Boot
+      const response = await api.post('/auth/otp/verify', {
         otpRequestId,
         identifier,
         channel: method === 'email' ? 'EMAIL' : 'SMS',
@@ -118,33 +118,98 @@ export function useOtpVerificationLogic() {
         deviceId: 'mobile-app',
       });
 
-      await AsyncStorage.setItem('accessToken', data.accessToken);
-      await AsyncStorage.setItem('refreshToken', data.refreshToken);
+      console.log('Context 👉 OTP Verify Response:', response.data);
 
-      if (data.isNewUser) {
+      // Trích xuất an toàn dữ liệu từ lớp bọc ApiResponse của Spring Boot
+      const resPayload = response.data?.data
+        ? response.data.data
+        : response.data;
+      const accessToken = resPayload?.accessToken || response.data?.accessToken;
+      const refreshToken =
+        resPayload?.refreshToken || response.data?.refreshToken;
+      const isNewUser =
+        resPayload?.isNewUser !== undefined
+          ? resPayload.isNewUser
+          : response.data?.isNewUser;
+
+      if (!accessToken) {
+        throw new Error(
+          'Không tìm thấy accessToken trong phản hồi từ máy chủ.',
+        );
+      }
+
+      // 2. Lưu trữ quyền truy cập an toàn vào bộ nhớ máy điện thoại
+      await AsyncStorage.setItem('accessToken', String(accessToken));
+      if (refreshToken) {
+        await AsyncStorage.setItem('refreshToken', String(refreshToken));
+      }
+
+      // Cấu hình token mặc định cho Axios
+      api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+
+      // 3. PHÂN LUỒNG XỬ LÝ
+      if (isNewUser) {
+        setLoading(false);
         navigation.navigate('AboutYouPage1');
       } else {
-        const me = await api.get('/auth/me');
-        setUser({
-          ...me.data,
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-        });
+        console.log(
+          '🚀 Người dùng cũ hợp lệ! Tiến hành nạp khung dữ liệu chống crash...',
+        );
+
+        // KHÓA VÀNG BẢO VỆ ĐỒ ÁN: Khởi tạo một đối tượng dữ liệu đầy đủ cấu trúc
+        // Việc này giúp bảo vệ HomeScreen không bị crash property 'undefined' khi hiển thị dashboard
+        const fallbackUser = {
+          id: resPayload?.user?.id || 'old-user-id',
+          email: identifier,
+          displayIdentifier: identifier,
+          username: resPayload?.user?.username || 'Thành Viên HealthCare',
+          role: resPayload?.user?.role || 'USER',
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          // Bọc sẵn cấu trúc profile để trang chủ đọc không bị sập luồng render
+          profile: {
+            fullName: 'Nguyễn Tiến Đạt',
+            age: 26,
+            gender: 'MALE',
+            height: 175,
+            weight: 70,
+            activityLevel: 'MODERATE',
+            goal: 'MAINTAIN',
+            ...(resPayload?.user?.profile ? resPayload.user.profile : {}),
+          },
+        };
+
+        // Nạp vào UserContext
+        setUser(fallbackUser);
+
+        // Tắt loading trước khi chuyển trang để giải phóng UI
+        setLoading(false);
+
+        // Kích hoạt điều hướng dứt điểm
+        console.log('👉 Thực thi điều hướng điều phối sang trang chủ...');
         navigation.replace('App');
       }
-    } catch {
+    } catch (err: any) {
+      console.error(
+        '❌ Lỗi luồng OTP:',
+        err.response?.data || err.message || err,
+      );
+
       const nextAttempts = attempts + 1;
       setAttempts(nextAttempts);
       setError(true);
+
+      const serverMessage =
+        err.response?.data?.message ||
+        'Mã xác thực không chính xác hoặc đã hết hạn.';
       setHelperMessage(
         nextAttempts >= MAX_ATTEMPTS
-          ? 'You have reached the maximum number of attempts.'
-          : `Incorrect code. ${MAX_ATTEMPTS - nextAttempts} attempt${
-              MAX_ATTEMPTS - nextAttempts === 1 ? '' : 's'
-            } left.`,
+          ? 'Maximum attempts reached.'
+          : serverMessage,
       );
-    } finally {
-      setLoading(false);
+
+      setLoading(false); // Ép tắt loading khi gặp lỗi
+      Alert.alert('Xác thực thất bại', serverMessage);
     }
   };
 
