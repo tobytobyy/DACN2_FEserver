@@ -1,4 +1,10 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, {
+  createContext,
+  useState,
+  useContext,
+  useCallback,
+  ReactNode,
+} from 'react';
 
 /* ======================================================
  * 1. Kiểu dữ liệu cho 1 lần uống nước (Water Log)
@@ -41,6 +47,9 @@ interface WaterContextType {
 
   /** Xóa một log khỏi lịch sử */
   deleteLog: (id: string, amount: number) => void;
+
+  /** Initialize current intake from server value (idempotent) */
+  initializeForDay: (ml: number) => void;
 }
 
 /* ======================================================
@@ -66,6 +75,9 @@ export const WaterProvider = ({ children }: { children: ReactNode }) => {
 
   /** Lịch sử uống nước */
   const [history, setHistory] = useState<WaterLog[]>([]);
+
+  /** Flag to track if initializeForDay has been called (idempotent) */
+  const [initialized, setInitialized] = useState(false);
 
   /* ======================================================
    * Thêm nước (khi user bấm + hoặc -)
@@ -103,6 +115,18 @@ export const WaterProvider = ({ children }: { children: ReactNode }) => {
     setHistory(prev => prev.filter(item => item.id !== id));
   };
 
+  /* ======================================================
+   * Initialize current intake from server value (idempotent)
+   * ====================================================== */
+  const initializeForDay = useCallback(
+    (ml: number) => {
+      if (initialized) return;
+      setCurrentIntake(ml);
+      setInitialized(true);
+    },
+    [initialized],
+  );
+
   return (
     <WaterContext.Provider
       value={{
@@ -114,6 +138,7 @@ export const WaterProvider = ({ children }: { children: ReactNode }) => {
         history,
         addWater,
         deleteLog,
+        initializeForDay,
       }}
     >
       {children}
