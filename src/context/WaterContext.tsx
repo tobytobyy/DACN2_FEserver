@@ -76,8 +76,15 @@ export const WaterProvider = ({ children }: { children: ReactNode }) => {
   /** Lịch sử uống nước */
   const [history, setHistory] = useState<WaterLog[]>([]);
 
-  /** Flag to track if initializeForDay has been called (idempotent) */
-  const [initialized, setInitialized] = useState(false);
+  /** Tracks which date initializeForDay has already run for (idempotent per day) */
+  const [initializedDate, setInitializedDate] = useState<string | null>(null);
+
+  const formatLocalDate = (date: Date): string => {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  };
 
   /* ======================================================
    * Thêm nước (khi user bấm + hoặc -)
@@ -116,15 +123,16 @@ export const WaterProvider = ({ children }: { children: ReactNode }) => {
   };
 
   /* ======================================================
-   * Initialize current intake from server value (idempotent)
+   * Initialize current intake from server value (idempotent per calendar day)
    * ====================================================== */
   const initializeForDay = useCallback(
     (ml: number) => {
-      if (initialized) return;
+      const today = formatLocalDate(new Date());
+      if (initializedDate === today) return;
       setCurrentIntake(ml);
-      setInitialized(true);
+      setInitializedDate(today);
     },
-    [initialized],
+    [initializedDate],
   );
 
   return (

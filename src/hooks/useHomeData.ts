@@ -6,7 +6,12 @@ import { fetchHealthArticles } from '../services/rss';
 import { useUser } from '../context/UserContext';
 import type { DailyMetrics, Article } from '../types/home';
 
-const formatDate = (date: Date): string => date.toISOString().slice(0, 10);
+const formatDate = (date: Date): string => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
 
 const fetchDailyMetrics = async (
   date: string,
@@ -54,9 +59,11 @@ export const useHomeData = () => {
     staleTime: 30 * 60 * 1000,
   });
 
+  // todayQuery.refetch is stable; todayQuery itself is a new object on every render
+  // and must NOT be in the dep array — that would cause an infinite refetch loop.
   const refetch = useCallback(() => {
     todayQuery.refetch();
-  }, [todayQuery]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFocusEffect(
     useCallback(() => {
@@ -64,9 +71,9 @@ export const useHomeData = () => {
     }, [refetch]),
   );
 
-  const weekMetrics = weekQueries
-    .map(q => q.data)
-    .filter((d): d is DailyMetrics => d != null);
+  const weekMetrics: (DailyMetrics | null)[] = weekQueries.map(
+    q => q.data ?? null,
+  );
 
   return {
     metrics: todayQuery.data ?? null,

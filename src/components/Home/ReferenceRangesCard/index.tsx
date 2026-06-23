@@ -32,12 +32,12 @@ const REFERENCE_METRICS: MetricRef[] = [
     key: 'sleep',
     emoji: '😴',
     name: 'Giấc ngủ',
-    range: '7 – 9',
+    range: '6 – 9',
     unit: 'giờ',
     getStatus: m => {
       if (!m || m.sleepMinutes == null) return 'neutral';
       const h = m.sleepMinutes / 60;
-      if (h < 7) return 'low';
+      if (h < 6) return 'low';
       if (h <= 9) return 'normal';
       return 'high';
     },

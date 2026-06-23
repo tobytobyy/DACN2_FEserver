@@ -5,10 +5,21 @@ import styles from './styles';
 
 const VNEXPRESS_HEALTH_URL = 'https://vnexpress.net/suc-khoe';
 
+const parseDate = (pubDate: string): Date => {
+  // Normalize RFC-2822 timezone offset so Hermes can parse it
+  const normalized = pubDate
+    .replace(/(\+|-)\d{4}$/, 'GMT$1$&')
+    .replace(/GMT(\+|-)(\d{2})(\d{2})$/, 'GMT$1$2:$3');
+  const d = new Date(normalized);
+  if (!isNaN(d.getTime())) return d;
+  // Fallback: strip the timezone offset entirely
+  return new Date(pubDate.replace(/\s+[+-]\d{4}$/, ''));
+};
+
 const formatRelativeTime = (pubDate: string): string => {
   if (!pubDate) return '';
   try {
-    const diff = Date.now() - new Date(pubDate).getTime();
+    const diff = Date.now() - parseDate(pubDate).getTime();
     const hours = Math.floor(diff / 3_600_000);
     if (hours < 1) return 'Vừa xong';
     if (hours < 24) return `${hours} giờ trước`;
@@ -34,12 +45,16 @@ const ArticlesSection: React.FC<Props> = ({ articles }) => {
 
       <FlatList
         data={articles}
-        keyExtractor={item => item.link}
+        keyExtractor={(item, index) => item.link || item.title || String(index)}
         scrollEnabled={false}
         renderItem={({ item }) => (
           <Pressable
             style={styles.articleRow}
-            onPress={() => Linking.openURL(item.link)}
+            onPress={() => {
+              if (item.link) {
+                Linking.openURL(item.link);
+              }
+            }}
           >
             {item.thumbnail ? (
               <Image

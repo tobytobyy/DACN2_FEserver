@@ -52,12 +52,11 @@ const SkeletonBox: React.FC<{ height: number; marginBottom?: number }> = ({
 };
 
 // weekMetrics[0] = today, weekMetrics[1] = yesterday, etc.
-// null fields count as 0 (inactive) — streak breaks on first inactive day.
-const calculateStreak = (weekMetrics: DailyMetrics[]): number => {
+// null days count as inactive — streak breaks on first inactive day.
+const calculateStreak = (week: (DailyMetrics | null)[]): number => {
   let streak = 0;
-  for (const day of weekMetrics) {
-    const active = (day.steps ?? 0) > 0 || (day.caloriesOut ?? 0) > 0;
-    if (active) {
+  for (const day of week) {
+    if ((day?.steps ?? 0) > 0 || (day?.caloriesOut ?? 0) > 0) {
       streak++;
     } else {
       break;
