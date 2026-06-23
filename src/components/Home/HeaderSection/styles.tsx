@@ -1,89 +1,67 @@
 import { StyleSheet } from 'react-native';
 
-const styles = StyleSheet.create({
-  /* ================= Background ================= */
-
-  /**
-   * Nền phía sau của Header
-   * - Màu xanh mint
-   * - Bo tròn góc dưới
-   * - position absolute để nằm trên cùng màn hình
-   */
-  headerBackground: {
-    backgroundColor: '#98F6D6',
-    height: 240,
+export default StyleSheet.create({
+  gradient: {
     width: '100%',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    position: 'absolute',
-    top: 0,
-    zIndex: 0,
+    paddingBottom: 20,
+    paddingTop: 12,
   },
-
-  /* ================= Content ================= */
-
-  /**
-   * Container nội dung header
-   * - Chứa text chào + avatar
-   * - Layout ngang, canh giữa theo chiều dọc
-   */
-  headerContent: {
+  content: {
     paddingHorizontal: 24,
-    paddingTop: 10,
+    paddingTop: 8,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
-
-  /* ================= Greeting ================= */
-
-  /**
-   * Hàng hiển thị icon 👋 + chữ Hello
-   */
-  helloRow: {
+  leftCol: {
+    flex: 1,
+  },
+  greetingText: {
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '600',
+  },
+  dateText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.6)',
+    marginTop: 4,
+  },
+  streakPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    backgroundColor: 'rgba(255,255,255,0.18)',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    alignSelf: 'flex-start',
+    marginTop: 12,
+    gap: 4,
   },
-
-  /** Emoji vẫy tay */
-  waveIcon: {
-    fontSize: 18,
+  streakText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
-
-  /** Text lời chào (Hello / Xin chào / Hi) */
-  helloText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-
-  /**
-   * Tên user hiển thị dưới lời chào
-   * - Font to để làm điểm nhấn
-   */
-  usernameText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginTop: 2,
-  },
-
-  /* ================= Avatar ================= */
-
-  /**
-   * Wrapper cho avatar
-   * - padding nhỏ để dễ bấm (hit area)
-   */
   avatarButton: {
-    padding: 4,
+    padding: 2,
+    marginLeft: 12,
   },
   avatarImage: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#E0F2F1',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  avatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
-
-export default styles;

@@ -1,55 +1,71 @@
 import React from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
-
+import LinearGradient from 'react-native-linear-gradient';
 import UserAvatar from '@assets/icons/svgs/account_circle.svg';
 import styles from './styles';
 
 type Props = {
-  email: string;
   displayName?: string;
   avatarUrl?: string | null;
-  greeting?: string;
+  streakDays?: number;
   onPressAvatar?: () => void;
 };
 
-const getNameFromEmail = (email: string): string => {
-  if (!email) return 'User';
-  const namePart = email.split('@')[0];
-  return namePart.replace(/[._]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+const getGreeting = (): string => {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 };
 
+const formatDate = (): string =>
+  new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+
 const HeaderSection: React.FC<Props> = ({
-  email,
   displayName,
   avatarUrl,
-  greeting,
+  streakDays = 0,
   onPressAvatar,
 }) => {
-  const greetingText = greeting ?? 'Hello!';
-  const userName = displayName?.trim() || getNameFromEmail(email);
+  const name = displayName?.trim() || 'there';
 
   return (
-    <View style={styles.headerBackground}>
-      <View style={styles.headerContent}>
-        {/* Text bên trái */}
-        <View>
-          <View style={styles.helloRow}>
-            <Text style={styles.waveIcon}>👋</Text>
-            <Text style={styles.helloText}>{greetingText}</Text>
-          </View>
-          <Text style={styles.usernameText}>{userName}</Text>
+    <LinearGradient
+      colors={['#2D8C83', '#1a5c56']}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 0, y: 1 }}
+      style={styles.gradient}
+    >
+      <View style={styles.content}>
+        <View style={styles.leftCol}>
+          <Text style={styles.greetingText}>
+            {getGreeting()}, {name} 👋
+          </Text>
+          <Text style={styles.dateText}>{formatDate()}</Text>
+          {streakDays > 0 && (
+            <View style={styles.streakPill}>
+              <Text>🔥</Text>
+              <Text style={styles.streakText}>Day {streakDays} streak</Text>
+            </View>
+          )}
         </View>
 
-        {/* Avatar bên phải */}
         <Pressable style={styles.avatarButton} onPress={onPressAvatar}>
           {avatarUrl ? (
             <Image source={{ uri: avatarUrl }} style={styles.avatarImage} />
           ) : (
-            <UserAvatar />
+            <View style={styles.avatarPlaceholder}>
+              <UserAvatar width={28} height={28} color="#FFFFFF" />
+            </View>
           )}
         </Pressable>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 

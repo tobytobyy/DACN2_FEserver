@@ -34,19 +34,16 @@ const HomeScreen: React.FC = () => {
   );
 
   const profile = user?.profile;
-  const email = user?.primaryEmail ?? user?.displayIdentifier ?? '';
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#98F6D6" />
+      <StatusBar barStyle="light-content" backgroundColor="#2D8C83" />
 
       {/* Header nằm tuyệt đối ở trên cùng để làm nền */}
       <View style={styles.headerContainer}>
         <HeaderSection
-          email={email}
           displayName={profile?.fullName || user?.username}
           avatarUrl={profile?.avatarUrl}
-          greeting="Welcome!"
           onPressAvatar={() => {}}
         />
       </View>
