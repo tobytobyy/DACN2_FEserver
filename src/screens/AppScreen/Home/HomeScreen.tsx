@@ -1,69 +1,123 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, ScrollView, StatusBar, StyleSheet } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
+import React, { useEffect, useRef } from 'react';
+import {
+  Animated,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  View,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
 import HeaderSection from '@components/Home/HeaderSection/HeaderSection';
 import ActivityCard from '@components/Home/ActivityCard/ActivityCard';
 import HeartSleepGrid from '@components/Home/HeartSleepGrid/HeartSleepGrid';
 import WaterCard from '@components/Home/WaterCard/WaterCard';
+import ReferenceRangesCard from '@components/Home/ReferenceRangesCard';
+import ArticlesSection from '@components/Home/ArticlesSection';
 
-import { getUserProfile } from '../../../components/Home/HeaderSection/types';
+import { useHomeData } from '../../../hooks/useHomeData';
+import { useWater } from '@context/WaterContext';
+import type { DailyMetrics } from '../../../types/home';
 
-type HomeUser = Awaited<ReturnType<typeof getUserProfile>> | null;
-
-const HomeScreen: React.FC = () => {
-  const [user, setUser] = useState<HomeUser>(null);
-
-  const fetchUser = useCallback(async () => {
-    try {
-      const userData = await getUserProfile();
-      setUser(userData);
-    } catch (error) {
-      console.log('Error fetching user profile:', error);
-    }
-  }, []);
+const SkeletonBox: React.FC<{ height: number; marginBottom?: number }> = ({
+  height,
+  marginBottom = 12,
+}) => {
+  const opacity = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    const anim = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(opacity, {
+          toValue: 0.4,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [opacity]);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchUser();
-    }, [fetchUser]),
+  return (
+    <Animated.View
+      style={[styles.skeleton, { height, marginBottom, opacity }]}
+    />
   );
+};
 
+// weekMetrics[0] = today, weekMetrics[1] = yesterday, etc.
+// null fields count as 0 (inactive) — streak breaks on first inactive day.
+const calculateStreak = (weekMetrics: DailyMetrics[]): number => {
+  let streak = 0;
+  for (const day of weekMetrics) {
+    const active = (day.steps ?? 0) > 0 || (day.caloriesOut ?? 0) > 0;
+    if (active) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  return streak;
+};
+
+const HomeScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
+  const { metrics, weekMetrics, user, articles, isLoading } = useHomeData();
+  const { initializeForDay } = useWater();
+
+  useEffect(() => {
+    if (metrics?.waterMl != null) {
+      initializeForDay(metrics.waterMl);
+    }
+  }, [metrics?.waterMl, initializeForDay]);
+
+  const streakDays = calculateStreak(weekMetrics);
   const profile = user?.profile;
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#2D8C83" />
 
-      {/* Header nằm tuyệt đối ở trên cùng để làm nền */}
-      <View style={styles.headerContainer}>
-        <HeaderSection
-          displayName={profile?.fullName || user?.username}
-          avatarUrl={profile?.avatarUrl}
-          onPressAvatar={() => {}}
-        />
-      </View>
+      <HeaderSection
+        displayName={profile?.fullName || user?.username}
+        avatarUrl={profile?.avatarUrl}
+        streakDays={streakDays}
+        onPressAvatar={() => navigation.navigate('SettingsTab')}
+      />
 
-      {/* ScrollView chứa nội dung chính */}
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <ActivityCard />
-        <HeartSleepGrid
-          heartRate={78}
-          heartStatus={{ label: 'Normal', color: '#10B981' }}
-          sleepHours={7}
-          sleepMinutes={20}
-          sleepTargetHours={8}
-        />
+        {isLoading ? (
+          <>
+            <SkeletonBox height={120} />
+            <SkeletonBox height={100} />
+            <SkeletonBox height={100} />
+          </>
+        ) : (
+          <>
+            <ActivityCard
+              steps={metrics?.steps ?? null}
+              calories={metrics?.caloriesOut ?? null}
+            />
+            <HeartSleepGrid
+              heartRate={metrics?.avgHeartRate ?? null}
+              sleepMinutes={metrics?.sleepMinutes ?? null}
+            />
+            <WaterCard />
+          </>
+        )}
 
-        <WaterCard />
+        <ReferenceRangesCard metrics={metrics ?? null} />
+        <ArticlesSection articles={articles} />
       </ScrollView>
     </View>
   );
@@ -72,23 +126,19 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F3F4F6', // Màu nền xám nhạt cho toàn màn hình
-  },
-  headerContainer: {
-    position: 'absolute', // Quan trọng: Để header nằm chìm bên dưới
-    top: 0,
-    left: 0,
-    right: 0,
-    zIndex: 0,
+    backgroundColor: '#F3F4F6',
   },
   scrollView: {
     flex: 1,
-    marginTop: 100, // Đẩy nội dung xuống để thẻ Activity chồng lên Header (overlap)
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 120, // Chừa khoảng trống lớn cho Bottom Tab Bar
-    paddingTop: 10,
+    paddingTop: 16,
+    paddingBottom: 120,
+  },
+  skeleton: {
+    backgroundColor: '#E5E7EB',
+    borderRadius: 16,
   },
 });
 
