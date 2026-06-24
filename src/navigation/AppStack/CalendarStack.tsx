@@ -6,7 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
  * ====================================================== */
 import CalendarScreen from '@screens/AppScreen/Calendar/CalendarScreen';
 import AiAnalysisScreen from '@screens/AppScreen/AIAnalysis/AiAnalysisScreen';
-import type { HealthSummary } from '@components/Calendar/Calendar.types';
+import type { DailyMetrics } from '@types/home';
 
 /* ======================================================
  * 1. Định nghĩa Param List cho Calendar Stack
@@ -20,7 +20,7 @@ export type CalendarStackParamList = {
   /** Màn hình AI phân tích dữ liệu theo ngày */
   AiAnalysis: {
     selectedDate: string;
-    summary: HealthSummary;
+    summary: DailyMetrics | null;
   };
 };
 

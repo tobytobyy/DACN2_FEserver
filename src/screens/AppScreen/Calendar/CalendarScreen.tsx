@@ -10,17 +10,16 @@ import { CalendarStackParamList } from '@navigation/AppStack/CalendarStack';
 
 import DailySummary from '@components/Calendar/DailySummary/DailySummary';
 import CalendarHeader from '@components/Calendar/CalendarHeader/CalendarHeader';
-import { HealthSummary } from '@components/Calendar/Calendar.types';
 import { styles } from '@components/Calendar/styles';
+import type { DailyMetrics } from '@types/home';
 
-import { generateMockSleepAndHeart } from '@components/Calendar/mockHealthData';
 import { api } from '../../../services/api';
 
 const STEP_GOAL = 10000;
 
 const CalendarScreen = () => {
   const [selectedDate, setSelectedDate] = useState('2025-12-26');
-  const [healthData, setHealthData] = useState<Record<string, HealthSummary>>(
+  const [metricsMap, setMetricsMap] = useState<Record<string, DailyMetrics>>(
     {},
   );
 
@@ -31,7 +30,7 @@ const CalendarScreen = () => {
   const navigation = useNavigation<NavigationProp>();
 
   useEffect(() => {
-    const fetchStepsAndCompose = async (date: string) => {
+    const fetchMetrics = async (date: string) => {
       try {
         // Tạo khoảng thời gian trong ngày đó
         const from = `${date}T00:00:00.000Z`;
@@ -43,7 +42,7 @@ const CalendarScreen = () => {
         });
 
         const workouts: any[] = res.data ?? [];
-        let stepsValue = 0;
+        let stepsValue: number | null = null;
 
         if (workouts.length > 0) {
           // Lấy bản ghi mới nhất trong ngày
@@ -52,29 +51,28 @@ const CalendarScreen = () => {
               new Date(b.time.endAt).getTime() -
               new Date(a.time.endAt).getTime(),
           )[0];
-          stepsValue = latest.steps ?? 0;
+          stepsValue = latest.steps ?? null;
         }
 
-        // Ghép với sleep/heart mock
-        const sleepHeart = generateMockSleepAndHeart();
-
-        const summary: HealthSummary = {
-          ...sleepHeart,
-          steps: `${stepsValue.toLocaleString()} steps`,
+        const metrics: DailyMetrics = {
+          date,
+          steps: stepsValue,
+          caloriesOut: null,
+          avgHeartRate: null,
+          sleepMinutes: null,
+          waterMl: null,
         };
 
-        setHealthData(prev => ({ ...prev, [date]: summary }));
+        setMetricsMap(prev => ({ ...prev, [date]: metrics }));
       } catch (err) {
         console.error('Failed to fetch workouts:', err);
       }
     };
 
-    fetchStepsAndCompose(selectedDate);
+    fetchMetrics(selectedDate);
   }, [selectedDate]);
 
-  const summary = healthData[selectedDate];
-  const stepsValue = parseInt(summary?.steps?.replace(/[^\d]/g, '') ?? '0', 10);
-  const stepProgress = Math.min(stepsValue / STEP_GOAL, 1);
+  const metrics: DailyMetrics | null = metricsMap[selectedDate] ?? null;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -100,18 +98,17 @@ const CalendarScreen = () => {
           style={styles.calendar}
         />
 
-        {summary && (
-          <DailySummary
-            onPressAiAnalysis={() =>
-              navigation.navigate('AiAnalysis', { selectedDate, summary })
-            }
-            selectedDate={selectedDate}
-            stepGoal={STEP_GOAL}
-            stepProgress={stepProgress}
-            stepsValue={stepsValue}
-            summary={summary}
-          />
-        )}
+        <DailySummary
+          onPressAiAnalysis={() =>
+            navigation.navigate('AiAnalysis', {
+              selectedDate,
+              summary: metrics,
+            })
+          }
+          selectedDate={selectedDate}
+          stepGoal={STEP_GOAL}
+          metrics={metrics}
+        />
       </ScrollView>
     </SafeAreaView>
   );
