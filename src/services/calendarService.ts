@@ -5,11 +5,10 @@ export const fetchDayAggregate = async (
   date: string,
 ): Promise<DailyMetrics | null> => {
   try {
-    const res = await api.get('/health/daily-aggregate', { params: { date } });
+    const res = await api.get(`/health/summary/${date}`);
     return unwrapApiData(res.data) as DailyMetrics;
-  } catch (err: any) {
-    if (err?.response?.status === 404) return null;
-    throw err;
+  } catch {
+    return null;
   }
 };
 
@@ -20,8 +19,7 @@ export const fetchMonthAggregates = async (
   try {
     const res = await api.get('/health/summary', { params: { from, to } });
     return (unwrapApiData(res.data) as DailyMetrics[]) ?? [];
-  } catch (err: any) {
-    if (err?.response?.status === 404) return [];
-    throw err;
+  } catch {
+    return [];
   }
 };
