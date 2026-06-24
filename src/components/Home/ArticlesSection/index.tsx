@@ -5,14 +5,14 @@ import styles from './styles';
 
 const VNEXPRESS_HEALTH_URL = 'https://vnexpress.net/suc-khoe';
 
+// FIX 3: Simplify timezone normalization. The old double-replace produced
+// "GMT++0700" because $& (full match = "+0700") was appended after $1 ("+").
+// This single replace converts "+0700" → "+07:00" which Hermes can parse.
 const parseDate = (pubDate: string): Date => {
-  // Normalize RFC-2822 timezone offset so Hermes can parse it
-  const normalized = pubDate
-    .replace(/(\+|-)\d{4}$/, 'GMT$1$&')
-    .replace(/GMT(\+|-)(\d{2})(\d{2})$/, 'GMT$1$2:$3');
+  const normalized = pubDate.replace(/([+-])(\d{2})(\d{2})$/, '$1$2:$3');
   const d = new Date(normalized);
   if (!isNaN(d.getTime())) return d;
-  // Fallback: strip the timezone offset entirely
+  // Fallback: strip timezone offset entirely
   return new Date(pubDate.replace(/\s+[+-]\d{4}$/, ''));
 };
 
@@ -38,7 +38,10 @@ const ArticlesSection: React.FC<Props> = ({ articles }) => {
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>Bài viết sức khỏe</Text>
-        <Pressable onPress={() => Linking.openURL(VNEXPRESS_HEALTH_URL)}>
+        {/* FIX 8: Catch and discard openURL rejections to prevent unhandled promise rejections */}
+        <Pressable
+          onPress={() => Linking.openURL(VNEXPRESS_HEALTH_URL).catch(() => {})}
+        >
           <Text style={styles.seeMoreText}>Xem thêm</Text>
         </Pressable>
       </View>
@@ -51,8 +54,9 @@ const ArticlesSection: React.FC<Props> = ({ articles }) => {
           <Pressable
             style={styles.articleRow}
             onPress={() => {
+              // FIX 8: Catch and discard openURL rejections
               if (item.link) {
-                Linking.openURL(item.link);
+                Linking.openURL(item.link).catch(() => {});
               }
             }}
           >

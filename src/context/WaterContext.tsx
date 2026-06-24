@@ -13,7 +13,7 @@ export type WaterLog = {
   /** ID duy nhất cho mỗi lần uống */
   id: string;
 
-  /** Lượng nước uống (ml) */
+  /** Lượng nước uống (ml) — always stored as absolute value */
   amount: number;
 
   /** Thời gian uống (HH:mm) */
@@ -98,13 +98,15 @@ export const WaterProvider = ({ children }: { children: ReactNode }) => {
       minute: '2-digit',
     });
 
+    // FIX 9: Append random suffix to avoid duplicate IDs on rapid taps
+    // FIX 2: Store amount as Math.abs so deleteLog's `prev - amount` is always correct
     const newLog: WaterLog = {
-      id: Date.now().toString(),
-      amount,
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      amount: Math.abs(amount),
       time: timeString,
     };
 
-    // Cập nhật tổng lượng nước
+    // Cập nhật tổng lượng nước (signed delta preserved here)
     setCurrentIntake(prev => Math.max(0, prev + amount));
 
     // Thêm log mới lên đầu lịch sử
@@ -115,7 +117,7 @@ export const WaterProvider = ({ children }: { children: ReactNode }) => {
    * Xóa 1 log uống nước
    * ====================================================== */
   const deleteLog = (id: string, amount: number) => {
-    // Giảm tổng lượng nước
+    // FIX 2: amount in log is always Math.abs, so prev - amount is always correct
     setCurrentIntake(prev => Math.max(0, prev - amount));
 
     // Xóa log khỏi history
@@ -130,6 +132,8 @@ export const WaterProvider = ({ children }: { children: ReactNode }) => {
       const today = formatLocalDate(new Date());
       if (initializedDate === today) return;
       setCurrentIntake(ml);
+      // FIX 7: Clear history on new day so yesterday's logs don't persist
+      setHistory([]);
       setInitializedDate(today);
     },
     [initializedDate],

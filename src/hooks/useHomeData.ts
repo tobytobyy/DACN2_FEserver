@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from 'react';
-import { useQuery, useQueries } from '@tanstack/react-query';
+import { useCallback } from 'react';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { useFocusEffect } from '@react-navigation/native';
 import { api, unwrapApiData } from '../services/api';
 import { fetchHealthArticles } from '../services/rss';
@@ -13,43 +13,39 @@ const formatDate = (date: Date): string => {
   return `${y}-${m}-${d}`;
 };
 
+// FIX 1: Let errors propagate so React Query handles retry/error state.
+// 404 means no aggregate for that day — return null (not an error).
 const fetchDailyMetrics = async (
   date: string,
 ): Promise<DailyMetrics | null> => {
   try {
     const res = await api.get(`/health/daily-aggregate?date=${date}`);
     return unwrapApiData<DailyMetrics>(res.data);
-  } catch {
-    return null;
+  } catch (err: any) {
+    if (err?.response?.status === 404) return null;
+    throw err;
   }
 };
 
 export const useHomeData = () => {
   const { user } = useUser();
 
-  const today = useMemo(() => formatDate(new Date()), []);
-
-  const last7Days = useMemo(
-    () =>
-      Array.from({ length: 7 }, (_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        return formatDate(d);
-      }),
-    [],
-  );
-
-  const todayQuery = useQuery<DailyMetrics | null>({
-    queryKey: ['daily-aggregate', today],
-    queryFn: () => fetchDailyMetrics(today),
-    staleTime: 0,
+  // FIX 4: Compute last7Days directly (not in useMemo with []) so
+  // it updates after midnight instead of staying frozen at mount time.
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    return formatDate(d);
   });
 
+  // FIX 10: Remove todayQuery entirely. weekQueries[0] covers today with
+  // staleTime:0 so there is no conflicting cache entry for the same key.
   const weekQueries = useQueries({
-    queries: last7Days.map(date => ({
+    queries: last7Days.map((date, i) => ({
       queryKey: ['daily-aggregate', date],
       queryFn: () => fetchDailyMetrics(date),
-      staleTime: 5 * 60 * 1000,
+      // FIX 10: today's entry is always considered stale; historical days cache for 5 min
+      staleTime: i === 0 ? 0 : 5 * 60 * 1000,
     })),
   });
 
@@ -59,10 +55,10 @@ export const useHomeData = () => {
     staleTime: 30 * 60 * 1000,
   });
 
-  // todayQuery.refetch is stable; todayQuery itself is a new object on every render
-  // and must NOT be in the dep array — that would cause an infinite refetch loop.
+  // FIX 6: refetch triggers both today's query and all week queries so
+  // every panel refreshes on tab focus, not just the daily card.
   const refetch = useCallback(() => {
-    todayQuery.refetch();
+    weekQueries.forEach(q => q.refetch());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useFocusEffect(
@@ -71,17 +67,21 @@ export const useHomeData = () => {
     }, [refetch]),
   );
 
+  // FIX 10: Derive today's metrics from weekQueries[0]
+  const metrics: DailyMetrics | null = weekQueries[0]?.data ?? null;
   const weekMetrics: (DailyMetrics | null)[] = weekQueries.map(
     q => q.data ?? null,
   );
 
   return {
-    metrics: todayQuery.data ?? null,
+    metrics,
     weekMetrics,
     user,
     articles: articlesQuery.data ?? [],
-    isLoading: todayQuery.isLoading || articlesQuery.isLoading,
-    isError: todayQuery.isError,
+    // FIX 5: isLoading only gates on today's health data, not the RSS fetch.
+    // Articles load independently so health cards are not blocked by RSS latency.
+    isLoading: weekQueries[0]?.isLoading ?? true,
+    isError: weekQueries[0]?.isError ?? false,
     refetch,
   };
 };
