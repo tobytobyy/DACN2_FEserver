@@ -1,78 +1,129 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { theme } from '@assets/theme';
 import { CalendarStackParamList } from '@navigation/AppStack/CalendarStack';
-
 import DailySummary from '@components/Calendar/DailySummary/DailySummary';
 import CalendarHeader from '@components/Calendar/CalendarHeader/CalendarHeader';
 import { styles } from '@components/Calendar/styles';
-import type { DailyMetrics } from '@types/home';
+import type { DailyMetrics } from '../../types/home';
 
-import { api } from '../../../services/api';
+import {
+  fetchDayAggregate,
+  fetchMonthAggregates,
+} from '../../../services/calendarService';
+import { buildMarkedDates } from '../../../utils/healthStatus';
 
 const STEP_GOAL = 10000;
 
+const formatLocalDate = (d: Date): string => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+};
+
+const getMonthRange = (dateStr: string): { from: string; to: string } => {
+  const d = new Date(dateStr + 'T00:00:00');
+  const y = d.getFullYear();
+  const mo = d.getMonth();
+  const from = `${y}-${String(mo + 1).padStart(2, '0')}-01`;
+  const lastDay = new Date(y, mo + 1, 0).getDate();
+  const to = `${y}-${String(mo + 1).padStart(2, '0')}-${String(
+    lastDay,
+  ).padStart(2, '0')}`;
+  return { from, to };
+};
+
+type NavigationProp = NativeStackNavigationProp<
+  CalendarStackParamList,
+  'Calendar'
+>;
+
 const CalendarScreen = () => {
-  const [selectedDate, setSelectedDate] = useState('2025-12-26');
-  const [metricsMap, setMetricsMap] = useState<Record<string, DailyMetrics>>(
-    {},
+  const navigation = useNavigation<NavigationProp>();
+  const today = formatLocalDate(new Date());
+
+  const [selectedDate, setSelectedDate] = useState<string>(today);
+  const [currentMonth, setCurrentMonth] = useState<string>(today);
+  const [monthMap, setMonthMap] = useState<Record<string, DailyMetrics>>({});
+  const [dayMetrics, setDayMetrics] = useState<DailyMetrics | null>(null);
+  const [isDayLoading, setIsDayLoading] = useState(false);
+
+  // Load all aggregates for the visible month
+  const loadMonth = useCallback(async (monthAnchor: string) => {
+    const { from, to } = getMonthRange(monthAnchor);
+    try {
+      const list = await fetchMonthAggregates(from, to);
+      const map: Record<string, DailyMetrics> = {};
+      for (const agg of list) {
+        if (agg.date) {
+          // agg.date may arrive as string 'YYYY-MM-DD' or LocalDate serialized
+          const key = String(agg.date).slice(0, 10);
+          map[key] = agg;
+        }
+      }
+      setMonthMap(prev => ({ ...prev, ...map }));
+    } catch {
+      // silent — borders just won't appear for failed months
+    }
+  }, []);
+
+  // Load a single day's metrics
+  const loadDay = useCallback(
+    async (dateStr: string, map: Record<string, DailyMetrics>) => {
+      if (map[dateStr]) {
+        setDayMetrics(map[dateStr]);
+        return;
+      }
+      setIsDayLoading(true);
+      try {
+        const agg = await fetchDayAggregate(dateStr);
+        setDayMetrics(agg);
+      } finally {
+        setIsDayLoading(false);
+      }
+    },
+    [],
   );
 
-  type NavigationProp = NativeStackNavigationProp<
-    CalendarStackParamList,
-    'Calendar'
-  >;
-  const navigation = useNavigation<NavigationProp>();
-
+  // On mount: load today's month and today's day
   useEffect(() => {
-    const fetchMetrics = async (date: string) => {
-      try {
-        // Tạo khoảng thời gian trong ngày đó
-        const from = `${date}T00:00:00.000Z`;
-        const to = `${date}T23:59:59.999Z`;
+    loadMonth(today);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-        // Gọi API /health/workouts
-        const res = await api.get('/health/workouts', {
-          params: { from, to },
-        });
+  // Reload today on screen focus (same pattern as HomeScreen)
+  useFocusEffect(
+    useCallback(() => {
+      loadMonth(currentMonth);
+    }, [currentMonth, loadMonth]),
+  );
 
-        const workouts: any[] = res.data ?? [];
-        let stepsValue: number | null = null;
+  // When month changes
+  const handleMonthChange = useCallback(
+    (month: { dateString: string }) => {
+      setCurrentMonth(month.dateString);
+      loadMonth(month.dateString);
+    },
+    [loadMonth],
+  );
 
-        if (workouts.length > 0) {
-          // Lấy bản ghi mới nhất trong ngày
-          const latest = workouts.sort(
-            (a, b) =>
-              new Date(b.time.endAt).getTime() -
-              new Date(a.time.endAt).getTime(),
-          )[0];
-          stepsValue = latest.steps ?? null;
-        }
+  // When a day is tapped
+  const handleDayPress = useCallback(
+    (day: { dateString: string }) => {
+      const dateStr = day.dateString;
+      setSelectedDate(dateStr);
+      loadDay(dateStr, monthMap);
+    },
+    [monthMap, loadDay],
+  );
 
-        const metrics: DailyMetrics = {
-          date,
-          steps: stepsValue,
-          caloriesOut: null,
-          avgHeartRate: null,
-          sleepMinutes: null,
-          waterMl: null,
-        };
-
-        setMetricsMap(prev => ({ ...prev, [date]: metrics }));
-      } catch (err) {
-        console.error('Failed to fetch workouts:', err);
-      }
-    };
-
-    fetchMetrics(selectedDate);
-  }, [selectedDate]);
-
-  const metrics: DailyMetrics | null = metricsMap[selectedDate] ?? null;
+  // Recompute markedDates when monthMap or selectedDate changes
+  const markedDates = buildMarkedDates(monthMap, selectedDate, today);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -83,32 +134,34 @@ const CalendarScreen = () => {
       >
         <Calendar
           current={selectedDate}
-          onDayPress={day => setSelectedDate(day.dateString)}
-          markedDates={{
-            [selectedDate]: {
-              selected: true,
-              selectedColor: theme.colors.blue,
-            },
-          }}
+          onDayPress={handleDayPress}
+          onMonthChange={handleMonthChange}
+          markedDates={markedDates}
+          markingType="custom"
           theme={{
             todayTextColor: theme.colors.blue,
             arrowColor: theme.colors.blue,
-            selectedDayTextColor: theme.colors.white,
           }}
           style={styles.calendar}
         />
 
-        <DailySummary
-          onPressAiAnalysis={() =>
-            navigation.navigate('AiAnalysis', {
-              selectedDate,
-              summary: metrics,
-            })
-          }
-          selectedDate={selectedDate}
-          stepGoal={STEP_GOAL}
-          metrics={metrics}
-        />
+        {isDayLoading ? (
+          <View style={{ padding: 24, alignItems: 'center' }}>
+            <ActivityIndicator color={theme.colors.blue} />
+          </View>
+        ) : (
+          <DailySummary
+            selectedDate={selectedDate}
+            metrics={dayMetrics}
+            stepGoal={STEP_GOAL}
+            onPressAiAnalysis={() =>
+              navigation.navigate('AiAnalysis', {
+                selectedDate,
+                summary: dayMetrics,
+              })
+            }
+          />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
