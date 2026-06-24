@@ -95,15 +95,22 @@ const DailySummary = ({
           <Text style={styles.metricValue}>
             {steps != null ? `${stepsValue.toLocaleString()} steps` : '–'}
           </Text>
-          <View style={styles.progressBar}>
-            <View
-              style={[styles.progressFill, { width: `${stepProgress * 100}%` }]}
-            />
-          </View>
-          <Text style={styles.progressText}>
-            {stepsValue.toLocaleString()} / {stepGoal.toLocaleString()} steps (
-            {Math.round(stepProgress * 100)}%)
-          </Text>
+          {steps != null && (
+            <>
+              <View style={styles.progressBar}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${stepProgress * 100}%` },
+                  ]}
+                />
+              </View>
+              <Text style={styles.progressText}>
+                {stepsValue.toLocaleString()} / {stepGoal.toLocaleString()}{' '}
+                steps ({Math.round(stepProgress * 100)}%)
+              </Text>
+            </>
+          )}
         </View>
 
         {/* Sleep */}

@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useFocusEffect } from '@react-navigation/native';
-import { api, unwrapApiData } from '../services/api';
 import { fetchHealthArticles } from '../services/rss';
+import { fetchDayAggregate } from '../services/calendarService';
 import { useUser } from '../context/UserContext';
 import type { DailyMetrics, Article } from '../types/home';
 
@@ -11,20 +11,6 @@ const formatDate = (date: Date): string => {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
-};
-
-// FIX 1: Let errors propagate so React Query handles retry/error state.
-// 404 means no aggregate for that day — return null (not an error).
-const fetchDailyMetrics = async (
-  date: string,
-): Promise<DailyMetrics | null> => {
-  try {
-    const res = await api.get(`/health/daily-aggregate?date=${date}`);
-    return unwrapApiData<DailyMetrics>(res.data);
-  } catch (err: any) {
-    if (err?.response?.status === 404) return null;
-    throw err;
-  }
 };
 
 export const useHomeData = () => {
@@ -43,7 +29,7 @@ export const useHomeData = () => {
   const weekQueries = useQueries({
     queries: last7Days.map((date, i) => ({
       queryKey: ['daily-aggregate', date],
-      queryFn: () => fetchDailyMetrics(date),
+      queryFn: () => fetchDayAggregate(date),
       // FIX 10: today's entry is always considered stale; historical days cache for 5 min
       staleTime: i === 0 ? 0 : 5 * 60 * 1000,
     })),

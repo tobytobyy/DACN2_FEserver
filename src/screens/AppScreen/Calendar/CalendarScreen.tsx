@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
@@ -10,7 +10,7 @@ import { CalendarStackParamList } from '@navigation/AppStack/CalendarStack';
 import DailySummary from '@components/Calendar/DailySummary/DailySummary';
 import CalendarHeader from '@components/Calendar/CalendarHeader/CalendarHeader';
 import { styles } from '@components/Calendar/styles';
-import type { DailyMetrics } from '../../types/home';
+import type { DailyMetrics } from '@types/home';
 
 import {
   fetchDayAggregate,
@@ -54,24 +54,29 @@ const CalendarScreen = () => {
   const [dayMetrics, setDayMetrics] = useState<DailyMetrics | null>(null);
   const [isDayLoading, setIsDayLoading] = useState(false);
 
-  // Load all aggregates for the visible month
-  const loadMonth = useCallback(async (monthAnchor: string) => {
-    const { from, to } = getMonthRange(monthAnchor);
-    try {
-      const list = await fetchMonthAggregates(from, to);
-      const map: Record<string, DailyMetrics> = {};
-      for (const agg of list) {
-        if (agg.date) {
-          // agg.date may arrive as string 'YYYY-MM-DD' or LocalDate serialized
-          const key = String(agg.date).slice(0, 10);
-          map[key] = agg;
+  // Load all aggregates for the visible month; returns the built map so callers can chain loadDay
+  const loadMonth = useCallback(
+    async (monthAnchor: string): Promise<Record<string, DailyMetrics>> => {
+      const { from, to } = getMonthRange(monthAnchor);
+      try {
+        const list = await fetchMonthAggregates(from, to);
+        const map: Record<string, DailyMetrics> = {};
+        for (const agg of list) {
+          if (agg.date) {
+            // agg.date may arrive as string 'YYYY-MM-DD' or LocalDate serialized
+            const key = String(agg.date).slice(0, 10);
+            map[key] = agg;
+          }
         }
+        setMonthMap(prev => ({ ...prev, ...map }));
+        return map;
+      } catch {
+        // silent — borders just won't appear for failed months
+        return {};
       }
-      setMonthMap(prev => ({ ...prev, ...map }));
-    } catch {
-      // silent — borders just won't appear for failed months
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Load a single day's metrics
   const loadDay = useCallback(
@@ -91,16 +96,13 @@ const CalendarScreen = () => {
     [],
   );
 
-  // On mount: load today's month and today's day
-  useEffect(() => {
-    loadMonth(today);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Reload today on screen focus (same pattern as HomeScreen)
+  // On focus: load the visible month, then populate day metrics for selectedDate
   useFocusEffect(
     useCallback(() => {
-      loadMonth(currentMonth);
-    }, [currentMonth, loadMonth]),
+      loadMonth(currentMonth).then(newMap => {
+        loadDay(selectedDate, { ...monthMap, ...newMap });
+      });
+    }, [currentMonth, selectedDate, monthMap, loadMonth, loadDay]),
   );
 
   // When month changes
@@ -122,8 +124,11 @@ const CalendarScreen = () => {
     [monthMap, loadDay],
   );
 
-  // Recompute markedDates when monthMap or selectedDate changes
-  const markedDates = buildMarkedDates(monthMap, selectedDate, today);
+  // Recompute markedDates only when monthMap, selectedDate, or today changes
+  const markedDates = useMemo(
+    () => buildMarkedDates(monthMap, selectedDate, today),
+    [monthMap, selectedDate, today],
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
