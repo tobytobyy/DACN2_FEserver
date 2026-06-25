@@ -1,260 +1,278 @@
 import { StyleSheet } from 'react-native';
-import { theme } from '@assets/theme';
+
+// Design tokens — midnight-blue fitness theme
+const C = {
+  surface: '#111927',
+  surface2: '#1C2840',
+  surfaceBd: 'rgba(255,255,255,0.07)',
+  text: '#EFF6FF',
+  text2: '#7A94B0',
+  text3: '#3D5269',
+  accent: '#00E5A0',
+  accentDim: 'rgba(0,229,160,0.12)',
+  accentBd: 'rgba(0,229,160,0.22)',
+  amber: '#F59E0B',
+  red: '#F43F5E',
+  redDim: 'rgba(244,63,94,0.13)',
+  redBd: 'rgba(244,63,94,0.22)',
+};
 
 const styles = StyleSheet.create({
-  /* ================= Bottom Card ================= */
+  /* ── Card shell ── */
   bottomCard: {
-    flex: 0.9,
-    backgroundColor: theme.colors.white,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
-    paddingBottom: theme.spacing.lg,
-    marginTop: -24, // overlay nhẹ lên map
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: -3 },
-    elevation: 3,
+    flex: 1,
+    backgroundColor: C.surface,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    marginTop: -28,
+    paddingHorizontal: 24,
   },
-
   bottomContent: {
-    paddingBottom: 100,
+    flexGrow: 1,
+    paddingBottom: 32,
   },
 
-  /* ================= Distance ================= */
-  distanceLabel: {
-    textAlign: 'center',
-    fontSize: theme.fonts.size.sm,
-    fontFamily: theme.fonts.poppins.regular,
-    color: theme.colors.subText_1,
-    marginBottom: theme.spacing.xs,
+  /* ── Drag handle ── */
+  dragHandle: {
+    width: 36,
+    height: 4,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 16,
   },
-  distanceRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'baseline',
+
+  /* ── Hero metric ── */
+  metricHero: {
+    alignItems: 'center',
+    marginBottom: 16,
   },
-  distanceValue: {
-    fontSize: 40,
-    fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.text,
+  distanceNumber: {
+    fontSize: 80,
+    fontWeight: '900',
+    color: C.text,
+    letterSpacing: -2,
+    lineHeight: 84,
+  },
+  distanceNumberActive: {
+    color: C.accent,
+  },
+  distanceNumberDone: {
+    color: C.accent,
+  },
+  distanceNumberSmall: {
+    fontSize: 56,
+    fontWeight: '900',
+    color: C.text,
+    letterSpacing: -1,
+    lineHeight: 60,
   },
   distanceUnit: {
-    fontSize: theme.fonts.size.sm,
-    fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.subText_1,
-    marginLeft: 6,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    color: C.text3,
+    marginTop: 4,
   },
 
-  /* ================= Tracking Stats ================= */
-  statsRow: {
+  /* ── Stats grid ── */
+  statsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: theme.spacing.lg,
+    borderWidth: 1,
+    borderColor: C.surfaceBd,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 20,
   },
-  statItem: {
-    alignItems: 'center',
+  statCell: {
     flex: 1,
-  },
-  statLabel: {
-    fontSize: theme.fonts.size.xs,
-    fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.subText_1,
-    marginBottom: 4,
-  },
-  statLabelRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 4,
   },
-  statLabelColored: {
-    fontSize: theme.fonts.size.xs,
-    fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.primary,
-  },
-  statLabelCalo: {
-    fontSize: theme.fonts.size.xs,
-    fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.danger,
+  statDivider: {
+    width: 1,
+    backgroundColor: C.surfaceBd,
+    marginVertical: 14,
   },
   statValue: {
-    fontSize: theme.fonts.size.md,
-    fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.text,
+    fontSize: 18,
+    fontWeight: '800',
+    color: C.text,
+    letterSpacing: -0.5,
+  },
+  statValueAccent: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: C.accent,
+    letterSpacing: -0.5,
+  },
+  statLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: C.text3,
+    marginTop: 3,
   },
 
-  /* ================= Buttons ================= */
-  startButtonWrapper: {
-    marginTop: theme.spacing.lg * 1.5,
-    alignItems: 'center',
-  },
-  startButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 3,
-  },
-  startButtonDisabled: {
-    backgroundColor: theme.colors.subText_1,
-  },
-  startButtonIcon: {
-    fontSize: 28,
-    color: theme.colors.white,
-  },
-
-  actionRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: theme.spacing.lg,
-    gap: theme.spacing.md,
-  },
-  pauseButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: theme.colors.red,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cancelButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: theme.colors.danger,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  resumeButton: {
-    flex: 1,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  /* ================= History Button ================= */
-  historyButtonWrapper: {
-    marginTop: theme.spacing.md,
-    alignItems: 'center',
-  },
-  historyButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 22,
-    backgroundColor: theme.colors.blue, // màu khác để phân biệt
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: theme.spacing.sm,
-  },
-  historyButtonText: {
-    color: theme.colors.white,
-    fontSize: theme.fonts.size.sm,
-    fontFamily: theme.fonts.poppins.bold,
-  },
-
-  /* ================= Result ================= */
-  resultTopRow: {
-    marginBottom: theme.spacing.sm,
-  },
-  resultDateRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-  },
-  resultDateText: {
-    fontSize: theme.fonts.size.xs,
-    color: theme.colors.subText_1,
-    fontFamily: theme.fonts.poppins.regular,
-  },
-  resultCard: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 24,
-    padding: theme.spacing.lg,
-  },
-  resultHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  resultLabel: {
-    fontSize: theme.fonts.size.sm,
-    color: theme.colors.subText_1,
-    fontFamily: theme.fonts.poppins.regular,
-    marginBottom: 4,
-  },
-  newRecordBadge: {
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    backgroundColor: '#BBF7D0',
-    borderRadius: 999,
-  },
-  newRecordText: {
-    fontSize: theme.fonts.size.xs,
-    color: '#166534',
-    fontFamily: theme.fonts.poppins.bold,
-  },
-  resultMetricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: theme.spacing.sm,
-  },
-  resultMetricItem: {
-    flex: 1,
-    padding: theme.spacing.sm,
-  },
-  resultMetricLabel: {
-    fontSize: theme.fonts.size.xs,
-    color: theme.colors.subText_1,
-    fontFamily: theme.fonts.poppins.regular,
-    marginBottom: 2,
-  },
-  resultMetricValue: {
-    fontSize: theme.fonts.size.md,
-    color: theme.colors.text,
-    fontFamily: theme.fonts.poppins.bold,
-  },
-
-  /* ================= Actions ================= */
-  resultActionsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: theme.spacing.lg,
-    gap: theme.spacing.sm,
-  },
-  trashButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  /* ── Achievement badge ── */
+  achievementBadge: {
+    backgroundColor: C.accentDim,
     borderWidth: 1,
-    borderColor: '#FECACA',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FEF2F2',
+    borderColor: C.accentBd,
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 8,
+    alignSelf: 'center',
   },
-  saveButton: {
+  achievementText: {
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: C.accent,
+  },
+
+  /* ── Summary card (paused / done) ── */
+  summaryCard: {
+    backgroundColor: C.surface2,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: C.surfaceBd,
+    marginBottom: 16,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  summaryCell: {
+    alignItems: 'center',
     flex: 1,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: theme.colors.primary,
+  },
+  summaryValue: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: C.text,
+    letterSpacing: -0.5,
+  },
+  summaryValueAccent: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: C.accent,
+    letterSpacing: -0.5,
+  },
+  summaryLabel: {
+    fontSize: 8,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    textTransform: 'uppercase',
+    color: C.text3,
+    marginTop: 3,
+  },
+  summaryDivider: {
+    height: 1,
+    backgroundColor: C.surfaceBd,
+    marginVertical: 12,
+  },
+
+  /* ── Actions ── */
+  actionsArea: {
+    gap: 8,
+  },
+
+  btnPrimary: {
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 15,
+    alignItems: 'center',
     justifyContent: 'center',
+  },
+  btnGreen: {
+    backgroundColor: C.accent,
+  },
+  btnAmber: {
+    backgroundColor: C.amber,
+  },
+  btnPrimaryText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: '#001810',
+  },
+  btnAmberText: {
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    textTransform: 'uppercase',
+    color: '#1A0A00',
+  },
+
+  btnPair: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+
+  btnGhost: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 15,
+    borderWidth: 1,
+    borderColor: C.surfaceBd,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnGhostText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: C.text2,
+  },
+  btnDanger: {
+    borderColor: C.redBd,
+    backgroundColor: C.redDim,
+  },
+  btnDangerText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: C.red,
+  },
+  btnAccentGhost: {
+    borderColor: C.accentBd,
+    backgroundColor: C.accentDim,
+  },
+  btnAccentGhostText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    color: C.accent,
+  },
+
+  btnLink: {
+    paddingVertical: 10,
     alignItems: 'center',
   },
-  saveButtonText: {
-    color: theme.colors.white,
-    fontSize: theme.fonts.size.sm,
-    fontFamily: theme.fonts.poppins.bold,
+  btnLinkText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    color: C.text3,
+  },
+
+  btnDisabled: {
+    opacity: 0.45,
   },
 });
 
 export default styles;
+export { C };

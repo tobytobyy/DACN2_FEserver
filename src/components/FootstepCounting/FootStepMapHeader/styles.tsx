@@ -1,13 +1,15 @@
 import { StyleSheet } from 'react-native';
-import { theme } from '@assets/theme';
 
 export const styles = StyleSheet.create({
-  mapContainer: {
-    flex: 1.2,
-    height: '40%',
-    backgroundColor: '#E5E7EB',
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.sm,
+  circleIconButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(10,15,28,0.72)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
   },
   topHeader: {
     flexDirection: 'row',
@@ -15,61 +17,49 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   touch: {
-    fontSize: 16,
-  },
-  currentActive: {
-    backgroundColor: '#4ADE80',
-  },
-  currentSearch: {
-    backgroundColor: '#F87171',
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  circleIconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    // shadow cho nổi bật trên map
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  centerMap: {
-    fontSize: 12,
+    fontSize: 18,
+    color: '#EFF6FF',
+    lineHeight: 22,
+    textAlign: 'center',
   },
   gpsBadge: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(10,15,28,0.72)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
     borderRadius: 999,
-    backgroundColor: theme.colors.white,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
   },
   gpsText: {
-    fontSize: theme.fonts.size.xs,
-    fontFamily: theme.fonts.poppins.bold,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 1.2,
+    color: '#7A94B0',
+    textTransform: 'uppercase',
   },
-  mapWrapper: {
-    flex: 1,
-    marginTop: theme.spacing.lg,
-    borderRadius: 24,
-    overflow: 'hidden',
+  dot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
   },
-  mapView: {
-    flex: 1,
+  currentActive: {
+    backgroundColor: '#00E5A0',
+    shadowColor: '#00E5A0',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 6,
+    elevation: 4,
   },
-  walkerWrapper: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 4,
+  currentSearch: {
+    backgroundColor: '#F43F5E',
   },
+  // unused legacy keys — kept for type safety
+  mapContainer: { flex: 1 },
+  mapWrapper: { flex: 1 },
+  mapView: { flex: 1 },
+  walkerWrapper: {},
+  centerMap: {},
 });

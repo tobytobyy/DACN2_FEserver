@@ -3,109 +3,114 @@ import { View, Text, FlatList, TouchableOpacity } from 'react-native';
 import { styles } from './styles';
 import { useFootStepHistory } from './index';
 
-// Hàm tính thời gian đã đi
 const formatDuration = (start: string, end: string) => {
-  const startTime = new Date(start).getTime();
-  const endTime = new Date(end).getTime();
-  const diffMs = endTime - startTime;
-  if (isNaN(startTime) || isNaN(endTime) || diffMs <= 0) return '--';
-
-  const minutes = Math.floor(diffMs / 60000);
-  const seconds = Math.floor((diffMs % 60000) / 1000);
-  return `${minutes} phút ${seconds} giây`;
-};
-// Ước lượng bước chân từ quãng đường (nếu DB chưa có)
-const estimateSteps = (distanceKm: number, strideLengthM = 0.8): number => {
-  const distanceM = distanceKm * 1000;
-  return Math.round(distanceM / strideLengthM);
+  const s = new Date(start).getTime();
+  const e = new Date(end).getTime();
+  const diff = e - s;
+  if (isNaN(s) || isNaN(e) || diff <= 0) return '--';
+  const m = Math.floor(diff / 60000);
+  const sec = Math.floor((diff % 60000) / 1000);
+  if (m === 0) return `${sec}s`;
+  return `${m}p ${sec}s`;
 };
 
-// Ước lượng calories từ quãng đường (nếu DB chưa có)
-const estimateCalories = (distanceKm: number, kcalPerKm = 50): number => {
-  return Math.round(distanceKm * kcalPerKm);
-};
+const estimateSteps = (distanceKm: number, strideLengthM = 0.78): number =>
+  Math.round((distanceKm * 1000) / strideLengthM);
+
+const estimateCalories = (distanceKm: number, kcalPerKm = 50): number =>
+  Math.round(distanceKm * kcalPerKm);
+
 const FootStepHistoryUI: React.FC = () => {
   const { workouts, goBack } = useFootStepHistory();
 
   return (
     <View style={styles.container}>
-      {/* Nút trở về */}
-      <TouchableOpacity style={styles.backButton} onPress={goBack}>
-        <Text style={styles.backText}>← Trở về</Text>
-      </TouchableOpacity>
-
-      <Text style={styles.title}>Lịch sử hoạt động</Text>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={goBack}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backText}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.title}>Lịch sử hoạt động</Text>
+      </View>
 
       {workouts.length === 0 ? (
         <View style={styles.emptyWrapper}>
+          <Text style={styles.emptyIcon}>🏃</Text>
+          <Text style={styles.emptyTitle}>Chưa có hoạt động nào</Text>
           <Text style={styles.emptyText}>
-            Không có dữ liệu được đo trước đó, vui lòng tiến hành đo.
+            Bắt đầu theo dõi lộ trình đầu tiên của bạn để xem kết quả tại đây.
           </Text>
         </View>
       ) : (
         <FlatList
           data={workouts}
           keyExtractor={item => item.id ?? item._id ?? String(item.distanceKm)}
+          showsVerticalScrollIndicator={false}
           renderItem={({ item }) => {
-            // Nếu steps/calories trong DB = 0 thì tính lại từ distanceKm
             const steps =
               item.steps && item.steps > 0
                 ? item.steps
                 : estimateSteps(item.distanceKm);
-
             const calories =
               item.caloriesOut && item.caloriesOut > 0
                 ? item.caloriesOut
                 : estimateCalories(item.distanceKm);
+            const duration =
+              item.time?.startAt && item.time?.endAt
+                ? formatDuration(item.time.startAt, item.time.endAt)
+                : '--';
+            const dateStr = item.time?.startAt
+              ? new Date(item.time.startAt).toLocaleDateString('vi-VN', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                })
+              : '--';
+            const isWalk = item.workoutType === 'WALK';
 
             return (
               <View style={styles.card}>
-                <Text style={styles.cardTitle}>
-                  {item.workoutType === 'WALK' ? '🚶 Đi bộ' : item.workoutType}
-                </Text>
+                {/* Card header: type badge + date */}
+                <View style={styles.cardHeader}>
+                  <View style={styles.cardTypeBadge}>
+                    <Text>{isWalk ? '🚶' : '🏃'}</Text>
+                    <Text style={styles.cardTypeText}>
+                      {isWalk ? 'Đi bộ' : item.workoutType}
+                    </Text>
+                  </View>
+                  <Text style={styles.cardDate}>{dateStr}</Text>
+                </View>
 
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Quãng đường:</Text>
-                  <Text style={styles.cardValue}>
-                    {item.distanceKm.toFixed(2)} km
+                {/* Distance hero */}
+                <View style={styles.cardDistanceRow}>
+                  <Text style={styles.cardDistance}>
+                    {item.distanceKm.toFixed(2)}
                   </Text>
+                  <Text style={styles.cardDistanceUnit}>km</Text>
                 </View>
 
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Thời gian bắt đầu:</Text>
-                  <Text style={styles.cardValue}>
-                    {item.time?.startAt
-                      ? new Date(item.time.startAt).toLocaleString('vi-VN')
-                      : '--'}
-                  </Text>
-                </View>
-
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Thời gian kết thúc:</Text>
-                  <Text style={styles.cardValue}>
-                    {item.time?.endAt
-                      ? new Date(item.time.endAt).toLocaleString('vi-VN')
-                      : '--'}
-                  </Text>
-                </View>
-
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Thời gian đã đi:</Text>
-                  <Text style={styles.cardValue}>
-                    {item.time?.startAt && item.time?.endAt
-                      ? formatDuration(item.time.startAt, item.time.endAt)
-                      : '--'}
-                  </Text>
-                </View>
-
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>Calories:</Text>
-                  <Text style={styles.cardValue}>{calories} kcal</Text>
-                </View>
-
-                <View style={styles.cardRow}>
-                  <Text style={styles.cardLabel}>FootStep:</Text>
-                  <Text style={styles.cardValue}>{steps}</Text>
+                {/* Stats row */}
+                <View style={styles.cardStatsRow}>
+                  <View style={styles.cardStatCell}>
+                    <Text style={styles.cardStatValue}>{duration}</Text>
+                    <Text style={styles.cardStatLabel}>Thời gian</Text>
+                  </View>
+                  <View style={styles.cardStatDivider} />
+                  <View style={styles.cardStatCell}>
+                    <Text style={styles.cardStatValue}>
+                      {steps.toLocaleString()}
+                    </Text>
+                    <Text style={styles.cardStatLabel}>Bước chân</Text>
+                  </View>
+                  <View style={styles.cardStatDivider} />
+                  <View style={styles.cardStatCell}>
+                    <Text style={styles.cardStatValue}>{calories}</Text>
+                    <Text style={styles.cardStatLabel}>Kcal</Text>
+                  </View>
                 </View>
               </View>
             );

@@ -94,5 +94,5 @@ const FootStepCountingScreen: React.FC = () => {
 export default FootStepCountingScreen;
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#E5E7EB' },
+  safeArea: { flex: 1, backgroundColor: '#0A0F1C' },
 });

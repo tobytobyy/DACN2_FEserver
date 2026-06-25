@@ -1,10 +1,5 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
-import { theme } from '@assets/theme';
-import FootstepIcon from '@assets/icons/svgs/footprint_1515.svg';
-import FireIcon from '@assets/icons/svgs/calories_1515.svg';
-import CalendarIcon from '@assets/icons/svgs/calendar_2521.svg';
-import TrashIcon from '@assets/icons/svgs/trash_1618.svg';
 import styles from './styles';
 
 type Props = {
@@ -26,6 +21,8 @@ type Props = {
   onViewHistory: () => void;
 };
 
+const StatDivider = () => <View style={styles.statDivider} />;
+
 const FootStepBottomCard: React.FC<Props> = ({
   hasFinished,
   isTracking,
@@ -44,227 +41,239 @@ const FootStepBottomCard: React.FC<Props> = ({
   onSave,
   onViewHistory,
 }) => {
+  const isIdle = !isTracking && !isPaused && !hasFinished;
+  const isActive = isTracking && !isPaused && !hasFinished;
+  const isDoneOrPaused = isPaused || hasFinished;
+
   return (
     <View style={styles.bottomCard}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.bottomContent}
       >
-        {/* Trạng thái chưa bắt đầu */}
-        {!isTracking && !isPaused && !hasFinished && (
+        <View style={styles.dragHandle} />
+
+        {/* ── IDLE ── */}
+        {isIdle && (
           <>
-            <Text style={styles.distanceLabel}>DISTANCE</Text>
-            <View style={styles.distanceRow}>
-              <Text style={styles.distanceValue}>{distanceText}</Text>
-              <Text style={styles.distanceUnit}>km</Text>
+            <View style={styles.metricHero}>
+              <Text style={styles.distanceNumber}>{distanceText}</Text>
+              <Text style={styles.distanceUnit}>Kilômét</Text>
             </View>
 
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>TIME</Text>
+            <View style={styles.statsGrid}>
+              <View style={styles.statCell}>
                 <Text style={styles.statValue}>{timeText}</Text>
+                <Text style={styles.statLabel}>Thời gian</Text>
               </View>
-              <View style={styles.statItem}>
-                <View style={styles.statLabelRow}>
-                  <FootstepIcon width={14} height={14} />
-                  <Text style={styles.statLabelColored}>FOOTSTEP</Text>
-                </View>
-                <Text style={styles.statValue}>{steps}</Text>
+              <StatDivider />
+              <View style={styles.statCell}>
+                <Text style={styles.statValue}>{steps.toLocaleString()}</Text>
+                <Text style={styles.statLabel}>Bước chân</Text>
               </View>
-              <View style={styles.statItem}>
-                <View style={styles.statLabelRow}>
-                  <FireIcon width={14} height={14} />
-                  <Text style={styles.statLabelCalo}>CALO</Text>
-                </View>
+              <StatDivider />
+              <View style={styles.statCell}>
                 <Text style={styles.statValue}>{calories}</Text>
+                <Text style={styles.statLabel}>Kcal</Text>
               </View>
             </View>
 
-            <View style={styles.startButtonWrapper}>
+            <View style={styles.actionsArea}>
               <TouchableOpacity
                 style={[
-                  styles.startButton,
-                  isDisabled && styles.startButtonDisabled,
+                  styles.btnPrimary,
+                  styles.btnGreen,
+                  isDisabled && styles.btnDisabled,
                 ]}
                 onPress={onStart}
                 disabled={isDisabled}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <Text style={styles.startButtonIcon}>▶</Text>
+                <Text style={styles.btnPrimaryText}>▶ Bắt đầu</Text>
               </TouchableOpacity>
-            </View>
-
-            {/* Nút xem lịch sử luôn hiển thị */}
-            <View style={styles.historyButtonWrapper}>
               <TouchableOpacity
-                style={styles.historyButton}
+                style={styles.btnLink}
                 onPress={onViewHistory}
-                activeOpacity={0.8}
+                activeOpacity={0.7}
               >
-                <Text style={styles.historyButtonText}>XEM LỊCH SỬ</Text>
+                <Text style={styles.btnLinkText}>Xem lịch sử hoạt động</Text>
               </TouchableOpacity>
             </View>
           </>
         )}
 
-        {/* Trạng thái đang tracking */}
-        {isTracking && !isPaused && !hasFinished && (
+        {/* ── ACTIVE ── */}
+        {isActive && (
           <>
-            <Text style={styles.distanceLabel}>DISTANCE</Text>
-            <View style={styles.distanceRow}>
-              <Text style={styles.distanceValue}>{distanceText}</Text>
-              <Text style={styles.distanceUnit}>km</Text>
+            <View style={styles.metricHero}>
+              <Text
+                style={[styles.distanceNumber, styles.distanceNumberActive]}
+              >
+                {distanceText}
+              </Text>
+              <Text style={styles.distanceUnit}>Kilômét</Text>
             </View>
 
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Text style={styles.statLabel}>TIME</Text>
+            <View style={styles.statsGrid}>
+              <View style={styles.statCell}>
                 <Text style={styles.statValue}>{timeText}</Text>
+                <Text style={styles.statLabel}>Thời gian</Text>
               </View>
-              <View style={styles.statItem}>
-                <View style={styles.statLabelRow}>
-                  <FootstepIcon width={14} height={14} />
-                  <Text style={styles.statLabelColored}>FOOTSTEP</Text>
-                </View>
-                <Text style={styles.statValue}>{steps}</Text>
+              <StatDivider />
+              <View style={styles.statCell}>
+                <Text style={styles.statValueAccent}>
+                  {steps.toLocaleString()}
+                </Text>
+                <Text style={styles.statLabel}>Bước chân</Text>
               </View>
-              <View style={styles.statItem}>
-                <View style={styles.statLabelRow}>
-                  <FireIcon width={14} height={14} />
-                  <Text style={styles.statLabelCalo}>CALO</Text>
-                </View>
+              <StatDivider />
+              <View style={styles.statCell}>
                 <Text style={styles.statValue}>{calories}</Text>
+                <Text style={styles.statLabel}>Kcal</Text>
               </View>
             </View>
 
-            <View style={styles.actionRow}>
+            <View style={styles.actionsArea}>
               <TouchableOpacity
-                style={styles.pauseButton}
+                style={[
+                  styles.btnPrimary,
+                  styles.btnAmber,
+                  isDisabled && styles.btnDisabled,
+                ]}
                 onPress={onPause}
                 disabled={isDisabled}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <Text style={styles.startButtonIcon}>⏸</Text>
+                <Text style={styles.btnAmberText}>⏸ Tạm dừng</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.cancelButton}
+                style={[
+                  styles.btnGhost,
+                  styles.btnDanger,
+                  isDisabled && styles.btnDisabled,
+                ]}
                 onPress={onCancel}
                 disabled={isDisabled}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <Text style={styles.startButtonIcon}>✖</Text>
+                <Text style={styles.btnDangerText}>✕ Hủy hoạt động</Text>
               </TouchableOpacity>
             </View>
           </>
         )}
 
-        {/* Trạng thái paused hoặc finished */}
-        {(isPaused || hasFinished) && (
+        {/* ── PAUSED / DONE ── */}
+        {isDoneOrPaused && (
           <>
-            <View style={styles.resultTopRow}>
-              <View style={styles.resultDateRow}>
-                <CalendarIcon
-                  width={16}
-                  height={16}
-                  color={theme.colors.text}
-                />
-                <Text style={styles.resultDateText}>
-                  Hoạt động vừa hoàn thành
-                </Text>
+            <View style={styles.metricHero}>
+              {hasFinished && (
+                <View style={styles.achievementBadge}>
+                  <Text style={styles.achievementText}>🏅 Hoàn thành</Text>
+                </View>
+              )}
+              <Text
+                style={[
+                  styles.distanceNumberSmall,
+                  hasFinished && styles.distanceNumberDone,
+                ]}
+              >
+                {distanceText}
+              </Text>
+              <Text style={styles.distanceUnit}>
+                {isPaused && !hasFinished
+                  ? 'Kilômét · Đang tạm dừng'
+                  : 'Kilômét hôm nay'}
+              </Text>
+            </View>
+
+            <View style={styles.summaryCard}>
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryCell}>
+                  <Text style={styles.summaryValue}>{timeText}</Text>
+                  <Text style={styles.summaryLabel}>Thời gian</Text>
+                </View>
+                <View style={styles.summaryCell}>
+                  <Text
+                    style={
+                      hasFinished
+                        ? styles.summaryValueAccent
+                        : styles.summaryValue
+                    }
+                  >
+                    {steps.toLocaleString()}
+                  </Text>
+                  <Text style={styles.summaryLabel}>Bước chân</Text>
+                </View>
+              </View>
+              <View style={styles.summaryDivider} />
+              <View style={styles.summaryRow}>
+                <View style={styles.summaryCell}>
+                  <Text style={styles.summaryValue}>{paceText}</Text>
+                  <Text style={styles.summaryLabel}>Pace TB</Text>
+                </View>
+                <View style={styles.summaryCell}>
+                  <Text style={styles.summaryValue}>{calories}</Text>
+                  <Text style={styles.summaryLabel}>Kcal</Text>
+                </View>
               </View>
             </View>
 
-            <View style={styles.resultCard}>
-              <View style={styles.resultHeaderRow}>
-                <View>
-                  <Text style={styles.resultLabel}>TOTAL</Text>
-                  <View style={styles.distanceRow}>
-                    <Text style={styles.distanceValue}>{distanceText}</Text>
-                    <Text style={styles.distanceUnit}>km</Text>
-                  </View>
-                </View>
-                <View style={styles.newRecordBadge}>
-                  <Text style={styles.newRecordText}>Excellent!</Text>
-                </View>
-              </View>
-
-              <View style={styles.resultMetricsRow}>
-                <View style={styles.resultMetricItem}>
-                  <Text style={styles.resultMetricLabel}>TIME</Text>
-                  <Text style={styles.resultMetricValue}>{timeText}</Text>
-                </View>
-                <View style={styles.resultMetricItem}>
-                  <Text style={styles.resultMetricLabel}>CALO</Text>
-                  <Text style={styles.resultMetricValue}>{calories}</Text>
-                </View>
-              </View>
-
-              <View style={styles.resultMetricsRow}>
-                <View style={styles.resultMetricItem}>
-                  <Text style={styles.resultMetricLabel}>PACE TB</Text>
-                  <Text style={styles.resultMetricValue}>{paceText}</Text>
-                </View>
-                <View style={styles.resultMetricItem}>
-                  <Text style={styles.resultMetricLabel}>FOOTSTEP</Text>
-                  <Text style={styles.resultMetricValue}>{steps}</Text>
-                </View>
-              </View>
-
-              <View style={styles.resultActionsRow}>
-                {/* Resume chỉ hiện khi paused nhưng chưa finished */}
-                {isPaused && !hasFinished && (
+            <View style={styles.actionsArea}>
+              {/* Paused — not yet saved */}
+              {isPaused && !hasFinished && (
+                <>
                   <TouchableOpacity
-                    style={styles.resumeButton}
+                    style={[styles.btnPrimary, styles.btnGreen]}
                     onPress={onResume}
-                    activeOpacity={0.8}
+                    activeOpacity={0.85}
                   >
-                    <Text style={styles.saveButtonText}>RESUME</Text>
+                    <Text style={styles.btnPrimaryText}>▶ Tiếp tục</Text>
                   </TouchableOpacity>
-                )}
-
-                {/* Khi đã finished thì chỉ hiện nút xem lịch sử + thoát */}
-                {hasFinished ? (
-                  <>
+                  <View style={styles.btnPair}>
                     <TouchableOpacity
-                      style={styles.saveButton}
-                      activeOpacity={0.8}
-                      onPress={onViewHistory}
-                    >
-                      <Text style={styles.saveButtonText}>XEM LỊCH SỬ ĐO</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.cancelButton}
-                      onPress={onReset}
-                      activeOpacity={0.8}
-                    >
-                      <Text style={styles.startButtonIcon}>✖</Text>
-                    </TouchableOpacity>
-                  </>
-                ) : (
-                  <>
-                    <TouchableOpacity
-                      style={styles.trashButton}
-                      onPress={onReset}
-                      activeOpacity={0.8}
-                    >
-                      <TrashIcon
-                        width={18}
-                        height={18}
-                        color={theme.colors.danger}
-                      />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                      style={styles.saveButton}
-                      activeOpacity={0.8}
+                      style={[
+                        styles.btnGhost,
+                        styles.btnAccentGhost,
+                        isDisabled && styles.btnDisabled,
+                      ]}
                       onPress={onSave}
+                      disabled={isDisabled}
+                      activeOpacity={0.85}
                     >
-                      <Text style={styles.saveButtonText}>SAVE ACTIVITY</Text>
+                      <Text style={styles.btnAccentGhostText}>💾 Lưu lại</Text>
                     </TouchableOpacity>
-                  </>
-                )}
-              </View>
+                    <TouchableOpacity
+                      style={[styles.btnGhost, styles.btnDanger]}
+                      onPress={onReset}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.btnDangerText}>🗑 Xóa</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+
+              {/* Done */}
+              {hasFinished && (
+                <>
+                  <TouchableOpacity
+                    style={[styles.btnPrimary, styles.btnGreen]}
+                    onPress={onViewHistory}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.btnPrimaryText}>
+                      Xem lịch sử hoạt động
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.btnGhost}
+                    onPress={onReset}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.btnGhostText}>Đóng</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </>
         )}
