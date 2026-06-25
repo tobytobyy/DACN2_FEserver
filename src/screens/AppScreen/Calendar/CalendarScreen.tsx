@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar } from 'react-native-calendars';
@@ -54,6 +54,10 @@ const CalendarScreen = () => {
   const [dayMetrics, setDayMetrics] = useState<DailyMetrics | null>(null);
   const [isDayLoading, setIsDayLoading] = useState(false);
 
+  // Ref so useFocusEffect can read selectedDate without it being a dep
+  const selectedDateRef = useRef(selectedDate);
+  selectedDateRef.current = selectedDate;
+
   // Load all aggregates for the visible month; returns the built map so callers can chain loadDay
   const loadMonth = useCallback(
     async (monthAnchor: string): Promise<Record<string, DailyMetrics>> => {
@@ -96,23 +100,22 @@ const CalendarScreen = () => {
     [],
   );
 
-  // On focus: load the visible month, then populate day metrics for selectedDate
+  // On focus or month change: load the visible month then load the selected day.
+  // monthMap and selectedDate are intentionally excluded from deps — including
+  // monthMap would cause an infinite loop (loadMonth writes monthMap state),
+  // and selectedDate is read via ref so day presses don't retrigger this effect.
   useFocusEffect(
     useCallback(() => {
       loadMonth(currentMonth).then(newMap => {
-        loadDay(selectedDate, { ...monthMap, ...newMap });
+        loadDay(selectedDateRef.current, newMap);
       });
-    }, [currentMonth, selectedDate, monthMap, loadMonth, loadDay]),
+    }, [currentMonth, loadMonth, loadDay]),
   );
 
-  // When month changes
-  const handleMonthChange = useCallback(
-    (month: { dateString: string }) => {
-      setCurrentMonth(month.dateString);
-      loadMonth(month.dateString);
-    },
-    [loadMonth],
-  );
+  // When month changes — useFocusEffect handles the data load via currentMonth dep
+  const handleMonthChange = useCallback((month: { dateString: string }) => {
+    setCurrentMonth(month.dateString);
+  }, []);
 
   // When a day is tapped
   const handleDayPress = useCallback(
