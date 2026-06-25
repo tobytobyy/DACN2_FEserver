@@ -24,6 +24,17 @@ export type UserProfile = {
     conditions?: string[];
     restingHeartRate?: number;
   };
+  settings?: {
+    unitSystem?: string;
+    language?: string;
+    timezone?: string;
+    notifications?: {
+      enabled?: boolean;
+      remindDrinkWater?: boolean;
+      remindSleep?: boolean;
+      remindWorkout?: boolean;
+    };
+  } | null;
 };
 
 export const getUserProfile = async (): Promise<UserProfile> => {

@@ -24,11 +24,9 @@ import GoogleIcon from '@assets/icons/svgs/google_color_2122.svg';
 import MailIcon from '@assets/icons/svgs/email_1512.svg';
 import ShieldIcon from '@assets/icons/svgs/security_1418.svg';
 import BellIcon from '@assets/icons/svgs/notification_1518.svg';
-import MoonIcon from '@assets/icons/svgs/sleep_2424.svg';
 import GlobeIcon from '@assets/icons/svgs/language_1515.svg';
 import HelpIcon from '@assets/icons/svgs/help_1616.svg';
 import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
-import CloudIcon from '@assets/icons/svgs/cloud_2015.svg';
 import AccountIcon from '@assets/icons/svgs/account_circle.svg';
 import HeartIcon from '@assets/icons/svgs/heart.svg';
 
@@ -58,8 +56,7 @@ export default function SettingScreen() {
   const { clearUser } = useUser();
   const [currentView, setCurrentView] = useState<SettingsView>('main');
   const [notifications, setNotifications] = useState(true);
-  const [darkMode, setDarkMode] = useState(true);
-  const [dataSync, setDataSync] = useState(true);
+  const [isSavingNotif, setIsSavingNotif] = useState(false);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [form, setForm] = useState({
@@ -82,6 +79,7 @@ export default function SettingScreen() {
       const profile = nextUser.profile || {};
       const metrics = nextUser.healthMetrics || {};
       setUser(nextUser);
+      setNotifications(nextUser.settings?.notifications?.enabled ?? true);
       setForm({
         fullName: profile.fullName || nextUser.username || '',
         avatarUrl: profile.avatarUrl || '',
@@ -155,6 +153,24 @@ export default function SettingScreen() {
       );
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleToggleNotifications = async () => {
+    if (isSavingNotif) return;
+    const next = !notifications;
+    setNotifications(next); // optimistic
+    setIsSavingNotif(true);
+    try {
+      await api.patch('/users/me/settings/notifications', { enabled: next });
+    } catch (error: any) {
+      setNotifications(!next); // revert
+      Alert.alert(
+        'Không thể cập nhật',
+        error?.response?.data?.message || 'Vui lòng kiểm tra kết nối backend.',
+      );
+    } finally {
+      setIsSavingNotif(false);
     }
   };
 
@@ -340,25 +356,7 @@ export default function SettingScreen() {
                 title="Notification"
                 type="toggle"
                 toggleState={notifications}
-                onToggle={() => setNotifications(!notifications)}
-              />
-              <SettingRow
-                IconComponent={MoonIcon}
-                color={theme.colors.violet}
-                iconColor={theme.colors.white}
-                title="Dark Mode"
-                type="toggle"
-                toggleState={darkMode}
-                onToggle={() => setDarkMode(!darkMode)}
-              />
-              <SettingRow
-                IconComponent={CloudIcon}
-                color={theme.colors.danger}
-                iconColor={theme.colors.white}
-                title="Data synchronization"
-                type="toggle"
-                toggleState={dataSync}
-                onToggle={() => setDataSync(!dataSync)}
+                onToggle={handleToggleNotifications}
               />
             </SettingsSection>
 
