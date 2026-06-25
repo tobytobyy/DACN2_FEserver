@@ -6,6 +6,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import BrowserScreen from '@screens/AppScreen/Browser/BrowserScreen';
 import HeartMeasurementScreen from '@screens/HeartMeasurement/HeartMeasurementScreen';
 import HeartResultScreen from '@screens/HeartMeasurement/HeartResultScreen';
+import HeartHistoryScreen from '@screens/HeartMeasurement/HeartHistoryScreen';
 import CaloriesScanScreen from '@screens/CaloriesScan/CaloriesScanScreen';
 import FootStepCountingScreen from '@screens/FootStepCounting/FootStepCountingScreen';
 import SleepTrackingScreen from '@screens/SleepTracking/SleepTrackingScreen';
@@ -29,6 +30,9 @@ export type BrowserStackParamList = {
   HeartResult: {
     bpm: number;
   };
+
+  /** Lịch sử nhịp tim */
+  HeartHistory: undefined;
 
   /** Quét calories bằng AI */
   AiCaloriesScan: undefined;
@@ -75,6 +79,7 @@ const BrowserStack = () => {
         component={HeartMeasurementScreen}
       />
       <Stack.Screen name="HeartResult" component={HeartResultScreen} />
+      <Stack.Screen name="HeartHistory" component={HeartHistoryScreen} />
 
       {/* Calories Scan */}
       <Stack.Screen name="AiCaloriesScan" component={CaloriesScanScreen} />

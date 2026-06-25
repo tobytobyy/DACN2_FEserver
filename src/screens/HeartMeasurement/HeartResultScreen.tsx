@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { saveHeartRate } from './api';
 import {
   View,
   Text,
@@ -25,6 +26,16 @@ const HeartResultScreen = () => {
   const navigation = useNavigation<Nav>();
   const route = useRoute<Route>();
   const { bpm } = route.params;
+
+  const savedRef = useRef(false);
+
+  useEffect(() => {
+    if (savedRef.current) return;
+    savedRef.current = true;
+    saveHeartRate(bpm, new Date().toISOString()).catch(err => {
+      console.warn('Save heart rate failed:', err);
+    });
+  }, [bpm]);
 
   let status = '';
   let insight = '';
@@ -153,6 +164,19 @@ const HeartResultScreen = () => {
           onPress={() => navigation.navigate('HeartMeasurement')}
         >
           <Text style={styles.doneText}>Quay lại đo</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => navigation.navigate('HeartHistory')}>
+          <Text
+            style={{
+              color: theme.colors.primary,
+              fontWeight: '600',
+              textAlign: 'center',
+              marginTop: 8,
+            }}
+          >
+            Xem lịch sử nhịp tim
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
