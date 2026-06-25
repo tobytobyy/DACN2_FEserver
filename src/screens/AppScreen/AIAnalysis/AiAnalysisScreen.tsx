@@ -81,7 +81,7 @@ const Section = ({ title, items }: { title: string; items: string[] }) => (
 const AiAnalysisScreen: React.FC = () => {
   const navigation = useNavigation<AiAnalysisNavigationProp>();
   const route = useRoute<AiAnalysisRouteProp>();
-  const { selectedDate, summary } = route.params;
+  const { selectedDate } = route.params;
 
   const [analysis, setAnalysis] = useState<DailyAiAnalysis>(fallbackAnalysis);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,7 +94,6 @@ const AiAnalysisScreen: React.FC = () => {
       try {
         const res = await api.post('/ai/daily-analysis', {
           date: selectedDate,
-          summary,
         });
         setAnalysis(res.data?.data ?? fallbackAnalysis);
       } catch (error) {
@@ -106,7 +105,7 @@ const AiAnalysisScreen: React.FC = () => {
     };
 
     fetchAnalysis();
-  }, [selectedDate, summary]);
+  }, [selectedDate]);
 
   const submitFeedback = async () => {
     setIsSendingFeedback(true);

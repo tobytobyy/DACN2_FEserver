@@ -106,6 +106,8 @@ const HomeScreen: React.FC = () => {
             <ActivityCard
               steps={metrics?.steps ?? null}
               calories={metrics?.caloriesOut ?? null}
+              targetSteps={user?.goals?.dailySteps ?? undefined}
+              targetCalories={user?.goals?.dailyCaloriesOut ?? undefined}
             />
             <HeartSleepGrid
               heartRate={metrics?.avgHeartRate ?? null}

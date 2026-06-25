@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api } from '../services/api';
+import { api, unwrapApiData } from '../services/api';
 
 export interface User {
   id: string;
@@ -8,6 +8,9 @@ export interface User {
   accessToken?: string;
   refreshToken?: string;
   username?: string;
+  name?: string;
+  email?: string;
+  role?: string;
   primaryEmail?: string;
   profile?: {
     fullName?: string;
@@ -27,6 +30,13 @@ export interface User {
     conditions?: string[];
     restingHeartRate?: number;
   };
+  goals?: {
+    dailySteps?: number;
+    dailyCaloriesIn?: number;
+    dailyCaloriesOut?: number;
+    dailyWaterMl?: number;
+    targetWeightKg?: number;
+  } | null;
 }
 
 interface UserContextType {
@@ -52,7 +62,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
     const res = await api.get<User>('/auth/me');
-    setUser(res.data);
+    setUser(unwrapApiData<User>(res.data));
   };
 
   const clearUser = async () => {
