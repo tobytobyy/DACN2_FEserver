@@ -77,18 +77,17 @@ export default function SettingScreen() {
       const res = await api.get<UserProfile>('/auth/me');
       const nextUser = res.data;
       const profile = nextUser.profile || {};
-      const metrics = nextUser.healthMetrics || {};
       setUser(nextUser);
       setNotifications(nextUser.settings?.notifications?.enabled ?? true);
       setForm({
         fullName: profile.fullName || nextUser.username || '',
         avatarUrl: profile.avatarUrl || '',
         gender: profile.gender || '',
-        birthDate: (profile.birthDate || profile.birthday || '').slice(0, 10),
-        heightCm: String(profile.heightCm || metrics.heightCm || ''),
-        weightKg: String(profile.weightKg || metrics.weightKg || ''),
-        bloodType: metrics.bloodType || '',
-        conditions: (metrics.conditions || []).join(', '),
+        birthDate: (profile.birthDate || '').slice(0, 10),
+        heightCm: String(profile.heightCm || ''),
+        weightKg: String(profile.weightKg || ''),
+        bloodType: profile.bloodType || '',
+        conditions: (profile.conditions || []).join(', '),
       });
     } catch (error) {
       console.warn('Fetch user settings failed:', error);
@@ -100,25 +99,18 @@ export default function SettingScreen() {
   }, [syncUser]);
 
   const profile = user?.profile || null;
-  const metrics = user?.healthMetrics || null;
   const displayName = profile?.fullName || user?.username || 'Health User';
   const email =
     user?.primaryEmail || user?.displayIdentifier || 'Not connected';
 
   const healthRows = useMemo(
     () => [
-      {
-        label: 'Chiều cao',
-        value: `${metrics?.heightCm || profile?.heightCm || 0} cm`,
-      },
-      {
-        label: 'Cân nặng',
-        value: `${metrics?.weightKg || profile?.weightKg || 0} kg`,
-      },
+      { label: 'Chiều cao', value: `${profile?.heightCm || 0} cm` },
+      { label: 'Cân nặng', value: `${profile?.weightKg || 0} kg` },
       { label: 'Giới tính', value: profile?.gender || 'Chưa cập nhật' },
-      { label: 'Nhóm máu', value: metrics?.bloodType || 'Chưa cập nhật' },
+      { label: 'Nhóm máu', value: profile?.bloodType || 'Chưa cập nhật' },
     ],
-    [metrics, profile],
+    [profile],
   );
 
   const handleSaveProfile = async () => {
@@ -127,10 +119,8 @@ export default function SettingScreen() {
       const payload = {
         fullName: form.fullName.trim(),
         avatarUrl: form.avatarUrl.trim() || null,
-        gender: form.gender.trim(),
-        birthDate: form.birthDate
-          ? new Date(form.birthDate).toISOString()
-          : null,
+        gender: form.gender || null,
+        birthDate: form.birthDate ? form.birthDate.slice(0, 10) : null,
         heightCm: Number(form.heightCm || 0),
         weightKg: Number(form.weightKg || 0),
         bloodType: form.bloodType.trim() || null,
@@ -223,12 +213,32 @@ export default function SettingScreen() {
               autoCapitalize="none"
             />
             <Text style={styles.formLabel}>Giới tính</Text>
-            <TextInput
-              value={form.gender}
-              onChangeText={gender => setForm(prev => ({ ...prev, gender }))}
-              style={styles.formInput}
-              placeholder="male/female/other"
-            />
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+              {(['MALE', 'FEMALE', 'OTHER'] as const).map(option => {
+                const selected = form.gender === option;
+                return (
+                  <TouchableOpacity
+                    key={option}
+                    onPress={() =>
+                      setForm(prev => ({ ...prev, gender: option }))
+                    }
+                    style={[
+                      styles.formInput,
+                      {
+                        flex: 1,
+                        marginBottom: 0,
+                        alignItems: 'center',
+                        backgroundColor: selected ? '#2D8C83' : '#F3F4F6',
+                      },
+                    ]}
+                  >
+                    <Text style={{ color: selected ? '#FFFFFF' : '#374151' }}>
+                      {option}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
             <Text style={styles.formLabel}>Ngày sinh (YYYY-MM-DD)</Text>
             <TextInput
               value={form.birthDate}
@@ -318,7 +328,7 @@ export default function SettingScreen() {
                 color={theme.colors.red}
                 iconColor={theme.colors.white}
                 title="Health notes"
-                value={(metrics?.conditions || []).join(', ') || 'No notes'}
+                value={(profile?.conditions || []).join(', ') || 'No notes'}
                 onClick={() => setCurrentView('profile_edit')}
               />
             </SettingsSection>

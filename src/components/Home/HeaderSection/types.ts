@@ -16,6 +16,8 @@ export type UserProfile = {
     height?: number;
     weightKg?: number;
     weight?: number;
+    bloodType?: string;
+    conditions?: string[];
   } | null;
   healthMetrics?: {
     heightCm?: number;
