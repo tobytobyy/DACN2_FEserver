@@ -121,8 +121,8 @@ export default function SettingScreen() {
         avatarUrl: form.avatarUrl.trim() || null,
         gender: form.gender || null,
         birthDate: form.birthDate ? form.birthDate.slice(0, 10) : null,
-        heightCm: Number(form.heightCm || 0),
-        weightKg: Number(form.weightKg || 0),
+        heightCm: form.heightCm ? Number(form.heightCm) : null,
+        weightKg: form.weightKg ? Number(form.weightKg) : null,
         bloodType: form.bloodType.trim() || null,
         conditions: form.conditions
           .split(',')
