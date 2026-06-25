@@ -1,34 +1,27 @@
 import { useRef, useState, useCallback } from 'react';
 import { Alert, PermissionsAndroid, Platform } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import {
-  accelerometer,
-  setUpdateIntervalForType,
-  SensorTypes,
-} from 'react-native-sensors';
-import type { Subscription } from 'rxjs';
 import { workoutApi } from '../services/api';
 import { useUser } from '../context/UserContext';
 import type { Point } from '../screens/FootStepCounting/index';
 
-// GPS polls every 1s for smooth route, but API batches every 10s (saves battery ~10x)
+// GPS polls every 1s for smooth route, but pushes to API every 10s (saves battery ~10x)
 const GPS_INTERVAL_MS = 1000;
 const UI_TIMER_INTERVAL_MS = 1000;
 const POINT_PUSH_INTERVAL_MS = 10000;
-const MIN_DISTANCE_METERS = 5;
-const MAX_ACCURACY_METERS = 50;
-const STRIDE_LENGTH_M = 0.8; // GPS fallback stride
 
-// MET (Compendium of Physical Activities)
+// Filtering: ignore GPS noise
+const MIN_DISTANCE_METERS = 3; // smaller = more responsive route; larger = less drift noise
+const MAX_ACCURACY_METERS = 30; // tighter than before — ignore weak GPS fixes
+
+// Step estimation from GPS distance
+const WALK_STRIDE_M = 0.75; // avg walking step length
+const RUN_STRIDE_M = 1.2; // avg running step length
+
+// MET values (Compendium of Physical Activities) for calorie calc
 const WALK_MET = 3.5;
 const RUN_MET = 7.0;
 const DEFAULT_WEIGHT_KG = 65;
-
-// Accelerometer step detection thresholds (m/s²)
-const ACC_SAMPLE_MS = 100; // 10 Hz
-const MAG_HIGH = 11.5; // crossing up triggers potential step
-const MAG_LOW = 9.0; // crossing down confirms the step
-const MIN_STEP_INTERVAL_MS = 350; // max ~2.8 steps/second
 
 const { startTracking, pushPoints, endTracking, upsertSteps } = workoutApi;
 
@@ -67,21 +60,15 @@ export const useWorkoutTracking = () => {
   const gpsIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const uiTimerRef = useRef<NodeJS.Timeout | null>(null);
   const pointPushTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const accSubscriptionRef = useRef<Subscription | null>(null);
   const startTimeRef = useRef<number>(0);
   const pausedElapsedRef = useRef<number>(0);
   const lastSavedPointRef = useRef<{ lat: number; lng: number } | null>(null);
   const totalDistanceMetersRef = useRef<number>(0);
   const pointBufferRef = useRef<Point[]>([]);
   const stepsTotalRef = useRef<number>(0);
-  const useAccelerometerRef = useRef(false);
   const workoutTypeRef = useRef<string>('WALK');
 
-  // Accelerometer step detection state
-  const accIsAboveRef = useRef(false);
-  const accLastStepMsRef = useRef(0);
-
-  // User weight via ref — avoid stale closure without recreating callbacks on profile updates
+  // Keep weight in ref so callbacks don't need to re-create when user profile updates
   const weightKgRef = useRef<number>(DEFAULT_WEIGHT_KG);
   weightKgRef.current =
     user?.profile?.weightKg ??
@@ -94,41 +81,19 @@ export const useWorkoutTracking = () => {
     setStepsTotal(steps);
   }, []);
 
-  // Two-threshold step detection from accelerometer magnitude
-  const detectStep = useCallback((mag: number): boolean => {
-    if (!accIsAboveRef.current && mag > MAG_HIGH) {
-      accIsAboveRef.current = true;
-    } else if (accIsAboveRef.current && mag < MAG_LOW) {
-      accIsAboveRef.current = false;
-      const now = Date.now();
-      if (now - accLastStepMsRef.current > MIN_STEP_INTERVAL_MS) {
-        accLastStepMsRef.current = now;
-        return true;
-      }
-    }
-    return false;
-  }, []);
-
-  // Flush buffered GPS points; sync server values back to client
+  // Flush buffered GPS points to backend; sync server values back to UI
   const flushPoints = useCallback(
     async (id: string) => {
       const toSend = pointBufferRef.current.splice(0);
       if (toSend.length === 0) return;
       try {
         const live = await pushPoints(id, toSend);
+        // Server is source of truth — sync distance, steps, calories, pace
         if (typeof live.distanceKm === 'number' && live.distanceKm > 0) {
           totalDistanceMetersRef.current = live.distanceKm * 1000;
           setDistanceKm(live.distanceKm);
-          // Sync GPS-derived steps only when accelerometer not in use
-          if (!useAccelerometerRef.current) {
-            updateSteps(Math.round((live.distanceKm * 1000) / STRIDE_LENGTH_M));
-          }
         }
-        if (
-          typeof live.steps === 'number' &&
-          live.steps > 0 &&
-          !useAccelerometerRef.current
-        ) {
+        if (typeof live.steps === 'number' && live.steps > 0) {
           updateSteps(live.steps);
         }
         if (typeof live.caloriesOut === 'number' && live.caloriesOut > 0) {
@@ -136,7 +101,7 @@ export const useWorkoutTracking = () => {
         }
         setAvgPaceSecPerKm(live.avgPaceSecPerKm ?? null);
       } catch {
-        // Silently retain client-side values on network failure
+        // Keep client-side estimates on network failure; retry next flush
       }
     },
     [updateSteps],
@@ -145,11 +110,15 @@ export const useWorkoutTracking = () => {
   const handlePosition = useCallback(
     (pos: any) => {
       const { latitude, longitude, accuracy } = pos.coords;
+
+      // Always update marker position for UI responsiveness
       setCurrentLat(latitude);
       setCurrentLng(longitude);
 
+      // Drop fixes with poor accuracy (e.g. indoors, first GPS lock)
       if (accuracy && accuracy > MAX_ACCURACY_METERS) return;
 
+      // Calculate distance from previous point
       let segmentDistM = 0;
       if (lastSavedPointRef.current) {
         segmentDistM = calculateDistance(
@@ -159,21 +128,26 @@ export const useWorkoutTracking = () => {
           longitude,
         );
       }
+
+      // Skip GPS noise: ignore movement smaller than threshold
       if (lastSavedPointRef.current && segmentDistM < MIN_DISTANCE_METERS)
         return;
 
+      // Record point
       lastSavedPointRef.current = { lat: latitude, lng: longitude };
       setRoute(prev => [...prev, { lat: latitude, lng: longitude }]);
+
+      // Accumulate distance
       totalDistanceMetersRef.current += segmentDistM;
-      setDistanceKm(totalDistanceMetersRef.current / 1000);
+      const km = totalDistanceMetersRef.current / 1000;
+      setDistanceKm(km);
 
-      // GPS-based steps — fallback when accelerometer is unavailable
-      if (!useAccelerometerRef.current) {
-        updateSteps(
-          Math.round(totalDistanceMetersRef.current / STRIDE_LENGTH_M),
-        );
-      }
+      // Estimate steps from GPS distance — same principle as Strava/Nike Run Club
+      const stride =
+        workoutTypeRef.current === 'RUN' ? RUN_STRIDE_M : WALK_STRIDE_M;
+      updateSteps(Math.round(totalDistanceMetersRef.current / stride));
 
+      // Buffer point for batch push (sends every 10s, not every 1s)
       pointBufferRef.current.push({
         tsMs: Date.now(),
         lat: latitude,
@@ -199,13 +173,6 @@ export const useWorkoutTracking = () => {
     }
   }, []);
 
-  const stopAccelerometer = useCallback(() => {
-    if (accSubscriptionRef.current) {
-      accSubscriptionRef.current.unsubscribe();
-      accSubscriptionRef.current = null;
-    }
-  }, []);
-
   const startGpsLoop = useCallback(
     (id: string) => {
       const getOnce = () =>
@@ -216,6 +183,7 @@ export const useWorkoutTracking = () => {
         );
       getOnce();
       gpsIntervalRef.current = setInterval(getOnce, GPS_INTERVAL_MS);
+      // Batch push: flush accumulated points every 10s
       pointPushTimerRef.current = setInterval(
         () => flushPoints(id),
         POINT_PUSH_INTERVAL_MS,
@@ -224,43 +192,14 @@ export const useWorkoutTracking = () => {
     [handlePosition, flushPoints],
   );
 
-  const startAccelerometer = useCallback(
-    (baseSteps: number) => {
-      accIsAboveRef.current = false;
-      accLastStepMsRef.current = 0;
-      let stepCount = baseSteps;
-
-      try {
-        setUpdateIntervalForType(SensorTypes.accelerometer, ACC_SAMPLE_MS);
-        accSubscriptionRef.current = accelerometer.subscribe({
-          next: ({ x, y, z }: { x: number; y: number; z: number }) => {
-            const mag = Math.sqrt(x * x + y * y + z * z);
-            if (detectStep(mag)) {
-              stepCount++;
-              updateSteps(stepCount);
-            }
-          },
-          error: () => {
-            // Sensor unavailable — silently fall back to GPS-based steps
-            useAccelerometerRef.current = false;
-          },
-        });
-        useAccelerometerRef.current = true;
-      } catch {
-        useAccelerometerRef.current = false;
-      }
-    },
-    [detectStep, updateSteps],
-  );
-
   const startUiTimer = useCallback((baseElapsedMs: number) => {
     const origin = Date.now() - baseElapsedMs;
     startTimeRef.current = origin;
     uiTimerRef.current = setInterval(() => {
       const elapsed = Date.now() - origin;
       setElapsedMs(elapsed);
+      // MET-based calorie: kcal = MET × weight_kg × hours elapsed
       const met = workoutTypeRef.current === 'RUN' ? RUN_MET : WALK_MET;
-      // MET-based calorie: kcal = MET × weight_kg × hours
       setCaloriesOut(
         Math.round(met * weightKgRef.current * (elapsed / 3_600_000)),
       );
@@ -270,17 +209,12 @@ export const useWorkoutTracking = () => {
   const start = async (type = 'WALK') => {
     try {
       if (Platform.OS === 'android') {
-        const locationGrant = await PermissionsAndroid.request(
+        const grant = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         );
-        if (locationGrant !== PermissionsAndroid.RESULTS.GRANTED) {
+        if (grant !== PermissionsAndroid.RESULTS.GRANTED) {
           Alert.alert('Lỗi', 'Bạn cần cấp quyền GPS để bắt đầu');
           return;
-        }
-        if (Platform.Version >= 29) {
-          await PermissionsAndroid.request(
-            PermissionsAndroid.PERMISSIONS.ACTIVITY_RECOGNITION,
-          );
         }
       }
 
@@ -300,25 +234,23 @@ export const useWorkoutTracking = () => {
       setCaloriesOut(0);
       setAvgPaceSecPerKm(null);
 
-      startAccelerometer(0);
       startUiTimer(0);
       startGpsLoop(res.trackingId);
     } catch (e) {
       console.log('Start error', e);
-      Alert.alert('Lỗi', 'Không thể bắt đầu');
+      Alert.alert('Lỗi', 'Không thể bắt đầu. Hãy kiểm tra kết nối mạng.');
     }
   };
 
   const pause = useCallback(
     async (id: string | null) => {
       stopAllIntervals();
-      stopAccelerometer();
       if (id) await flushPoints(id).catch(() => {});
       pausedElapsedRef.current = Date.now() - startTimeRef.current;
       setIsPaused(true);
       setIsTracking(false);
     },
-    [stopAllIntervals, stopAccelerometer, flushPoints],
+    [stopAllIntervals, flushPoints],
   );
 
   const resume = useCallback(
@@ -326,16 +258,14 @@ export const useWorkoutTracking = () => {
       if (!id) return;
       setIsTracking(true);
       setIsPaused(false);
-      startAccelerometer(stepsTotalRef.current);
       startUiTimer(pausedElapsedRef.current);
       startGpsLoop(id);
     },
-    [startAccelerometer, startUiTimer, startGpsLoop],
+    [startUiTimer, startGpsLoop],
   );
 
   const reset = useCallback(() => {
     stopAllIntervals();
-    stopAccelerometer();
     setIsTracking(false);
     setIsPaused(false);
     setHasFinished(false);
@@ -350,12 +280,13 @@ export const useWorkoutTracking = () => {
     totalDistanceMetersRef.current = 0;
     pointBufferRef.current = [];
     pausedElapsedRef.current = 0;
-  }, [stopAllIntervals, stopAccelerometer, updateSteps]);
+  }, [stopAllIntervals, updateSteps]);
 
   const end = async (id: string | null) => {
     if (!id) return;
+    // Flush remaining buffered points before finalising
     await flushPoints(id).catch(() => {});
-    // Sync step count to backend before finalising — fixes steps = 0 in workout history
+    // Sync final step count — fixes steps = 0 in workout history
     if (stepsTotalRef.current > 0) {
       try {
         await upsertSteps(id, stepsTotalRef.current);
