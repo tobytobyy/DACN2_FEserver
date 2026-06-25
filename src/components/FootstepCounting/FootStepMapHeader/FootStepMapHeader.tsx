@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import MapView, { Polyline, PROVIDER_GOOGLE } from 'react-native-maps';
+import Geolocation from '@react-native-community/geolocation';
 import { styles as externalStyles } from './styles';
 import { useFootStepMap } from './useFootStepMap';
 import { FootStepMapProps } from './types';
@@ -49,7 +50,29 @@ const FootStepMapHeader: React.FC<
 > = ({ onBack, routeSample = [], currentLat, currentLng, isTracking }) => {
   const { mapRef, isMapReadyRef, DEFAULT_REGION, centerMap } = useFootStepMap();
   const hasFirstJump = useRef(false);
+  // Stores the pre-tracking GPS fix so onMapReady can center even if location
+  // arrived before the map finished loading (common race condition).
+  const pendingCenterRef = useRef<{ lat: number; lng: number } | null>(null);
 
+  // One-shot location fetch on mount — centers the map before the user starts
+  // tracking, without touching any workout state.
+  useEffect(() => {
+    Geolocation.getCurrentPosition(
+      pos => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        pendingCenterRef.current = { lat, lng };
+        if (isMapReadyRef.current) {
+          centerMap(lat, lng);
+        }
+        // else: onMapReady picks it up from pendingCenterRef
+      },
+      () => {}, // silently ignore — map falls back to DEFAULT_REGION
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Re-center while tracking is active (follow the user as they move)
   useEffect(() => {
     if (currentLat && currentLng && isMapReadyRef.current) {
       if (!hasFirstJump.current || isTracking) {
@@ -114,7 +137,12 @@ const FootStepMapHeader: React.FC<
           customMapStyle={DARK_MAP_STYLE}
           onMapReady={() => {
             isMapReadyRef.current = true;
-            if (currentLat && currentLng) centerMap(currentLat, currentLng);
+            // Tracking location takes priority; fall back to the pre-tracking fix
+            const center =
+              currentLat && currentLng
+                ? { lat: currentLat, lng: currentLng }
+                : pendingCenterRef.current;
+            if (center) centerMap(center.lat, center.lng);
           }}
           showsUserLocation={true}
           showsMyLocationButton={false}
