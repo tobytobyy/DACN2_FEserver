@@ -45,7 +45,7 @@ const FootStepHistoryUI: React.FC = () => {
       ) : (
         <FlatList
           data={workouts}
-          keyExtractor={item => item._id}
+          keyExtractor={item => item.id ?? item._id ?? String(item.distanceKm)}
           renderItem={({ item }) => {
             // Nếu steps/calories trong DB = 0 thì tính lại từ distanceKm
             const steps =

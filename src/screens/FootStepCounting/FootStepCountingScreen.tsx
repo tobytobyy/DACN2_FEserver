@@ -9,6 +9,7 @@ import { useWorkoutTracking } from '../../hooks/useWorkoutTracking';
 const FootStepCountingScreen: React.FC = () => {
   const navigation = useNavigation<any>();
   const {
+    trackingId,
     isTracking,
     isPaused,
     hasFinished,
@@ -46,9 +47,8 @@ const FootStepCountingScreen: React.FC = () => {
   const handleSaveActivity = async () => {
     setIsProcessing(true);
     try {
-      await end();
+      await end(trackingId);
       Alert.alert('Thành công', 'Hoạt động đã được lưu!');
-      // Không reset ngay, để Card hiển thị kết quả đã lưu
     } catch {
       Alert.alert('Lỗi', 'Không thể lưu vào CSDL');
     } finally {
@@ -57,7 +57,7 @@ const FootStepCountingScreen: React.FC = () => {
   };
 
   const handleViewHistory = () => {
-    navigation.navigate('WorkoutHistory'); // 👈 chuyển sang màn hình lịch sử
+    navigation.navigate('WorkoutHistory');
   };
 
   return (
@@ -80,12 +80,12 @@ const FootStepCountingScreen: React.FC = () => {
         steps={stepsTotal}
         calories={Math.round(caloriesOut)}
         onStart={() => start('WALK')}
-        onPause={pause}
-        onResume={resume}
+        onPause={() => pause(trackingId)}
+        onResume={() => resume(trackingId)}
         onCancel={handleCancel}
         onReset={reset}
         onSave={handleSaveActivity}
-        onViewHistory={handleViewHistory} // 👈 truyền prop mới
+        onViewHistory={handleViewHistory}
       />
     </SafeAreaView>
   );
