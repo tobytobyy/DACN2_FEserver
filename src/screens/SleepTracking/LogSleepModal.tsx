@@ -20,12 +20,66 @@ const LogSleepModal: React.FC<Props> = ({ visible, onClose, onSaved }) => {
   const [wake, setWake] = useState<Date>(new Date(defaults.endAt));
   const [saving, setSaving] = useState(false);
 
+  // Android renders DateTimePicker as an imperative dialog; it must only be
+  // mounted while actively picking, otherwise it reopens on every re-render
+  // (infinite loop). iOS renders an inline spinner. We use per-field "picker"
+  // flags so the picker is mounted on demand and torn down inside onChange.
+  const [picker, setPicker] = useState<{
+    field: 'bed' | 'wake';
+    mode: 'date' | 'time';
+  } | null>(null);
+
   useEffect(() => {
     if (!visible) {
       setSaving(false);
       setTimerStart(null);
+      setPicker(null);
     }
   }, [visible]);
+
+  const onPickerChange = (
+    field: 'bed' | 'wake',
+    currentMode: 'date' | 'time',
+    event: { type?: string },
+    picked?: Date,
+  ) => {
+    // Always tear the picker down first so it cannot reopen on re-render.
+    setPicker(null);
+
+    // User cancelled the Android dialog.
+    if (event?.type === 'dismissed' || !picked) {
+      return;
+    }
+
+    const base = field === 'bed' ? bed : wake;
+    const next = new Date(base);
+    if (currentMode === 'date') {
+      next.setFullYear(
+        picked.getFullYear(),
+        picked.getMonth(),
+        picked.getDate(),
+      );
+    } else {
+      next.setHours(picked.getHours(), picked.getMinutes(), 0, 0);
+    }
+
+    if (field === 'bed') {
+      setBed(next);
+    } else {
+      setWake(next);
+    }
+
+    // On Android, after picking the date, immediately chain into the time step.
+    if (Platform.OS === 'android' && currentMode === 'date') {
+      setPicker({ field, mode: 'time' });
+    }
+  };
+
+  const fmt = (d: Date) =>
+    `${d.toLocaleDateString()} ${d.getHours().toString().padStart(2, '0')}:${d
+      .getMinutes()
+      .toString()
+      .padStart(2, '0')}`;
 
   const save = async (startAt: string, endAt: string, source: string) => {
     const err = validateRange(startAt, endAt, new Date());
@@ -102,23 +156,62 @@ const LogSleepModal: React.FC<Props> = ({ visible, onClose, onSaved }) => {
           ) : (
             <View>
               <Text style={{ color: '#C7D2FE', marginBottom: 8 }}>Giờ ngủ</Text>
-              <DateTimePicker
-                value={bed}
-                mode="datetime"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(_, d) => d && setBed(d)}
-              />
+              {Platform.OS === 'ios' ? (
+                <DateTimePicker
+                  value={bed}
+                  mode="datetime"
+                  display="spinner"
+                  onChange={(e, d) => onPickerChange('bed', 'date', e, d)}
+                />
+              ) : (
+                <Pressable
+                  onPress={() => setPicker({ field: 'bed', mode: 'date' })}
+                  style={{
+                    backgroundColor: '#312E81',
+                    padding: 12,
+                    borderRadius: 10,
+                  }}
+                >
+                  <Text style={{ color: '#fff' }}>{fmt(bed)}</Text>
+                </Pressable>
+              )}
+
               <Text
                 style={{ color: '#C7D2FE', marginTop: 12, marginBottom: 8 }}
               >
                 Giờ thức
               </Text>
-              <DateTimePicker
-                value={wake}
-                mode="datetime"
-                display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                onChange={(_, d) => d && setWake(d)}
-              />
+              {Platform.OS === 'ios' ? (
+                <DateTimePicker
+                  value={wake}
+                  mode="datetime"
+                  display="spinner"
+                  onChange={(e, d) => onPickerChange('wake', 'date', e, d)}
+                />
+              ) : (
+                <Pressable
+                  onPress={() => setPicker({ field: 'wake', mode: 'date' })}
+                  style={{
+                    backgroundColor: '#312E81',
+                    padding: 12,
+                    borderRadius: 10,
+                  }}
+                >
+                  <Text style={{ color: '#fff' }}>{fmt(wake)}</Text>
+                </Pressable>
+              )}
+
+              {picker && Platform.OS === 'android' ? (
+                <DateTimePicker
+                  value={picker.field === 'bed' ? bed : wake}
+                  mode={picker.mode}
+                  display="default"
+                  onChange={(e, d) =>
+                    onPickerChange(picker.field, picker.mode, e, d)
+                  }
+                />
+              ) : null}
+
               <PrimaryButton
                 label="Lưu"
                 disabled={saving}
