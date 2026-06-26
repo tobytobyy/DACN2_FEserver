@@ -19,3 +19,18 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Force every native module (e.g. react-native-worklets-core) to use the
+// project NDK instead of defaulting to a version that isn't installed.
+subprojects { subproject ->
+    plugins.withId("com.android.library") {
+        subproject.android {
+            ndkVersion rootProject.ext.ndkVersion
+        }
+    }
+    plugins.withId("com.android.application") {
+        subproject.android {
+            ndkVersion rootProject.ext.ndkVersion
+        }
+    }
+}
