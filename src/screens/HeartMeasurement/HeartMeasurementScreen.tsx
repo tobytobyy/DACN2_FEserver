@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import {
   View,
   Text,
@@ -22,8 +28,18 @@ import type { BrowserStackParamList } from '@navigation/AppStack/BrowserStack';
 import {
   Camera,
   useCameraDevice,
+  useFrameProcessor,
+  VisionCameraProxy,
   type CameraPermissionStatus,
 } from 'react-native-vision-camera';
+import { Worklets } from 'react-native-worklets-core';
+import { analyze, type PpgSample, type PpgResult } from './ppgAnalyzer';
+import { setTorch } from './torch';
+
+const redAveragePlugin = VisionCameraProxy.initFrameProcessorPlugin(
+  'redAverage',
+  {},
+);
 
 type Nav = NativeStackNavigationProp<BrowserStackParamList, 'HeartMeasurement'>;
 
@@ -106,6 +122,41 @@ const HeartMeasurementScreen = () => {
   const measurementStartRef = useRef(0);
   const simulatedBpmRef = useRef(76);
   const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  // --- R3: PPG frame processor wiring ---
+  const ppgSamplesRef = useRef<PpgSample[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [ppg, setPpg] = useState<PpgResult>({
+    bpm: null,
+    quality: 'no_finger',
+    confidence: 0,
+  });
+
+  const pushSample = useMemo(
+    () =>
+      Worklets.createRunOnJS((red: number) => {
+        ppgSamplesRef.current.push({ t: Date.now(), red });
+        if (ppgSamplesRef.current.length > 450) {
+          ppgSamplesRef.current.splice(0, ppgSamplesRef.current.length - 450);
+        }
+      }),
+    [],
+  );
+
+  const frameProcessor = useFrameProcessor(
+    frame => {
+      'worklet';
+      if (redAveragePlugin == null) {
+        return;
+      }
+      const value = redAveragePlugin.call(frame);
+      if (typeof value === 'number') {
+        pushSample(value);
+      }
+    },
+    [pushSample],
+  );
+  // --- end R3 ---
 
   // -----------------------
   // 1. Xin quyền Camera
@@ -190,6 +241,7 @@ const HeartMeasurementScreen = () => {
     setSignalQuality(0);
     setEstimatedBpm(null);
     samplesRef.current = [];
+    ppgSamplesRef.current = [];
     measurementStartRef.current = Date.now();
     simulatedBpmRef.current = 68 + Math.floor(Math.random() * 22);
 
@@ -227,6 +279,27 @@ const HeartMeasurementScreen = () => {
       });
     }, INTERVAL_MS);
   };
+
+  // -----------------------
+  // R3: PPG analyze interval
+  // -----------------------
+  useEffect(() => {
+    if (!isMeasuring) return;
+    const id = setInterval(() => {
+      setPpg(analyze(ppgSamplesRef.current, 30));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [isMeasuring]);
+
+  // -----------------------
+  // R3: Torch control
+  // -----------------------
+  useEffect(() => {
+    setTorch(isMeasuring);
+    return () => {
+      setTorch(false);
+    };
+  }, [isMeasuring]);
 
   // -----------------------
   // 7. Camera Error Handling
@@ -283,6 +356,7 @@ const HeartMeasurementScreen = () => {
               device={device!}
               isActive={true}
               torch={torchMode}
+              frameProcessor={frameProcessor}
             />
           ) : (
             <Text style={styles.infoText}>{getCameraErrorMessage()}</Text>
