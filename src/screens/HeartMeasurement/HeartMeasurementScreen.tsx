@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  content: { alignItems: 'center', gap: theme.spacing.lg },
+  content: { width: '100%', alignItems: 'center', gap: theme.spacing.lg },
   camera: {
     width: 72,
     height: 72,
