@@ -22,6 +22,13 @@ const PulsingHeart: React.FC<Props> = ({ bpm, active, color, size = 96 }) => {
   const scale = useRef(new Animated.Value(1)).current;
   const halo = useRef(new Animated.Value(0)).current;
 
+  const haloOpacity = useRef(
+    halo.interpolate({ inputRange: [0, 1], outputRange: [0, 0.35] }),
+  ).current;
+  const haloScale = useRef(
+    halo.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }),
+  ).current;
+
   useEffect(() => {
     if (!active || bpm == null || bpm <= 0) {
       scale.stopAnimation();
@@ -74,18 +81,8 @@ const PulsingHeart: React.FC<Props> = ({ bpm, active, color, size = 96 }) => {
             height: haloSize,
             borderRadius: haloSize / 2,
             backgroundColor: color,
-            opacity: halo.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 0.35],
-            }),
-            transform: [
-              {
-                scale: halo.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0.6, 1],
-                }),
-              },
-            ],
+            opacity: haloOpacity,
+            transform: [{ scale: haloScale }],
           },
         ]}
       />
