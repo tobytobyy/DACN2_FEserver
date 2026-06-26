@@ -6,12 +6,24 @@ export type PpgResult = {
   bpm: number | null;
   quality: PpgQuality;
   confidence: number;
+  // Debug fields (optional) — let the UI surface WHY a reading was rejected.
+  redMean?: number;
+  acDcRatio?: number;
+  sampleCount?: number;
 };
 
-// Quality thresholds (spec-defined).
-const RED_MEAN_NO_FINGER = 200; // below -> finger not covering / not lit
-const RED_MEAN_SATURATED = 253; // above -> blown out
-const AC_DC_MIN = 0.005; // 0.5% peak-to-peak/mean -> below is too weak
+// Quality thresholds.
+//
+// Detection is driven by PULSATILITY (AC/DC ratio), not absolute brightness.
+// On a real device a fingertip over the lens + torch can read DARK (low luma,
+// e.g. mean ~40) yet carry a strong pulse — so a brightness floor wrongly
+// rejected real fingers. Instead: an essentially flat signal => no finger;
+// a blown-out bright frame (mean >= 253) => saturated; otherwise a finger with
+// a usable pulse. Downstream FFT band-pass (0.65–4Hz) rejects non-cardiac
+// motion, so the gate only needs to not block a genuine finger.
+const RED_MEAN_SATURATED = 253; // at/above -> blown out, no usable signal
+const AC_DC_NO_FINGER = 0.003; // <0.3% peak-to-peak/mean -> flat scene, no finger
+const AC_DC_WEAK = 0.005; // <0.5% -> finger present but signal too weak
 
 export function assessQuality(reds: number[]): {
   quality: PpgQuality;
@@ -30,13 +42,16 @@ export function assessQuality(reds: number[]): {
   }
   const acDcRatio = redMean > 0 ? (max - min) / redMean : 0;
 
-  if (redMean < RED_MEAN_NO_FINGER) {
-    return { quality: 'no_finger', acDcRatio, redMean };
-  }
+  // Saturated: frame is blown out (e.g. torch reflecting off nothing).
   if (redMean >= RED_MEAN_SATURATED) {
     return { quality: 'saturated', acDcRatio, redMean };
   }
-  if (acDcRatio < AC_DC_MIN) {
+  // Flat signal -> no finger covering the lens.
+  if (acDcRatio < AC_DC_NO_FINGER) {
+    return { quality: 'no_finger', acDcRatio, redMean };
+  }
+  // Finger present but pulsation too small to trust.
+  if (acDcRatio < AC_DC_WEAK) {
     return { quality: 'weak', acDcRatio, redMean };
   }
   return { quality: 'good', acDcRatio, redMean };
@@ -118,8 +133,13 @@ export function dominantFrequencyHz(
 export function analyze(samples: PpgSample[], sampleRateHz: number): PpgResult {
   const reds = samples.map(s => s.red);
   const q = assessQuality(reds);
+  const debug = {
+    redMean: Math.round(q.redMean * 10) / 10,
+    acDcRatio: Math.round(q.acDcRatio * 10000) / 10000,
+    sampleCount: reds.length,
+  };
   if (q.quality !== 'good') {
-    return { bpm: null, quality: q.quality, confidence: 0 };
+    return { bpm: null, quality: q.quality, confidence: 0, ...debug };
   }
 
   // Trim filter-settle region if we have enough samples.
@@ -139,7 +159,7 @@ export function analyze(samples: PpgSample[], sampleRateHz: number): PpgResult {
   const bpm = Math.round(freqHz * 60);
 
   if (bpm < BPM_MIN || bpm > BPM_MAX) {
-    return { bpm: null, quality: 'weak', confidence };
+    return { bpm: null, quality: 'weak', confidence, ...debug };
   }
-  return { bpm, quality: 'good', confidence };
+  return { bpm, quality: 'good', confidence, ...debug };
 }

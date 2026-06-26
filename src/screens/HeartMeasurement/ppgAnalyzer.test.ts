@@ -7,13 +7,14 @@ import {
 } from './ppgAnalyzer';
 
 describe('assessQuality', () => {
-  it('flags no_finger when red mean is low', () => {
+  it('flags no_finger when the signal is flat (no pulsation)', () => {
+    // Constant value -> AC/DC ratio = 0 -> no finger, regardless of brightness.
     const reds = new Array(300).fill(120);
     const r = assessQuality(reds);
     expect(r.quality).toBe('no_finger');
   });
 
-  it('flags saturated when red mean is very high', () => {
+  it('flags saturated when red mean is blown out (>=253)', () => {
     const reds = new Array(300).fill(254);
     const r = assessQuality(reds);
     expect(r.quality).toBe('saturated');
@@ -26,21 +27,34 @@ describe('assessQuality', () => {
     expect(r.redMean).toBe(0);
   });
 
-  it('flags weak when finger present but amplitude tiny', () => {
-    // mean ~220 (finger present), but essentially flat -> AC/DC ratio ~0
-    const reds = new Array(300).fill(0).map((_, i) => 220 + (i % 2) * 0.1);
+  it('flags weak when pulsation is between the no-finger and good floors', () => {
+    // mean 220, peak-to-peak ~0.9 -> AC/DC ~0.004 (in [0.003, 0.005))
+    const reds = new Array(300)
+      .fill(0)
+      .map((_, i) => 220 + 0.45 * Math.sin((2 * Math.PI * 1.2 * i) / 30));
     const r = assessQuality(reds);
     expect(r.quality).toBe('weak');
   });
 
-  it('passes good when finger present with a real pulsation', () => {
-    // mean ~220 with ~2% peak-to-peak oscillation
+  it('passes good when finger present with a real pulsation (bright)', () => {
+    // mean ~220 with ~4.5% peak-to-peak oscillation
     const reds = new Array(300)
       .fill(0)
       .map((_, i) => 220 + 5 * Math.sin((2 * Math.PI * 1.2 * i) / 30));
     const r = assessQuality(reds);
     expect(r.quality).toBe('good');
     expect(r.redMean).toBeCloseTo(220, 0);
+  });
+
+  it('passes good for a DARK finger with a strong pulse (real-device case)', () => {
+    // Real device: fingertip over lens reads dark (mean ~40) but pulsates
+    // strongly. Brightness must NOT gate this out.
+    const reds = new Array(300)
+      .fill(0)
+      .map((_, i) => 40 + 6 * Math.sin((2 * Math.PI * 1.2 * i) / 30));
+    const r = assessQuality(reds);
+    expect(r.quality).toBe('good');
+    expect(r.redMean).toBeCloseTo(40, 0);
   });
 });
 

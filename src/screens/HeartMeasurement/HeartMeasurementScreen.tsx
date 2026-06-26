@@ -350,6 +350,14 @@ const HeartMeasurementScreen = () => {
           <View style={styles.heartbeatBox}>
             <HeartLineIcon width={220} height={44} />
             <Text style={styles.bpmText}>{statusText}</Text>
+            {/* DEBUG: live analyzer verdict — remove once measurement is tuned */}
+            {isMeasuring && (
+              <Text style={styles.retryText}>
+                {`q=${ppg.quality} mean=${ppg.redMean ?? '-'} ac=${
+                  ppg.acDcRatio ?? '-'
+                } n=${ppg.sampleCount ?? 0} bpm=${ppg.bpm ?? '-'}`}
+              </Text>
+            )}
             {retryMessage != null && (
               <Text style={styles.retryText}>{retryMessage}</Text>
             )}
