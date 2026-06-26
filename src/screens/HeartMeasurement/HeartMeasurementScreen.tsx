@@ -60,7 +60,6 @@ const HeartMeasurementScreen = () => {
 
   const device = useCameraDevice('back');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const measurementStartRef = useRef(0);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // --- R3: PPG frame processor wiring ---
@@ -179,8 +178,6 @@ const HeartMeasurementScreen = () => {
     setIsMeasuring(true);
     setProgress(0);
     setRetryMessage(null);
-    measurementStartRef.current = Date.now();
-
     if (intervalRef.current) clearInterval(intervalRef.current);
 
     intervalRef.current = setInterval(() => {
@@ -193,8 +190,7 @@ const HeartMeasurementScreen = () => {
           // Finalize: read latest ppg from analyzer at completion
           const finalPpg = analyze(ppgSamplesRef.current, 30);
           setPpg(finalPpg);
-          // Defer navigation until after state update settles
-          setTimeout(() => finishMeasurement(finalPpg), 0);
+          finishMeasurement(finalPpg);
         }
         return next;
       });
