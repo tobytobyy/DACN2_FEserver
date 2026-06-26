@@ -101,11 +101,13 @@ describe('analyze', () => {
 
   it('returns ~60 bpm for a clean 60 bpm signal', () => {
     const r = analyze(makeSamples(60, 12), FS);
+    expect(r.bpm).not.toBeNull();
     expect(Math.abs((r.bpm as number) - 60)).toBeLessThanOrEqual(6);
   });
 
   it('returns ~90 bpm for a clean 90 bpm signal', () => {
     const r = analyze(makeSamples(90, 12), FS);
+    expect(r.bpm).not.toBeNull();
     expect(Math.abs((r.bpm as number) - 90)).toBeLessThanOrEqual(6);
   });
 

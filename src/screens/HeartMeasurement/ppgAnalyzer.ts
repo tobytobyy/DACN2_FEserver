@@ -126,7 +126,7 @@ export function analyze(samples: PpgSample[], sampleRateHz: number): PpgResult {
     reds.length > SETTLE_SAMPLES ? reds.slice(SETTLE_SAMPLES) : reds;
 
   // Detrend with ~1s window (odd).
-  const win = Math.max(3, Math.floor(sampleRateHz) | 1);
+  const win = Math.max(3, Math.round(sampleRateHz) | 1); // ~1s odd window; Math.round handles fractional fps (e.g. 29.97)
   const detrended = detrend(trimmed, win);
 
   const { freqHz, confidence } = dominantFrequencyHz(
