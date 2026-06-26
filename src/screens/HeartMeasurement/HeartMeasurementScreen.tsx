@@ -11,17 +11,14 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Animated,
   Platform,
 } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import LinearGradient from 'react-native-linear-gradient';
 
 import { theme } from '@assets/theme';
-import HeartLineIcon from '@assets/icons/svgs/heart_line.svg';
-import HeartIcon from '@assets/icons/svgs/heart.svg';
 import ArrowLeftIcon from '@assets/icons/svgs/arrow_left_2424.svg';
 import type { BrowserStackParamList } from '@navigation/AppStack/BrowserStack';
 
@@ -36,6 +33,8 @@ import {
 import { Worklets } from 'react-native-worklets-core';
 import { analyze, type PpgSample, type PpgResult } from './ppgAnalyzer';
 import { setTorch } from './torch';
+import QualityState from './components/QualityState';
+import LiveWaveform from './components/LiveWaveform';
 
 const redAveragePlugin = VisionCameraProxy.initFrameProcessorPlugin(
   'redAverage',
@@ -57,10 +56,10 @@ const HeartMeasurementScreen = () => {
     null,
   );
   const [retryMessage, setRetryMessage] = useState<string | null>(null);
+  const [waveform, setWaveform] = useState<number[]>([]);
 
   const device = useCameraDevice('back');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // --- R3: PPG frame processor wiring ---
   const ppgSamplesRef = useRef<PpgSample[]>([]);
@@ -107,35 +106,7 @@ const HeartMeasurementScreen = () => {
   }, []);
 
   // -----------------------
-  // 2. Animation nhịp tim
-  // -----------------------
-  useEffect(() => {
-    if (!isMeasuring) {
-      scaleAnim.setValue(1);
-      return;
-    }
-
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.2,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-      ]),
-    );
-
-    pulse.start();
-    return () => pulse.stop();
-  }, [isMeasuring, scaleAnim]);
-
-  // -----------------------
-  // 3. Cleanup interval
+  // 2. Cleanup interval
   // -----------------------
   useEffect(() => {
     return () => {
@@ -144,7 +115,7 @@ const HeartMeasurementScreen = () => {
   }, []);
 
   // -----------------------
-  // 4. Stop đo
+  // 3. Stop đo
   // -----------------------
   const stopMeasurement = useCallback(() => {
     setIsMeasuring(false);
@@ -152,7 +123,7 @@ const HeartMeasurementScreen = () => {
   }, []);
 
   // -----------------------
-  // 5. Nếu đo xong → điều hướng hoặc hiển thị retry
+  // 4. Nếu đo xong → điều hướng hoặc hiển thị retry
   // -----------------------
   const finishMeasurement = useCallback(
     (currentPpg: PpgResult) => {
@@ -169,12 +140,13 @@ const HeartMeasurementScreen = () => {
   );
 
   // -----------------------
-  // 6. Start đo
+  // 5. Start đo
   // -----------------------
   const startMeasurement = () => {
     if (isMeasuring) return;
 
     ppgSamplesRef.current = [];
+    setWaveform([]);
     setIsMeasuring(true);
     setProgress(0);
     setRetryMessage(null);
@@ -204,6 +176,8 @@ const HeartMeasurementScreen = () => {
     if (!isMeasuring) return;
     const id = setInterval(() => {
       setPpg(analyze(ppgSamplesRef.current, 30));
+      const recent = ppgSamplesRef.current.slice(-90).map(s => s.red);
+      setWaveform(recent);
     }, 1000);
     return () => clearInterval(id);
   }, [isMeasuring]);
@@ -223,7 +197,7 @@ const HeartMeasurementScreen = () => {
   }, [isMeasuring]);
 
   // -----------------------
-  // 7. Camera Error Handling
+  // 6. Camera Error Handling
   // -----------------------
   const getCameraErrorMessage = () => {
     if (permission === null) return 'Đang kiểm tra quyền camera...';
@@ -237,155 +211,92 @@ const HeartMeasurementScreen = () => {
   const canUseCamera = !!device && permission === 'granted';
 
   // -----------------------
-  // R4: Quality-aware status text (driven by ppg.quality)
-  // -----------------------
-  const statusText = !isMeasuring
-    ? 'Đặt ngón tay che camera sau và đèn flash, rồi bấm Bắt đầu'
-    : ppg.quality === 'no_finger'
-    ? 'Đặt ngón tay che camera sau và đèn flash'
-    : ppg.quality === 'saturated'
-    ? 'Ấn nhẹ tay hơn — tín hiệu quá sáng'
-    : ppg.quality === 'weak'
-    ? 'Giữ yên tay, đang bắt tín hiệu…'
-    : ppg.bpm != null
-    ? `${ppg.bpm} BPM`
-    : 'Đang đo…';
-
-  // -----------------------
-  // 8. UI
+  // 7. UI
   // -----------------------
   const progressPercent = Math.round(progress * 100);
-  const size = 160;
-  const strokeWidth = 8;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-
-  const strokeColor =
-    progressPercent < 50
-      ? '#22C55E'
-      : progressPercent < 80
-      ? '#FACC15'
-      : '#DC2626';
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <ArrowLeftIcon width={24} height={24} color={theme.colors.primary} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Heart Measurement</Text>
-      </View>
-
-      {/* CONTENT */}
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.content}>
-          {/* CAMERA — torch prop set to 'off'; native setTorch() is the sole driver */}
-          {canUseCamera ? (
-            <Camera
-              style={styles.camera}
-              device={device!}
-              isActive={true}
-              torch={
-                Platform.OS === 'ios' ? (isMeasuring ? 'on' : 'off') : 'off'
-              }
-              frameProcessor={frameProcessor}
-            />
-          ) : (
-            <Text style={styles.infoText}>{getCameraErrorMessage()}</Text>
-          )}
-
-          {/* PROGRESS RING */}
-          <TouchableOpacity onPress={startMeasurement} disabled={isMeasuring}>
-            <View style={styles.circleWrapper}>
-              <Svg width={size} height={size}>
-                <Circle
-                  stroke="#E5E7EB"
-                  fill="none"
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={radius}
-                  strokeWidth={strokeWidth}
-                />
-
-                <Circle
-                  stroke={strokeColor}
-                  fill="none"
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={radius}
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={circumference}
-                  strokeDashoffset={
-                    circumference - (circumference * progressPercent) / 100
-                  }
-                  strokeLinecap="round"
-                  rotation={-90}
-                  originX={size / 2}
-                  originY={size / 2}
-                />
-              </Svg>
-
-              <Animated.View
-                style={[
-                  styles.heartCenter,
-                  {
-                    transform: [
-                      { translateX: -50 },
-                      { translateY: -50 },
-                      { scale: scaleAnim },
-                    ],
-                  },
-                ]}
-              >
-                <HeartIcon width={100} height={100} color="#DC2626" />
-              </Animated.View>
-            </View>
+    <LinearGradient colors={['#0d1a18', '#0a0a0c']} style={{ flex: 1 }}>
+      <SafeAreaView style={styles.safeArea}>
+        {/* HEADER */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <ArrowLeftIcon width={24} height={24} color="#2dd4bf" />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Heart Measurement</Text>
+        </View>
 
-          {/* STATUS */}
-          <View style={styles.heartbeatBox}>
-            <HeartLineIcon width={220} height={44} />
-            <Text style={styles.bpmText}>{statusText}</Text>
-            {/* DEBUG: live analyzer verdict — remove once measurement is tuned */}
-            {isMeasuring && (
-              <Text style={styles.retryText}>
-                {`q=${ppg.quality} mean=${ppg.redMean ?? '-'} ac=${
-                  ppg.acDcRatio ?? '-'
-                } n=${ppg.sampleCount ?? 0} bpm=${ppg.bpm ?? '-'}`}
-              </Text>
+        {/* CONTENT */}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.content}>
+            {/* CAMERA — torch prop set to 'off'; native setTorch() is the sole driver */}
+            {canUseCamera ? (
+              <Camera
+                style={styles.camera}
+                device={device!}
+                isActive={true}
+                torch={
+                  Platform.OS === 'ios' ? (isMeasuring ? 'on' : 'off') : 'off'
+                }
+                frameProcessor={frameProcessor}
+              />
+            ) : (
+              <Text style={styles.infoText}>{getCameraErrorMessage()}</Text>
             )}
+
+            {/* Quality-aware center block (heart + BPM / guidance) */}
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={startMeasurement}
+              disabled={isMeasuring}
+            >
+              <QualityState
+                quality={ppg.quality}
+                bpm={ppg.bpm}
+                isMeasuring={isMeasuring}
+              />
+            </TouchableOpacity>
+
+            {/* Live waveform */}
+            <LiveWaveform samples={waveform} color="#2dd4bf" />
+
+            {/* Slim progress bar (measurement window) */}
+            <View style={styles.progressTrack}>
+              <View
+                style={[styles.progressFill, { width: `${progressPercent}%` }]}
+              />
+            </View>
+
             {retryMessage != null && (
               <Text style={styles.retryText}>{retryMessage}</Text>
             )}
-          </View>
 
-          {/* INSTRUCTIONS */}
-          <View style={styles.tipsBox}>
-            <HeartIcon width={20} height={20} color="#fff" />
-            <View style={styles.tipsTextWrapper}>
-              <Text style={styles.tipsTitle}>Hướng dẫn đo nhịp tim:</Text>
-              <Text style={styles.tipsText}>
-                1. Đặt ngón tay lên camera & flash.
-              </Text>
-              <Text style={styles.tipsText}>
-                2. Giữ yên tay trong suốt quá trình đo.
-              </Text>
-              <Text style={styles.tipsText}>
-                3. Không di chuyển hoặc thay đổi vị trí.
-              </Text>
-              <Text style={styles.tipsText}>
-                4. AI sẽ ước tính BPM từ chu kỳ thay đổi ánh sáng đỏ và cảnh báo
-                kết quả chỉ mang tính tham khảo.
-              </Text>
+            {/* INSTRUCTIONS */}
+            <View style={styles.tipsBox}>
+              <View style={styles.tipsTextWrapper}>
+                <Text style={styles.tipsTitle}>Hướng dẫn đo nhịp tim:</Text>
+                <Text style={styles.tipsText}>
+                  1. Đặt ngón tay lên camera & flash.
+                </Text>
+                <Text style={styles.tipsText}>
+                  2. Giữ yên tay trong suốt quá trình đo.
+                </Text>
+                <Text style={styles.tipsText}>
+                  3. Không di chuyển hoặc thay đổi vị trí.
+                </Text>
+                <Text style={styles.tipsText}>
+                  4. AI sẽ ước tính BPM từ chu kỳ thay đổi ánh sáng đỏ và cảnh
+                  báo kết quả chỉ mang tính tham khảo.
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 };
 
@@ -394,21 +305,20 @@ const HeartMeasurementScreen = () => {
 // -----------------------
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: theme.colors.white },
+  safeArea: { flex: 1, backgroundColor: 'transparent' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
-    backgroundColor: theme.colors.white,
-    elevation: 2,
+    backgroundColor: 'transparent',
+    elevation: 0,
   },
   backButton: { marginRight: theme.spacing.sm },
   headerTitle: {
-    fontSize: theme.fonts.size.lg,
-    fontWeight: theme.fonts.weight.bold,
-    fontFamily: theme.fonts.poppins.bold,
-    color: theme.colors.primary,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   scrollContent: {
     flexGrow: 1,
@@ -417,65 +327,55 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   content: { alignItems: 'center', gap: theme.spacing.lg },
-  circleWrapper: {
-    width: 160,
-    height: 160,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
+  camera: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    alignSelf: 'center',
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: '#2dd4bf',
   },
-  heartCenter: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
+  progressTrack: {
+    width: 220,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#1f2937',
+    overflow: 'hidden',
+    alignSelf: 'center',
   },
-  heartbeatBox: { alignItems: 'center', gap: theme.spacing.sm },
-  bpmText: {
-    fontSize: theme.fonts.size.md,
-    fontFamily: theme.fonts.poppins.regular,
-    color: theme.colors.primary,
-  },
+  progressFill: { height: '100%', backgroundColor: '#2dd4bf' },
   retryText: {
-    fontSize: theme.fonts.size.sm,
-    fontFamily: theme.fonts.poppins.regular,
-    color: '#DC2626',
+    color: '#fb923c',
+    fontSize: 13,
     textAlign: 'center',
-    marginTop: 4,
+    marginTop: 8,
   },
   tipsBox: {
-    flexDirection: 'row',
-    backgroundColor: '#000',
-    padding: theme.spacing.md,
-    borderRadius: theme.spacing.sm,
-    alignItems: 'flex-start',
-    gap: theme.spacing.sm,
-    marginTop: theme.spacing.lg,
+    backgroundColor: '#11181c',
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 20,
     maxWidth: 520,
+    width: '100%',
   },
   tipsTextWrapper: { flex: 1 },
   tipsTitle: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: theme.fonts.size.md,
-    fontFamily: theme.fonts.poppins.bold,
+    fontWeight: '700',
     marginBottom: theme.spacing.xs,
   },
   tipsText: {
-    color: '#fff',
+    color: '#9ca3af',
     fontSize: theme.fonts.size.sm,
     fontFamily: theme.fonts.poppins.regular,
     marginBottom: 4,
     lineHeight: 20,
   },
-  camera: {
-    width: 200,
-    height: 200,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginBottom: theme.spacing.md,
-  },
   infoText: {
     textAlign: 'center',
-    color: theme.colors.primary,
+    color: '#9ca3af',
     fontSize: theme.fonts.size.sm,
     fontFamily: theme.fonts.poppins.regular,
   },
