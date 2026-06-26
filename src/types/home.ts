@@ -4,6 +4,10 @@ export interface DailyMetrics {
   caloriesOut: number | null;
   avgHeartRate: number | null;
   sleepMinutes: number | null;
+  deepMinutes?: number | null;
+  remMinutes?: number | null;
+  lightMinutes?: number | null;
+  sleepScore?: number | null;
   waterMl: number | null;
 }
 
