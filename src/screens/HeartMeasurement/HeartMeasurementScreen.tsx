@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   ScrollView,
   Animated,
+  Platform,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,63 +47,6 @@ type Nav = NativeStackNavigationProp<BrowserStackParamList, 'HeartMeasurement'>;
 const MEASUREMENT_DURATION_MS = 15000;
 const INTERVAL_MS = 120;
 const PROGRESS_STEP = INTERVAL_MS / MEASUREMENT_DURATION_MS;
-const MIN_VALID_SAMPLES = 45;
-
-type PulseSample = {
-  timestamp: number;
-  redValue: number;
-};
-
-const clamp = (value: number, min: number, max: number) =>
-  Math.min(Math.max(value, min), max);
-
-const estimateBpmFromPulseSamples = (samples: PulseSample[]): number => {
-  if (samples.length < MIN_VALID_SAMPLES) return 78;
-
-  const values = samples.map(sample => sample.redValue);
-  const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
-  const variance =
-    values.reduce((sum, value) => sum + Math.pow(value - mean, 2), 0) /
-    values.length;
-  const threshold = mean + Math.sqrt(variance) * 0.35;
-
-  const peaks: PulseSample[] = [];
-  for (let i = 1; i < samples.length - 1; i += 1) {
-    const current = samples[i];
-    const previous = samples[i - 1];
-    const next = samples[i + 1];
-    const farEnough =
-      peaks.length === 0 ||
-      current.timestamp - peaks[peaks.length - 1].timestamp > 420;
-
-    if (
-      current.redValue > threshold &&
-      current.redValue >= previous.redValue &&
-      current.redValue > next.redValue &&
-      farEnough
-    ) {
-      peaks.push(current);
-    }
-  }
-
-  if (peaks.length >= 2) {
-    const intervals = peaks
-      .slice(1)
-      .map((peak, index) => peak.timestamp - peaks[index].timestamp)
-      .filter(interval => interval >= 420 && interval <= 1400);
-
-    if (intervals.length > 0) {
-      const avgInterval =
-        intervals.reduce((sum, interval) => sum + interval, 0) /
-        intervals.length;
-      return Math.round(clamp(60000 / avgInterval, 45, 145));
-    }
-  }
-
-  const dominantWave = values[values.length - 1] - values[0];
-  const fallback = 74 + Math.round((Math.abs(dominantWave) % 18) - 6);
-  return clamp(fallback, 58, 102);
-};
 
 const HeartMeasurementScreen = () => {
   const navigation = useNavigation<Nav>();
@@ -112,20 +56,15 @@ const HeartMeasurementScreen = () => {
   const [permission, setPermission] = useState<CameraPermissionStatus | null>(
     null,
   );
-  const [redAvg, setRedAvg] = useState(0);
-  const [signalQuality, setSignalQuality] = useState(0);
-  const [estimatedBpm, setEstimatedBpm] = useState<number | null>(null);
+  const [retryMessage, setRetryMessage] = useState<string | null>(null);
 
   const device = useCameraDevice('back');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const samplesRef = useRef<PulseSample[]>([]);
   const measurementStartRef = useRef(0);
-  const simulatedBpmRef = useRef(76);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // --- R3: PPG frame processor wiring ---
   const ppgSamplesRef = useRef<PpgSample[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [ppg, setPpg] = useState<PpgResult>({
     bpm: null,
     quality: 'no_finger',
@@ -214,20 +153,21 @@ const HeartMeasurementScreen = () => {
   }, []);
 
   // -----------------------
-  // 5. Nếu đo xong → điều hướng
+  // 5. Nếu đo xong → điều hướng hoặc hiển thị retry
   // -----------------------
-  const finishMeasurement = useCallback(() => {
-    const bpm = estimateBpmFromPulseSamples(samplesRef.current);
-    setEstimatedBpm(bpm);
-    stopMeasurement();
-    navigation.navigate('HeartResult', { bpm });
-  }, [navigation, stopMeasurement]);
-
-  useEffect(() => {
-    if (progress >= 1 && isMeasuring) {
-      finishMeasurement();
-    }
-  }, [progress, isMeasuring, finishMeasurement]);
+  const finishMeasurement = useCallback(
+    (currentPpg: PpgResult) => {
+      stopMeasurement();
+      if (currentPpg.quality === 'good' && currentPpg.bpm != null) {
+        navigation.navigate('HeartResult', { bpm: currentPpg.bpm });
+      } else {
+        setRetryMessage(
+          'Chưa đo được nhịp tim ổn định. Hãy đặt lại ngón tay và thử lại.',
+        );
+      }
+    },
+    [navigation, stopMeasurement],
+  );
 
   // -----------------------
   // 6. Start đo
@@ -238,12 +178,8 @@ const HeartMeasurementScreen = () => {
     ppgSamplesRef.current = [];
     setIsMeasuring(true);
     setProgress(0);
-    setRedAvg(0);
-    setSignalQuality(0);
-    setEstimatedBpm(null);
-    samplesRef.current = [];
+    setRetryMessage(null);
     measurementStartRef.current = Date.now();
-    simulatedBpmRef.current = 68 + Math.floor(Math.random() * 22);
 
     if (intervalRef.current) clearInterval(intervalRef.current);
 
@@ -251,29 +187,14 @@ const HeartMeasurementScreen = () => {
       setProgress(prev => {
         const next = Math.min(prev + PROGRESS_STEP, 1);
 
-        const elapsed = Date.now() - measurementStartRef.current;
-        const pulseFrequency = simulatedBpmRef.current / 60000;
-        const pulseWave = Math.sin(2 * Math.PI * pulseFrequency * elapsed);
-        const breathingWave = Math.sin((2 * Math.PI * elapsed) / 4200);
-        const noise = Math.random() * 10 - 5;
-        const mockRed = Math.round(
-          168 + pulseWave * 34 + breathingWave * 8 + noise,
-        );
-
-        samplesRef.current.push({
-          timestamp: Date.now(),
-          redValue: mockRed,
-        });
-        setRedAvg(mockRed);
-
-        const values = samplesRef.current.map(sample => sample.redValue);
-        const min = Math.min(...values);
-        const max = Math.max(...values);
-        setSignalQuality(clamp(Math.round(((max - min) / 78) * 100), 0, 100));
-
         if (next >= 1 && intervalRef.current) {
           clearInterval(intervalRef.current);
           intervalRef.current = null;
+          // Finalize: read latest ppg from analyzer at completion
+          const finalPpg = analyze(ppgSamplesRef.current, 30);
+          setPpg(finalPpg);
+          // Defer navigation until after state update settles
+          setTimeout(() => finishMeasurement(finalPpg), 0);
         }
         return next;
       });
@@ -293,6 +214,10 @@ const HeartMeasurementScreen = () => {
 
   // -----------------------
   // R3: Torch control
+  // Native module is the single torch owner during measurement.
+  // On Android the Camera torch prop is ineffective when a frame processor runs,
+  // so we always set Camera torch='off' and let setTorch() drive the hardware.
+  // On iOS the Camera torch prop is also disabled here (setTorch covers it too).
   // -----------------------
   useEffect(() => {
     setTorch(isMeasuring);
@@ -314,8 +239,21 @@ const HeartMeasurementScreen = () => {
   };
 
   const canUseCamera = !!device && permission === 'granted';
-  const torchMode: 'on' | 'off' =
-    isMeasuring && device?.hasFlash ? 'on' : 'off';
+
+  // -----------------------
+  // R4: Quality-aware status text (driven by ppg.quality)
+  // -----------------------
+  const statusText = !isMeasuring
+    ? 'Đặt ngón tay che camera sau và đèn flash, rồi bấm Bắt đầu'
+    : ppg.quality === 'no_finger'
+    ? 'Đặt ngón tay che camera sau và đèn flash'
+    : ppg.quality === 'saturated'
+    ? 'Ấn nhẹ tay hơn — tín hiệu quá sáng'
+    : ppg.quality === 'weak'
+    ? 'Giữ yên tay, đang bắt tín hiệu…'
+    : ppg.bpm != null
+    ? `${ppg.bpm} BPM`
+    : 'Đang đo…';
 
   // -----------------------
   // 8. UI
@@ -349,13 +287,15 @@ const HeartMeasurementScreen = () => {
       {/* CONTENT */}
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
-          {/* CAMERA */}
+          {/* CAMERA — torch prop set to 'off'; native setTorch() is the sole driver */}
           {canUseCamera ? (
             <Camera
               style={styles.camera}
               device={device!}
               isActive={true}
-              torch={torchMode}
+              torch={
+                Platform.OS === 'ios' ? (isMeasuring ? 'on' : 'off') : 'off'
+              }
               frameProcessor={frameProcessor}
             />
           ) : (
@@ -413,13 +353,10 @@ const HeartMeasurementScreen = () => {
           {/* STATUS */}
           <View style={styles.heartbeatBox}>
             <HeartLineIcon width={220} height={44} />
-            <Text style={styles.bpmText}>
-              {isMeasuring
-                ? `Đang đo… ${progressPercent}% · Tín hiệu ${signalQuality}% · RedAvg ${redAvg}`
-                : estimatedBpm
-                ? `Kết quả gần nhất: ${estimatedBpm} BPM`
-                : 'Nhấn vào trái tim để bắt đầu đo'}
-            </Text>
+            <Text style={styles.bpmText}>{statusText}</Text>
+            {retryMessage != null && (
+              <Text style={styles.retryText}>{retryMessage}</Text>
+            )}
           </View>
 
           {/* INSTRUCTIONS */}
@@ -493,6 +430,13 @@ const styles = StyleSheet.create({
     fontSize: theme.fonts.size.md,
     fontFamily: theme.fonts.poppins.regular,
     color: theme.colors.primary,
+  },
+  retryText: {
+    fontSize: theme.fonts.size.sm,
+    fontFamily: theme.fonts.poppins.regular,
+    color: '#DC2626',
+    textAlign: 'center',
+    marginTop: 4,
   },
   tipsBox: {
     flexDirection: 'row',
