@@ -33,7 +33,7 @@ export function assessQuality(reds: number[]): {
   if (redMean < RED_MEAN_NO_FINGER) {
     return { quality: 'no_finger', acDcRatio, redMean };
   }
-  if (redMean > RED_MEAN_SATURATED) {
+  if (redMean >= RED_MEAN_SATURATED) {
     return { quality: 'saturated', acDcRatio, redMean };
   }
   if (acDcRatio < AC_DC_MIN) {

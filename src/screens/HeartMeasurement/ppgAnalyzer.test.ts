@@ -13,6 +13,13 @@ describe('assessQuality', () => {
     expect(r.quality).toBe('saturated');
   });
 
+  it('returns no_finger for empty input without throwing', () => {
+    const r = assessQuality([]);
+    expect(r.quality).toBe('no_finger');
+    expect(r.acDcRatio).toBe(0);
+    expect(r.redMean).toBe(0);
+  });
+
   it('flags weak when finger present but amplitude tiny', () => {
     // mean ~220 (finger present), but essentially flat -> AC/DC ratio ~0
     const reds = new Array(300).fill(0).map((_, i) => 220 + (i % 2) * 0.1);
