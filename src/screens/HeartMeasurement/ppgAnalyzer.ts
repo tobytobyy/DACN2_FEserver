@@ -69,6 +69,7 @@ const BPM_MIN = 40;
 const BPM_MAX = 200;
 const BAND_LO_HZ = 0.65;
 const BAND_HI_HZ = 4.0;
+// 0.05 Hz scan step = 3 BPM resolution (0.05*60); the ±6 BPM test tolerance covers two steps.
 const FREQ_STEP_HZ = 0.05;
 const SETTLE_SAMPLES = 150; // ~5s @30fps discarded for filter settle
 
