@@ -409,6 +409,27 @@ export const styles = StyleSheet.create({
     borderRadius: 6,
   },
 
+  /* ================= Ingredients ================= */
+
+  ingredientsBox: {
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 12,
+    backgroundColor: '#0B1221',
+  },
+
+  ingredientsTitle: {
+    color: '#E2E8F0',
+    fontWeight: '700',
+    marginBottom: 6,
+  },
+
+  ingredientItem: {
+    color: '#94A3B8',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+
   /* ================= Insight ================= */
 
   insightBox: {

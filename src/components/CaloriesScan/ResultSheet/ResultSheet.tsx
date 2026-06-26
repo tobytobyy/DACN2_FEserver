@@ -20,6 +20,7 @@ export type FoodAnalysis = {
   macros: FoodMacro[];
   badge?: string;
   note?: string;
+  ingredients?: string[];
 };
 
 type ResultMode = 'high' | 'medium';
@@ -150,6 +151,17 @@ export const ResultSheet: React.FC<Props> = ({
               />
             ))}
           </View>
+
+          {result.ingredients && result.ingredients.length > 0 ? (
+            <View style={styles.ingredientsBox}>
+              <Text style={styles.ingredientsTitle}>Nguyên liệu dự đoán</Text>
+              {result.ingredients.map((ing, idx) => (
+                <Text key={`${ing}-${idx}`} style={styles.ingredientItem}>
+                  • {ing}
+                </Text>
+              ))}
+            </View>
+          ) : null}
 
           <View style={styles.insightBox}>
             <Ionicons

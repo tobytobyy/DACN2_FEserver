@@ -44,6 +44,7 @@ type NutritionCandidateDto = {
   fat?: number | null;
   serving?: string | null;
   aiInsight?: string | null;
+  ingredients?: string[] | null;
   foodItem?: {
     name?: string | null;
     kcal?: number | null;
@@ -170,6 +171,7 @@ const buildFoodAnalysis = (candidate: NutritionCandidateDto): FoodAnalysis => {
           `AI ước tính ${calories} kcal cho ${
             fi?.serving || candidate.serving || '1 khẩu phần'
           }. Hãy điều chỉnh khẩu phần nếu bạn ăn ít hoặc nhiều hơn ảnh chụp.`,
+    ingredients: candidate.ingredients ?? [],
   };
 };
 
