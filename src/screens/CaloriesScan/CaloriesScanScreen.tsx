@@ -35,7 +35,7 @@ type Props = NativeStackScreenProps<BrowserStackParamList, 'AiCaloriesScan'>;
 type NutritionCandidateDto = {
   code: string;
   score?: number | null; // 0..1
-  status?: 'OK' | 'UNKNOWN' | string;
+  status?: 'KNOWN' | 'UNKNOWN' | string;
   name?: string | null;
   kcal?: number | null;
   calories?: number | null;
@@ -164,13 +164,13 @@ const buildFoodAnalysis = (candidate: NutritionCandidateDto): FoodAnalysis => {
         percentage: pct(fat * 9),
       },
     ],
-    note:
-      candidate.status === 'UNKNOWN'
-        ? 'Món này chưa có đủ dữ liệu trong hệ thống. Bạn có thể chọn món khác hoặc thử lại.'
-        : candidate.aiInsight ||
-          `AI ước tính ${calories} kcal cho ${
-            fi?.serving || candidate.serving || '1 khẩu phần'
-          }. Hãy điều chỉnh khẩu phần nếu bạn ăn ít hoặc nhiều hơn ảnh chụp.`,
+    note: candidate.aiInsight
+      ? candidate.aiInsight
+      : candidate.status === 'UNKNOWN'
+      ? 'Món này chưa có đủ dữ liệu trong hệ thống. Bạn có thể chọn món khác hoặc thử lại.'
+      : `AI ước tính ${calories} kcal cho ${
+          fi?.serving || candidate.serving || '1 khẩu phần'
+        }. Hãy điều chỉnh khẩu phần nếu bạn ăn ít hoặc nhiều hơn ảnh chụp.`,
     ingredients: candidate.ingredients ?? [],
   };
 };
