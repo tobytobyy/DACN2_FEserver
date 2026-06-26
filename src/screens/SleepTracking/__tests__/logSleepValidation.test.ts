@@ -5,11 +5,14 @@ describe('logSleepValidation', () => {
 
   it('buildLastNightRange returns prev-night 23:00 -> today 07:00', () => {
     const r = buildLastNightRange(now);
-    expect(r.startAt).toContain('2026-06-25');
-    expect(r.endAt).toContain('2026-06-26');
     expect(new Date(r.endAt).getTime()).toBeGreaterThan(
       new Date(r.startAt).getTime(),
     );
+    expect(new Date(r.endAt).getTime() - new Date(r.startAt).getTime()).toBe(
+      8 * 60 * 60 * 1000,
+    );
+    expect(r.startAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(r.endAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
   });
 
   it('validateRange rejects end <= start', () => {

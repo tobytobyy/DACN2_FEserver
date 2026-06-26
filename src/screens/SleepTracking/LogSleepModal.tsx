@@ -23,6 +23,7 @@ const LogSleepModal: React.FC<Props> = ({ visible, onClose, onSaved }) => {
   useEffect(() => {
     if (!visible) {
       setSaving(false);
+      setTimerStart(null);
     }
   }, [visible]);
 
