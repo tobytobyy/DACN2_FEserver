@@ -25,6 +25,9 @@ public class RedAverageFrameProcessorPlugin extends FrameProcessorPlugin {
     @Override
     @Nullable
     public Object callback(@NonNull Frame frame, @Nullable Map<String, Object> params) throws Throwable {
+        // Use android.media.Image (frame.getImage()) — ImageProxy isn't on the app
+        // module classpath. getImage() throws FrameInvalidError (never null) on an
+        // invalid frame, which propagates safely via callback's `throws Throwable`.
         Image image = frame.getImage();
         Image.Plane[] planes = image.getPlanes();
         if (planes.length == 0) {
