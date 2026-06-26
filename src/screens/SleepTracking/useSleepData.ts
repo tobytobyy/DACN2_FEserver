@@ -20,13 +20,16 @@ export const useSleepData = () => {
   const reload = useCallback(async () => {
     setLoading(true);
     const today = todayStr();
-    const [d, week] = await Promise.all([
-      fetchDayAggregate(today),
-      fetchSleepWeek(daysAgoStr(6), today),
-    ]);
-    setDay(d);
-    setWeekly(weekHours(week));
-    setLoading(false);
+    try {
+      const [d, week] = await Promise.all([
+        fetchDayAggregate(today),
+        fetchSleepWeek(daysAgoStr(6), today),
+      ]);
+      setDay(d);
+      setWeekly(weekHours(week));
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
