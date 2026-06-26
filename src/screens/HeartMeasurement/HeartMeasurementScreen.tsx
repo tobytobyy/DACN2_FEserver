@@ -226,7 +226,7 @@ const HeartMeasurementScreen = () => {
           >
             <ArrowLeftIcon width={24} height={24} color="#2dd4bf" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Heart Measurement</Text>
+          <Text style={styles.headerTitle}>Đo nhịp tim</Text>
         </View>
 
         {/* CONTENT */}
