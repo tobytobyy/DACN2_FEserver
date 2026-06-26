@@ -235,13 +235,13 @@ const HeartMeasurementScreen = () => {
   const startMeasurement = () => {
     if (isMeasuring) return;
 
+    ppgSamplesRef.current = [];
     setIsMeasuring(true);
     setProgress(0);
     setRedAvg(0);
     setSignalQuality(0);
     setEstimatedBpm(null);
     samplesRef.current = [];
-    ppgSamplesRef.current = [];
     measurementStartRef.current = Date.now();
     simulatedBpmRef.current = 68 + Math.floor(Math.random() * 22);
 
